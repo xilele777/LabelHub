@@ -1,0 +1,142 @@
+[
+  {
+    "imageUrl": "https://img.labelhub.com/datasets/cats/ragdoll_sleep_001.jpg",
+    "fileName": "ragdoll_sleep_001.jpg",
+    "fileSize": "2.8MB",
+    "resolution": "2048x1536",
+    "description": "一只布偶猫蜷缩在猫窝中睡觉"
+  },
+  {
+    "imageUrl": "https://img.labelhub.com/datasets/dogs/samoyed_smile_002.jpg",
+    "fileName": "samoyed_smile_002.jpg",
+    "fileSize": "3.2MB",
+    "resolution": "2560x1440",
+    "description": "一只萨摩耶犬面带微笑坐在一起"
+  },
+  {
+    "imageUrl": "https://img.labelhub.com/datasets/cats/british_shorthair_003.jpg",
+    "fileName": "british_shorthair_003.jpg",
+    "fileSize": "2.1MB",
+    "resolution": "1920x1080",
+    "description": "英短蓝猫趴在书桌上注视镜头"
+  },
+  {
+    "imageUrl": "https://img.labelhub.com/datasets/dogs/shiba_outdoor_004.jpg",
+    "fileName": "shiba_outdoor_004.jpg",
+    "fileSize": "2.9MB",
+    "resolution": "2048x1536",
+    "description": "柴犬在公园草地上奔跑"
+  },
+  {
+    "imageUrl": "https://img.labelhub.com/datasets/cats/tabby_window_005.jpg",
+    "fileName": "tabby_window_005.jpg",
+    "fileSize": "1.7MB",
+    "resolution": "1600x1200",
+    "description": "虎斑猫蹲在窗台上望向窗外"
+  },
+  {
+    "imageUrl": "https://img.labelhub.com/datasets/other/rabbit_grass_006.jpg",
+    "fileName": "rabbit_grass_006.jpg",
+    "fileSize": "2.4MB",
+    "resolution": "1920x1080",
+    "description": "一只兔子在草地上吃草"
+  },
+  {
+    "imageUrl": "https://img.labelhub.com/datasets/dogs/border_collie_frisbee_007.jpg",
+    "fileName": "border_collie_frisbee_007.jpg",
+    "fileSize": "3.5MB",
+    "resolution": "2560x1440",
+    "description": "边境牧羊犬跳跃接飞盘"
+  },
+  {
+    "imageUrl": "https://img.labelhub.com/datasets/cats/persian_grooming_008.jpg",
+    "fileName": "persian_grooming_008.jpg",
+    "fileSize": "2.6MB",
+    "resolution": "2048x1536",
+    "description": "波斯猫正在舔爪子理毛"
+  },
+  {
+    "imageUrl": "https://img.labelhub.com/datasets/mixed/dog_cat_couch_009.jpg",
+    "fileName": "dog_cat_couch_009.jpg",
+    "fileSize": "3.8MB",
+    "resolution": "2560x1440",
+    "description": "猫和狗一起躺在沙发上休息"
+  },
+  {
+    "imageUrl": "https://img.labelhub.com/datasets/cats/blurry_cat_dark_010.jpg",
+    "fileName": "blurry_cat_dark_010.jpg",
+    "fileSize": "1.2MB",
+    "resolution": "1280x720",
+    "description": "暗光环境下模糊的猫形轮廓"
+  },
+  {
+    "imageUrl": "https://img.labelhub.com/datasets/crops/grape_mildew_011.jpg",
+    "fileName": "grape_mildew_011.jpg",
+    "fileSize": "2.2MB",
+    "resolution": "1920x1080",
+    "description": "葡萄霜霉病叶片，叶面有黄色油浸状斑"
+  },
+  {
+    "imageUrl": "https://img.labelhub.com/datasets/crops/potato_late_blight_012.jpg",
+    "fileName": "potato_late_blight_012.jpg",
+    "fileSize": "2.5MB",
+    "resolution": "1920x1080",
+    "description": "马铃薯晚疫病，叶片水浸状暗褐色病斑"
+  },
+  {
+    "imageUrl": "https://img.labelhub.com/datasets/crops/cotton_blight_013.jpg",
+    "fileName": "cotton_blight_013.jpg",
+    "fileSize": "1.9MB",
+    "resolution": "1600x1200",
+    "description": "棉花角斑病，叶片出现多角形病斑"
+  },
+  {
+    "imageUrl": "https://img.labelhub.com/datasets/crops/tea_leaf_spot_014.jpg",
+    "fileName": "tea_leaf_spot_014.jpg",
+    "fileSize": "2.0MB",
+    "resolution": "1600x1200",
+    "description": "茶树叶斑病，圆形褐色小斑点"
+  },
+  {
+    "imageUrl": "https://img.labelhub.com/datasets/crops/orange_canker_015.jpg",
+    "fileName": "orange_canker_015.jpg",
+    "fileSize": "2.3MB",
+    "resolution": "1920x1080",
+    "description": "柑橘溃疡病，果实表面木栓化隆起病斑"
+  },
+  {
+    "imageUrl": "https://img.labelhub.com/datasets/crops/strawberry_powdery_016.jpg",
+    "fileName": "strawberry_powdery_016.jpg",
+    "fileSize": "2.1MB",
+    "resolution": "1920x1080",
+    "description": "草莓白粉病，叶面覆盖白色粉状物"
+  },
+  {
+    "imageUrl": "https://img.labelhub.com/datasets/crops/sunflower_rust_017.jpg",
+    "fileName": "sunflower_rust_017.jpg",
+    "fileSize": "1.8MB",
+    "resolution": "1280x720",
+    "description": "向日葵锈病，叶片背面出现褐色孢子堆"
+  },
+  {
+    "imageUrl": "https://img.labelhub.com/datasets/crops/banana_sigatoka_018.jpg",
+    "fileName": "banana_sigatoka_018.jpg",
+    "fileSize": "2.4MB",
+    "resolution": "1920x1080",
+    "description": "香蕉叶斑病，叶片出现椭圆形大斑"
+  },
+  {
+    "imageUrl": "https://img.labelhub.com/datasets/crops/mango_anthracnose_019.jpg",
+    "fileName": "mango_anthracnose_019.jpg",
+    "fileSize": "2.6MB",
+    "resolution": "2048x1536",
+    "description": "芒果炭疽病，果实表面黑色凹陷病斑"
+  },
+  {
+    "imageUrl": "https://img.labelhub.com/datasets/crops/healthy_peach_020.jpg",
+    "fileName": "healthy_peach_020.jpg",
+    "fileSize": "1.5MB",
+    "resolution": "1280x720",
+    "description": "健康桃树叶片，颜色鲜绿无病斑"
+  }
+]

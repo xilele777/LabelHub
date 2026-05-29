@@ -1,0 +1,142 @@
+[
+  {
+    "imageUrl": "https://img.labelhub.com/datasets/traffic/school_zone_sign_001.jpg",
+    "fileName": "school_zone_sign_001.jpg",
+    "fileSize": "1.4MB",
+    "resolution": "1280x720",
+    "description": "学校区域标志牌，黄色菱形"
+  },
+  {
+    "imageUrl": "https://img.labelhub.com/datasets/traffic/yield_sign_002.jpg",
+    "fileName": "yield_sign_002.jpg",
+    "fileSize": "1.1MB",
+    "resolution": "1280x720",
+    "description": "让行标志，倒三角形状"
+  },
+  {
+    "imageUrl": "https://img.labelhub.com/datasets/traffic/speed_limit_80_003.jpg",
+    "fileName": "speed_limit_80_003.jpg",
+    "fileSize": "1.3MB",
+    "resolution": "1280x720",
+    "description": "限速80圆形标志牌"
+  },
+  {
+    "imageUrl": "https://img.labelhub.com/datasets/traffic/no_parking_004.jpg",
+    "fileName": "no_parking_004.jpg",
+    "fileSize": "1.0MB",
+    "resolution": "1280x720",
+    "description": "禁止停车标志牌"
+  },
+  {
+    "imageUrl": "https://img.labelhub.com/datasets/traffic/multi_sign_pole_005.jpg",
+    "fileName": "multi_sign_pole_005.jpg",
+    "fileSize": "1.8MB",
+    "resolution": "1920x1080",
+    "description": "同一杆体上多个标志牌组合"
+  },
+  {
+    "imageUrl": "https://img.labelhub.com/datasets/traffic/pedestrian_sign_006.jpg",
+    "fileName": "pedestrian_sign_006.jpg",
+    "fileSize": "1.2MB",
+    "resolution": "1280x720",
+    "description": "注意行人警告标志"
+  },
+  {
+    "imageUrl": "https://img.labelhub.com/datasets/traffic/direction_sign_007.jpg",
+    "fileName": "direction_sign_007.jpg",
+    "fileSize": "2.0MB",
+    "resolution": "1920x1080",
+    "description": "蓝色方向指示标志牌"
+  },
+  {
+    "imageUrl": "https://img.labelhub.com/datasets/traffic/railway_sign_008.jpg",
+    "fileName": "railway_sign_008.jpg",
+    "fileSize": "1.5MB",
+    "resolution": "1600x1200",
+    "description": "铁路道口警告标志"
+  },
+  {
+    "imageUrl": "https://img.labelhub.com/datasets/street/market_street_009.jpg",
+    "fileName": "market_street_009.jpg",
+    "fileSize": "4.8MB",
+    "resolution": "3840x2160",
+    "description": "集市街道，密集行人和摊位"
+  },
+  {
+    "imageUrl": "https://img.labelhub.com/datasets/street/residential_car_010.jpg",
+    "fileName": "residential_car_010.jpg",
+    "fileSize": "3.5MB",
+    "resolution": "2560x1440",
+    "description": "小区道路，停靠车辆和出入行人"
+  },
+  {
+    "imageUrl": "https://img.labelhub.com/datasets/street/highway_merge_011.jpg",
+    "fileName": "highway_merge_011.jpg",
+    "fileSize": "4.2MB",
+    "resolution": "2560x1440",
+    "description": "高速汇入口，多辆汽车并线"
+  },
+  {
+    "imageUrl": "https://img.labelhub.com/datasets/street/delivery_bike_012.jpg",
+    "fileName": "delivery_bike_012.jpg",
+    "fileSize": "2.8MB",
+    "resolution": "1920x1080",
+    "description": "外卖骑手骑车穿行机动车道"
+  },
+  {
+    "imageUrl": "https://img.labelhub.com/datasets/street/bus_stop_013.jpg",
+    "fileName": "bus_stop_013.jpg",
+    "fileSize": "3.9MB",
+    "resolution": "2560x1440",
+    "description": "公交站台，乘客排队和车辆进站"
+  },
+  {
+    "imageUrl": "https://img.labelhub.com/datasets/street/foggy_road_014.jpg",
+    "fileName": "foggy_road_014.jpg",
+    "fileSize": "2.5MB",
+    "resolution": "1920x1080",
+    "description": "雾天公路，远处车辆仅见轮廓"
+  },
+  {
+    "imageUrl": "https://img.labelhub.com/datasets/industrial/circuit_scratch_015.jpg",
+    "fileName": "circuit_scratch_015.jpg",
+    "fileSize": "1.6MB",
+    "resolution": "1280x720",
+    "description": "电路板表面细微划痕"
+  },
+  {
+    "imageUrl": "https://img.labelhub.com/datasets/industrial/glass_bubble_016.jpg",
+    "fileName": "glass_bubble_016.jpg",
+    "fileSize": "1.9MB",
+    "resolution": "1600x1200",
+    "description": "玻璃面板内部气泡缺陷"
+  },
+  {
+    "imageUrl": "https://img.labelhub.com/datasets/industrial/weld_pore_017.jpg",
+    "fileName": "weld_pore_017.jpg",
+    "fileSize": "2.0MB",
+    "resolution": "1920x1080",
+    "description": "焊缝表面气孔缺陷"
+  },
+  {
+    "imageUrl": "https://img.labelhub.com/datasets/industrial/fabric_flaw_018.jpg",
+    "fileName": "fabric_flaw_018.jpg",
+    "fileSize": "1.4MB",
+    "resolution": "1280x720",
+    "description": "布料表面断纱缺陷"
+  },
+  {
+    "imageUrl": "https://img.labelhub.com/datasets/industrial/ceramic_crack_019.jpg",
+    "fileName": "ceramic_crack_019.jpg",
+    "fileSize": "1.7MB",
+    "resolution": "1600x1200",
+    "description": "陶瓷表面微裂纹缺陷"
+  },
+  {
+    "imageUrl": "https://img.labelhub.com/datasets/industrial/clean_product_020.jpg",
+    "fileName": "clean_product_020.jpg",
+    "fileSize": "1.3MB",
+    "resolution": "1280x720",
+    "description": "合格产品表面，无缺陷"
+  }
+]

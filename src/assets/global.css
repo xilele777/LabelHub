@@ -1,0 +1,62 @@
+﻿*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Fix Ant Design Steps title/description overlap */
+.ant-steps-item-title {
+  line-height: 1.4 !important;
+  white-space: nowrap;
+}
+
+.ant-steps-item-description {
+  line-height: 1.3 !important;
+}
+
+/* Ensure card bodies don't overflow */
+.ant-card-body {
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+/* ── Layout optimization utilities ── */
+
+/* Flex column that fills parent and allows children to shrink */
+.flex-col-fill {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
+}
+
+/* Flex row that fills parent */
+.flex-row-fill {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+}
+
+/* Scroll container: only this area scrolls, parent must have constrained height */
+.scroll-area {
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0;
+  flex: 1;
+}
+
+/* Ant Row with flex:1 needs min-height:0 to allow shrinking */
+.ant-row-flex {
+  min-height: 0;
+}

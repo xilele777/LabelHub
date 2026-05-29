@@ -1,0 +1,72 @@
+[
+  {
+    "imageUrl": "https://img.labelhub.com/datasets/satellite/port_area_001.jpg",
+    "fileName": "port_area_001.jpg",
+    "fileSize": "14.2MB",
+    "resolution": "7680x4320",
+    "description": "港口区域遥感图，包含水体、码头建筑和货场"
+  },
+  {
+    "imageUrl": "https://img.labelhub.com/datasets/satellite/industrial_park_002.jpg",
+    "fileName": "industrial_park_002.jpg",
+    "fileSize": "16.5MB",
+    "resolution": "7680x4320",
+    "description": "工业园区遥感图，大面积厂房和道路"
+  },
+  {
+    "imageUrl": "https://img.labelhub.com/datasets/satellite/residential_zone_003.jpg",
+    "fileName": "residential_zone_003.jpg",
+    "fileSize": "11.8MB",
+    "resolution": "7680x4320",
+    "description": "居民区遥感图，密集住宅与绿化带"
+  },
+  {
+    "imageUrl": "https://img.labelhub.com/datasets/satellite/wetland_reserve_004.jpg",
+    "fileName": "wetland_reserve_004.jpg",
+    "fileSize": "13.6MB",
+    "resolution": "7680x4320",
+    "description": "湿地保护区遥感图，植被与水体交织"
+  },
+  {
+    "imageUrl": "https://img.labelhub.com/datasets/satellite/cloud_cover_005.jpg",
+    "fileName": "cloud_cover_005.jpg",
+    "fileSize": "15.0MB",
+    "resolution": "7680x4320",
+    "description": "云遮挡区域遥感图，约30%面积被云覆盖"
+  },
+  {
+    "imageUrl": "https://img.labelhub.com/datasets/streetview/alley_seg_006.jpg",
+    "fileName": "alley_seg_006.jpg",
+    "fileSize": "5.2MB",
+    "resolution": "3840x2160",
+    "description": "窄巷街景，两侧建筑和地面"
+  },
+  {
+    "imageUrl": "https://img.labelhub.com/datasets/streetview/plaza_seg_007.jpg",
+    "fileName": "plaza_seg_007.jpg",
+    "fileSize": "6.8MB",
+    "resolution": "3840x2160",
+    "description": "广场全景，大面积铺装地面和天空"
+  },
+  {
+    "imageUrl": "https://img.labelhub.com/datasets/streetview/garden_seg_008.jpg",
+    "fileName": "garden_seg_008.jpg",
+    "fileSize": "5.5MB",
+    "resolution": "3840x2160",
+    "description": "社区花园，植被、小径、凉亭"
+  },
+  {
+    "imageUrl": "https://img.labelhub.com/datasets/streetview/parking_seg_009.jpg",
+    "fileName": "parking_seg_009.jpg",
+    "fileSize": "4.9MB",
+    "resolution": "3840x2160",
+    "description": "露天停车场，铺装地面与车辆"
+  },
+  {
+    "imageUrl": "https://img.labelhub.com/datasets/streetview/riverside_seg_010.jpg",
+    "fileName": "riverside_seg_010.jpg",
+    "fileSize": "7.1MB",
+    "resolution": "3840x2160",
+    "description": "河滨步道，水体、护栏、植被"
+  }
+]

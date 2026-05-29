@@ -1,0 +1,12 @@
+[
+  { "imageUrl": "https://picsum.photos/seed/obj001/640/480", "fileName": "street_001.jpg", "width": 640, "height": 480 },
+  { "imageUrl": "https://picsum.photos/seed/obj002/640/480", "fileName": "park_002.jpg", "width": 640, "height": 480 },
+  { "imageUrl": "https://picsum.photos/seed/obj003/640/480", "fileName": "highway_003.jpg", "width": 640, "height": 480 },
+  { "imageUrl": "https://picsum.photos/seed/obj004/640/480", "fileName": "intersection_004.jpg", "width": 640, "height": 480 },
+  { "imageUrl": "https://picsum.photos/seed/obj005/640/480", "fileName": "bridge_005.jpg", "width": 640, "height": 480 },
+  { "imageUrl": "https://picsum.photos/seed/obj006/640/480", "fileName": "plaza_006.jpg", "width": 640, "height": 480 },
+  { "imageUrl": "https://picsum.photos/seed/obj007/640/480", "fileName": "alley_007.jpg", "width": 640, "height": 480 },
+  { "imageUrl": "https://picsum.photos/seed/obj008/640/480", "fileName": "station_008.jpg", "width": 640, "height": 480 },
+  { "imageUrl": "https://picsum.photos/seed/obj009/640/480", "fileName": "market_009.jpg", "width": 640, "height": 480 },
+  { "imageUrl": "https://picsum.photos/seed/obj010/640/480", "fileName": "harbor_010.jpg", "width": 640, "height": 480 }
+]

@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+server/node_modules/
+
+# Build output
+dist/
+build/
+
+# SQLite database
+server/data/labelhub.db
+server/data/labelhub.db-wal
+server/data/labelhub.db-shm
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Environment
+.env
+.env.local
+
+# Logs
+*.log
+npm-debug.log*
+
+# Misc
+*.tsbuildinfo

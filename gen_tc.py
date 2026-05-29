@@ -1,0 +1,1 @@
+import pathlib`np = pathlib.Path(r"f:\LabelHub\src\pages\TemplateBuilder\components\TemplateCanvas.tsx")`np.parent.mkdir(parents=True, exist_ok=True)`nprint("dir ok")`n
