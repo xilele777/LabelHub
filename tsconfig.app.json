@@ -5,6 +5,13 @@
     "noEmit": true
   },
   "include": [
-    "src"
+    "src/**/*.ts",
+    "src/**/*.d.ts",
+    "src/**/*.vue",
+    "vite.config.ts"
+  ],
+  "exclude": [
+    "dist",
+    "node_modules"
   ]
 }

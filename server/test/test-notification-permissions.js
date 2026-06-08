@@ -11,6 +11,8 @@
  */
 const http = require('http');
 const { io: createClient } = require('socket.io-client');
+const db = require('../store/db');
+const { hashPassword } = require('../utils/password');
 const { encodeToken } = require('../middleware/auth');
 const notificationService = require('../services/notificationService');
 
@@ -55,6 +57,12 @@ function connectSocket(port, userId) {
 
 async function runTests() {
   console.log('\n===== Notification permission isolation tests =====\n');
+
+  db.seed('users', [
+    { id: 'u001', username: 'owner', password: hashPassword('owner123'), avatar: null, role: 'owner' },
+    { id: 'u002', username: 'annotator', password: hashPassword('annotator123'), avatar: null, role: 'annotator' },
+    { id: 'u003', username: 'reviewer', password: hashPassword('reviewer123'), avatar: null, role: 'reviewer' },
+  ]);
 
   const server = http.createServer();
   notificationService.initNotificationService(server);

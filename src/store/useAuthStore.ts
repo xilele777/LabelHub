@@ -1,85 +1,166 @@
-import { create } from 'zustand';
+import { computed, ref } from 'vue';
+import { defineStore } from 'pinia';
 import type { UserInfo } from '../types';
-import { loginApi } from '../api/auth';
-import { AUTH_EXPIRED_EVENT } from '../api/request';
-import { releaseAllItems } from '../api/annotation';
+import { AUTH_EXPIRED_EVENT, resetUnauthorizedRedirect } from '../api/request';
 
-// ===== Auth Store =====
-
-interface AuthState {
+export interface AuthState {
   user: UserInfo | null;
+  token: string | null;
   loading: boolean;
   error: string | null;
-  login: (username: string, password: string) => Promise<UserInfo | null>;
-  logout: () => Promise<void>;
-  setUser: (user: UserInfo | null) => void;
+}
+
+const TOKEN_KEY = 'token';
+const USER_KEY = 'user';
+
+function getStorage() {
+  return typeof window === 'undefined' ? null : window.localStorage;
+}
+
+function loadPersistedToken(): string | null {
+  return getStorage()?.getItem(TOKEN_KEY) ?? null;
 }
 
 function loadPersistedUser(): UserInfo | null {
+  const storage = getStorage();
+  if (!storage) return null;
+
   try {
-    const token = localStorage.getItem('token');
+    const token = storage.getItem(TOKEN_KEY);
     if (!token) {
-      localStorage.removeItem('user');
+      storage.removeItem(USER_KEY);
       return null;
     }
 
-    const saved = localStorage.getItem('user');
+    const saved = storage.getItem(USER_KEY);
     if (!saved) return null;
 
     const user = JSON.parse(saved) as Partial<UserInfo>;
     if (!user.id || !user.username || !user.role) {
-      localStorage.removeItem('user');
+      storage.removeItem(USER_KEY);
       return null;
     }
 
     return user as UserInfo;
   } catch {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    storage.removeItem(TOKEN_KEY);
+    storage.removeItem(USER_KEY);
     return null;
   }
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
-  user: loadPersistedUser(),
-  loading: false,
-  error: null,
+const useAuthPiniaStore = defineStore('auth', () => {
+  const user = ref<UserInfo | null>(loadPersistedUser());
+  const token = ref<string | null>(loadPersistedToken());
+  const loading = ref(false);
+  const error = ref<string | null>(null);
 
-  login: async (username: string, password: string) => {
-    set({ loading: true, error: null });
+  const isAuthenticated = computed(() => Boolean(token.value && user.value));
+  const role = computed(() => user.value?.role ?? null);
+
+  function setSession(payload: { token: string; user: UserInfo }) {
+    token.value = payload.token;
+    user.value = payload.user;
+    error.value = null;
+    resetUnauthorizedRedirect();
+
+    const storage = getStorage();
+    storage?.setItem(TOKEN_KEY, payload.token);
+    storage?.setItem(USER_KEY, JSON.stringify(payload.user));
+  }
+
+  function clearSession(message?: string) {
+    token.value = null;
+    user.value = null;
+    loading.value = false;
+    error.value = message ?? null;
+
+    const storage = getStorage();
+    storage?.removeItem(TOKEN_KEY);
+    storage?.removeItem(USER_KEY);
+  }
+
+  function setUser(nextUser: UserInfo | null) {
+    user.value = nextUser;
+
+    const storage = getStorage();
+    if (!storage) return;
+
+    if (nextUser) {
+      storage.setItem(USER_KEY, JSON.stringify(nextUser));
+    } else {
+      storage.removeItem(USER_KEY);
+    }
+  }
+
+  async function login(username: string, password: string): Promise<UserInfo | null> {
+    loading.value = true;
+    error.value = null;
+
     try {
+      const { loginApi } = await import('../api/auth');
       const res = await loginApi({ username, password });
-      const { token, user } = res.data;
-      // 持久化
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify(user));
-      set({ user, loading: false, error: null });
-      return user;
-    } catch (err: any) {
-      const msg = err?.message || '登录失败';
-      set({ loading: false, error: msg });
+      setSession(res.data);
+      loading.value = false;
+      return res.data.user;
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : '登录失败';
+      loading.value = false;
+      error.value = message;
       return null;
     }
-  },
+  }
 
-  logout: async () => {
-    set({ loading: true, error: null });
-    // 登出前释放当前用户持有的所有悲观锁
+  async function logout(): Promise<void> {
+    loading.value = true;
+    error.value = null;
+
     try {
+      const { releaseAllItems } = await import('../api/annotation');
       await releaseAllItems();
     } catch {
-      // 静默失败，不阻塞登出
+      // Releasing item locks should not block logout.
     }
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    set({ user: null, loading: false, error: null });
-  },
 
-  setUser: (user) => set({ user }),
-}));
+    clearSession();
+  }
+
+  return {
+    user,
+    token,
+    loading,
+    error,
+    isAuthenticated,
+    role,
+    login,
+    logout,
+    setUser,
+    setSession,
+    clearSession,
+  };
+});
+
+export type AuthStore = ReturnType<typeof useAuthPiniaStore>;
+
+interface UseAuthStore {
+  (): AuthStore;
+  <T>(selector: (store: AuthStore) => T): T;
+  getState: () => AuthStore;
+  setState: (patch: Partial<AuthState>) => void;
+}
+
+export const useAuthStore = ((selector?: (store: AuthStore) => unknown) => {
+  const store = useAuthPiniaStore();
+  return selector ? selector(store) : store;
+}) as UseAuthStore;
+
+useAuthStore.getState = () => useAuthPiniaStore();
+useAuthStore.setState = (patch) => {
+  useAuthPiniaStore().$patch(patch as never);
+};
 
 if (typeof window !== 'undefined') {
   window.addEventListener(AUTH_EXPIRED_EVENT, () => {
-    useAuthStore.setState({ user: null, loading: false, error: '登录已过期，请重新登录' });
+    useAuthStore().clearSession('登录已过期，请重新登录');
   });
 }

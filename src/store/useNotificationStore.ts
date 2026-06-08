@@ -1,41 +1,33 @@
-/**
- * 通知状态管理 Store (Zustand)
- *
- * 管理实时通知的状态：
- *   - 通知列表（最近 100 条）
- *   - 未读计数
- *   - 标记已读 / 全部已读
- *   - 清空通知
- *   - 通知弹窗显示/隐藏
- *   - 按用户持久化到 localStorage，页面刷新/重新登录后恢复
- */
-import { create } from 'zustand';
+import { computed, ref } from 'vue';
+import { defineStore } from 'pinia';
 import * as notificationApi from '../api/notification';
 
-/**
- * 通知对象接口（与 WebSocket 服务一致）
- */
+export type NotificationPriority = 'high' | 'medium' | 'low';
+
 export interface NotificationItem {
   id: string;
   type: string;
   title: string;
   message: string;
-  priority: 'high' | 'medium' | 'low';
-  data: Record<string, any>;
+  priority: NotificationPriority;
+  data: Record<string, unknown>;
   sender: string | null;
   targetUsers: string[];
   timestamp: string;
   read: boolean;
 }
 
-const MAX_NOTIFICATIONS = 100;
+export interface NotificationState {
+  notifications: NotificationItem[];
+  unreadCount: number;
+  panelOpen: boolean;
+  connected: boolean;
+  currentUserId: string | null;
+}
 
-/** localStorage key 前缀，按用户隔离 */
+const MAX_NOTIFICATIONS = 100;
 const STORAGE_PREFIX = 'notif_';
 
-/**
- * 通知类型 → 颜色映射
- */
 export const NOTIFICATION_COLOR_MAP: Record<string, string> = {
   review_approved: '#52c41a',
   review_rejected: '#ff4d4f',
@@ -49,227 +41,177 @@ export const NOTIFICATION_COLOR_MAP: Record<string, string> = {
   owner_message: '#1677ff',
 };
 
-// ─── localStorage 持久化辅助 ──────────────────────────────────
+function getStorage() {
+  return typeof window === 'undefined' ? null : window.localStorage;
+}
 
-/**
- * 获取当前用户的 localStorage key
- */
 function getStorageKey(userId: string): string {
   return `${STORAGE_PREFIX}${userId}`;
 }
 
-/**
- * 将通知持久化到 localStorage（按用户隔离）
- */
 function saveToLocalStorage(userId: string | null, notifications: NotificationItem[]): void {
   if (!userId) return;
   try {
-    localStorage.setItem(getStorageKey(userId), JSON.stringify(notifications));
+    getStorage()?.setItem(getStorageKey(userId), JSON.stringify(notifications));
   } catch {
-    // localStorage 满或不可用时静默失败
+    // localStorage may be unavailable or full.
   }
 }
 
-/**
- * 从 localStorage 加载用户通知
- */
 function loadFromLocalStorage(userId: string): NotificationItem[] {
   try {
-    const raw = localStorage.getItem(getStorageKey(userId));
+    const raw = getStorage()?.getItem(getStorageKey(userId));
     if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed.slice(0, MAX_NOTIFICATIONS) : [];
+    const parsed = JSON.parse(raw) as unknown;
+    return Array.isArray(parsed) ? (parsed as NotificationItem[]).slice(0, MAX_NOTIFICATIONS) : [];
   } catch {
     return [];
   }
 }
 
-/**
- * 清除指定用户在 localStorage 中的通知
- */
 function removeFromLocalStorage(userId: string): void {
   try {
-    localStorage.removeItem(getStorageKey(userId));
+    getStorage()?.removeItem(getStorageKey(userId));
   } catch {
-    // 静默失败
+    // Ignore storage cleanup failures.
   }
 }
 
-// ─── Store 定义 ──────────────────────────────────
+const useNotificationPiniaStore = defineStore('notification', () => {
+  const notifications = ref<NotificationItem[]>([]);
+  const unreadCount = ref(0);
+  const panelOpen = ref(false);
+  const connected = ref(false);
+  const currentUserId = ref<string | null>(null);
 
-interface NotificationState {
-  /** 通知列表（最新在前） */
-  notifications: NotificationItem[];
-  /** 未读数量 */
-  unreadCount: number;
-  /** 通知面板是否打开 */
-  panelOpen: boolean;
-  /** 连接状态 */
-  connected: boolean;
-  /** 当前用户ID（用于按用户持久化） */
-  currentUserId: string | null;
+  const hasUnread = computed(() => unreadCount.value > 0);
+  const latestNotification = computed(() => notifications.value[0]);
 
-  /** 添加通知 */
-  addNotification: (notification: NotificationItem) => void;
-  /** 从服务端加载通知 */
-  fetchNotifications: () => Promise<void>;
-  /** 标记单条已读 */
-  markAsRead: (id: string) => void;
-  /** 标记全部已读 */
-  markAllAsRead: () => void;
-  /** 清空通知 */
-  clearAll: () => void;
-  /** 删除单条通知 */
-  removeNotification: (id: string) => void;
-  /** 切换面板开关 */
-  togglePanel: () => void;
-  /** 设置面板开关 */
-  setPanelOpen: (open: boolean) => void;
-  /** 设置连接状态 */
-  setConnected: (connected: boolean) => void;
-  /**
-   * 切换当前用户：加载该用户持久化的通知
-   * 若用户ID发生变化，将旧用户通知保存后加载新用户的
-   */
-  setCurrentUser: (userId: string | null) => void;
-  /**
-   * 登出时调用：仅清除 localStorage 中的通知数据，
-   * 不影响内存状态（因为组件即将卸载）
-   */
-  clearUserStorage: () => void;
-}
+  function syncNotifications(nextNotifications: NotificationItem[]) {
+    notifications.value = nextNotifications.slice(0, MAX_NOTIFICATIONS);
+    unreadCount.value = notifications.value.filter((notification) => !notification.read).length;
+    saveToLocalStorage(currentUserId.value, notifications.value);
+  }
 
-export const useNotificationStore = create<NotificationState>((set, get) => ({
-  notifications: [],
-  unreadCount: 0,
-  panelOpen: false,
-  connected: false,
-  currentUserId: null,
+  function addNotification(notification: NotificationItem): void {
+    if (notifications.value.some((item) => item.id === notification.id)) return;
+    syncNotifications([notification, ...notifications.value]);
+  }
 
-  addNotification: (notification) => {
-    set((state) => {
-      // 去重：如果已存在相同 id 的通知，不再添加
-      if (state.notifications.some((n) => n.id === notification.id)) {
-        return state;
-      }
+  async function fetchNotifications(): Promise<void> {
+    if (!currentUserId.value) return;
 
-      const newNotifications = [notification, ...state.notifications].slice(0, MAX_NOTIFICATIONS);
-      const unreadCount = newNotifications.filter((n) => !n.read).length;
-
-      // 持久化
-      saveToLocalStorage(state.currentUserId, newNotifications);
-
-      return {
-        notifications: newNotifications,
-        unreadCount,
-      };
-    });
-  },
-
-  fetchNotifications: async () => {
-    const { currentUserId } = get();
-    if (!currentUserId) return;
     try {
       const res = await notificationApi.getNotificationList({ limit: MAX_NOTIFICATIONS });
-      const notifications = res.data.items || [];
-      const unreadCount = res.data.unreadCount ?? notifications.filter((n) => !n.read).length;
-      saveToLocalStorage(currentUserId, notifications);
-      set({ notifications, unreadCount });
+      notifications.value = res.data.items || [];
+      unreadCount.value = res.data.unreadCount ?? notifications.value.filter((item) => !item.read).length;
+      saveToLocalStorage(currentUserId.value, notifications.value);
     } catch (err) {
       console.warn('[NotificationStore] Failed to fetch notifications:', err);
     }
-  },
+  }
 
-  markAsRead: (id) => {
-    set((state) => {
-      const notifications = state.notifications.map((n) =>
-        n.id === id ? { ...n, read: true } : n
-      );
-      const unreadCount = notifications.filter((n) => !n.read).length;
-      saveToLocalStorage(state.currentUserId, notifications);
-      return { notifications, unreadCount };
-    });
+  function markAsRead(id: string): void {
+    syncNotifications(
+      notifications.value.map((notification) =>
+        notification.id === id ? { ...notification, read: true } : notification,
+      ),
+    );
     notificationApi.markNotificationRead(id).catch(() => {});
-  },
+  }
 
-  markAllAsRead: () => {
-    set((state) => {
-      const notifications = state.notifications.map((n) => ({ ...n, read: true }));
-      saveToLocalStorage(state.currentUserId, notifications);
-      return {
-        notifications,
-        unreadCount: 0,
-      };
-    });
+  function markAllAsRead(): void {
+    syncNotifications(notifications.value.map((notification) => ({ ...notification, read: true })));
+    unreadCount.value = 0;
     notificationApi.markAllNotificationsRead().catch(() => {});
-  },
+  }
 
-  clearAll: () => {
-    set((state) => {
-      saveToLocalStorage(state.currentUserId, []);
-      return { notifications: [], unreadCount: 0 };
-    });
+  function clearAll(): void {
+    syncNotifications([]);
     notificationApi.clearNotifications().catch(() => {});
-  },
+  }
 
-  removeNotification: (id) => {
-    set((state) => {
-      const notifications = state.notifications.filter((n) => n.id !== id);
-      const unreadCount = notifications.filter((n) => !n.read).length;
-      saveToLocalStorage(state.currentUserId, notifications);
-      return { notifications, unreadCount };
-    });
+  function removeNotification(id: string): void {
+    syncNotifications(notifications.value.filter((notification) => notification.id !== id));
     notificationApi.deleteNotification(id).catch(() => {});
-  },
+  }
 
-  togglePanel: () => {
-    set((state) => ({ panelOpen: !state.panelOpen }));
-  },
+  function togglePanel(): void {
+    panelOpen.value = !panelOpen.value;
+  }
 
-  setPanelOpen: (open) => {
-    set({ panelOpen: open });
-  },
+  function setPanelOpen(open: boolean): void {
+    panelOpen.value = open;
+  }
 
-  setConnected: (connected) => {
-    set({ connected });
-  },
+  function setConnected(nextConnected: boolean): void {
+    connected.value = nextConnected;
+  }
 
-  setCurrentUser: (userId) => {
-    const { currentUserId, notifications } = get();
+  function setCurrentUser(userId: string | null): void {
+    if (currentUserId.value === userId) return;
 
-    // 同一用户，无需切换
-    if (currentUserId === userId) return;
-
-    // 先保存当前用户的通知
-    if (currentUserId) {
-      saveToLocalStorage(currentUserId, notifications);
+    if (currentUserId.value) {
+      saveToLocalStorage(currentUserId.value, notifications.value);
     }
 
-    if (userId) {
-      // 加载新用户的通知
-      const savedNotifications = loadFromLocalStorage(userId);
-      const unreadCount = savedNotifications.filter((n) => !n.read).length;
-      set({
-        currentUserId: userId,
-        notifications: savedNotifications,
-        unreadCount,
-        panelOpen: false,
-      });
-    } else {
-      // 用户登出：清空内存
-      set({
-        currentUserId: null,
-        notifications: [],
-        unreadCount: 0,
-        panelOpen: false,
-      });
-    }
-  },
+    currentUserId.value = userId;
+    panelOpen.value = false;
 
-  clearUserStorage: () => {
-    const { currentUserId } = get();
-    if (currentUserId) {
-      removeFromLocalStorage(currentUserId);
+    if (!userId) {
+      notifications.value = [];
+      unreadCount.value = 0;
+      return;
     }
-  },
-}));
+
+    const savedNotifications = loadFromLocalStorage(userId);
+    notifications.value = savedNotifications;
+    unreadCount.value = savedNotifications.filter((notification) => !notification.read).length;
+  }
+
+  function clearUserStorage(): void {
+    if (currentUserId.value) {
+      removeFromLocalStorage(currentUserId.value);
+    }
+  }
+
+  return {
+    notifications,
+    unreadCount,
+    panelOpen,
+    connected,
+    currentUserId,
+    hasUnread,
+    latestNotification,
+    addNotification,
+    fetchNotifications,
+    markAsRead,
+    markAllAsRead,
+    clearAll,
+    removeNotification,
+    togglePanel,
+    setPanelOpen,
+    setConnected,
+    setCurrentUser,
+    clearUserStorage,
+  };
+});
+
+export type NotificationStore = ReturnType<typeof useNotificationPiniaStore>;
+
+interface UseNotificationStore {
+  (): NotificationStore;
+  <T>(selector: (store: NotificationStore) => T): T;
+  getState: () => NotificationStore;
+  setState: (patch: Partial<NotificationState>) => void;
+}
+
+export const useNotificationStore = ((selector?: (store: NotificationStore) => unknown) => {
+  const store = useNotificationPiniaStore();
+  return selector ? selector(store) : store;
+}) as UseNotificationStore;
+
+useNotificationStore.getState = () => useNotificationPiniaStore();
+useNotificationStore.setState = (patch) => {
+  useNotificationPiniaStore().$patch(patch as never);
+};

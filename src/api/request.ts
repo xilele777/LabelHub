@@ -1,127 +1,186 @@
-/**
- * 统一请求工具 — 基于 axios 封装
- *
- * - 自动携带 token（localStorage）
- * - 统一处理后端响应格式 { code, message, data }
- * - 401 自动跳转登录
- * - 提供 loading / error 语义
- */
 import axios, {
+  type AxiosError,
   type AxiosRequestConfig,
   type AxiosResponse,
-  type AxiosError,
+  type InternalAxiosRequestConfig,
 } from 'axios';
+import { useAuthStore } from '@/stores/auth';
 
 export const AUTH_EXPIRED_EVENT = 'labelhub:auth-expired';
 
-/* ─── 后端统一响应体 ──────────────────────────────── */
 export interface ApiResponse<T = unknown> {
   code: number;
   message: string;
   data: T;
 }
 
-/* ─── 创建 axios 实例 ──────────────────────────────── */
-const instance = axios.create({
-  baseURL: '/api',
-  timeout: 15_000,
-  headers: { 'Content-Type': 'application/json' },
-});
-
-function expireLocalSession(): void {
-  localStorage.removeItem('token');
-  localStorage.removeItem('user');
-  window.dispatchEvent(new Event(AUTH_EXPIRED_EVENT));
+export interface ApiError<T = unknown> extends Error {
+  code?: number | undefined;
+  status?: number | undefined;
+  data?: T | undefined;
+  originalError?: unknown;
 }
 
-/* ─── 请求拦截器：注入 token ──────────────────────── */
-instance.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token && config.headers) {
+export interface RequestConfig<D = unknown> extends AxiosRequestConfig<D> {
+  skipAuth?: boolean;
+}
+
+type UnauthorizedHandler = () => void;
+
+let unauthorizedHandler: UnauthorizedHandler | null = null;
+let redirectingToLogin = false;
+
+const instance = axios.create({
+  baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
+  timeout: 15_000,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+export function setUnauthorizedHandler(handler: UnauthorizedHandler) {
+  unauthorizedHandler = handler;
+}
+
+export function resetUnauthorizedRedirect() {
+  redirectingToLogin = false;
+}
+
+function createApiError<T = unknown>(
+  message: string,
+  options: Omit<ApiError<T>, 'name' | 'message'> = {},
+): ApiError<T> {
+  return Object.assign(new Error(message), options);
+}
+
+function isApiResponse<T = unknown>(value: unknown): value is ApiResponse<T> {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'code' in value &&
+    'message' in value &&
+    'data' in value
+  );
+}
+
+function isSuccessCode(code: number) {
+  return code >= 200 && code < 300;
+}
+
+function resolveToken(config: RequestConfig) {
+  if (config.skipAuth) return null;
+  const authStore = useAuthStore();
+  return authStore.token;
+}
+
+function handleUnauthorized() {
+  const authStore = useAuthStore();
+  authStore.clearSession();
+
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new Event(AUTH_EXPIRED_EVENT));
+  }
+
+  if (redirectingToLogin) return;
+  redirectingToLogin = true;
+
+  if (unauthorizedHandler) {
+    unauthorizedHandler();
+    return;
+  }
+
+  if (typeof window !== 'undefined') {
+    if (window.location.pathname === '/login') {
+      return;
+    }
+
+    const current = `${window.location.pathname}${window.location.search}`;
+    const redirect = encodeURIComponent(current);
+    window.location.replace(`/login?redirect=${redirect}`);
+  }
+}
+
+instance.interceptors.request.use((config: InternalAxiosRequestConfig) => {
+  const token = resolveToken(config as RequestConfig);
+  if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+
   return config;
 });
 
-/* ─── 响应拦截器：统一错误处理 ────────────────────── */
 instance.interceptors.response.use(
-  (res: AxiosResponse<ApiResponse>) => {
-    const body = res.data;
-    // 业务层成功 (code 2xx)
-    if (body.code >= 200 && body.code < 300) {
-      return body as any; // 让调用方直接拿到 { code, message, data }
+  (response: AxiosResponse<ApiResponse>) => {
+    const body = response.data;
+    if (!isApiResponse(body)) {
+      return body as unknown as AxiosResponse<ApiResponse>;
     }
-    // 业务层失败
-    const err = new Error(body.message || '请求失败') as any;
-    err.code = body.code;
-    err.data = body.data;
-    return Promise.reject(err);
+
+    if (isSuccessCode(body.code)) {
+      return body as unknown as AxiosResponse<ApiResponse>;
+    }
+
+    if (body.code === 401) {
+      handleUnauthorized();
+    }
+
+    return Promise.reject(
+      createApiError(body.message || 'Request failed', {
+        code: body.code,
+        status: response.status,
+        data: body.data,
+      }),
+    );
   },
   (error: AxiosError<ApiResponse>) => {
-    if (error.response) {
-      const { status, data } = error.response;
-      if (status === 401) {
-        expireLocalSession();
-        // 避免重复跳转
-        if (window.location.pathname !== '/login') {
-          window.location.href = '/login';
-        }
-      }
-      const msg = data?.message || `请求错误 (${status})`;
-      const err = new Error(msg) as any;
-      err.code = status;
-      err.data = data?.data;
-      return Promise.reject(err);
+    const status = error.response?.status;
+    const body = error.response?.data;
+
+    if (status === 401) {
+      handleUnauthorized();
     }
-    // 网络错误 / 超时
-    return Promise.reject(new Error(error.message || '网络异常，请稍后重试'));
+
+    return Promise.reject(
+      createApiError(body?.message || error.message || 'Network error', {
+        code: body?.code ?? status,
+        status,
+        data: body?.data,
+        originalError: error,
+      }),
+    );
   },
 );
 
-/* ─── 对外暴露的便捷方法 ──────────────────────────── */
-
-/**
- * GET 请求
- */
 export async function get<T = unknown>(
   url: string,
   params?: Record<string, unknown>,
-  config?: AxiosRequestConfig,
+  config?: RequestConfig,
 ): Promise<ApiResponse<T>> {
-  return instance.get(url, { params, ...config });
+  return instance.get<ApiResponse<T>, ApiResponse<T>>(url, { params, ...config });
 }
 
-/**
- * POST 请求
- */
 export async function post<T = unknown>(
   url: string,
   data?: unknown,
-  config?: AxiosRequestConfig,
+  config?: RequestConfig,
 ): Promise<ApiResponse<T>> {
-  return instance.post(url, data, config);
+  return instance.post<ApiResponse<T>, ApiResponse<T>>(url, data, config);
 }
 
-/**
- * PUT 请求
- */
 export async function put<T = unknown>(
   url: string,
   data?: unknown,
-  config?: AxiosRequestConfig,
+  config?: RequestConfig,
 ): Promise<ApiResponse<T>> {
-  return instance.put(url, data, config);
+  return instance.put<ApiResponse<T>, ApiResponse<T>>(url, data, config);
 }
 
-/**
- * DELETE 请求
- */
 export async function del<T = unknown>(
   url: string,
   params?: Record<string, unknown>,
-  config?: AxiosRequestConfig,
+  config?: RequestConfig,
 ): Promise<ApiResponse<T>> {
-  return instance.delete(url, { params, ...config });
+  return instance.delete<ApiResponse<T>, ApiResponse<T>>(url, { params, ...config });
 }
 
 export default instance;

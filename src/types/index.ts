@@ -1,6 +1,7 @@
 ﻿// ========== 用户与角色类型 ==========
 
 export enum Role {
+  ADMIN = 'admin',       // 管理员
   OWNER = 'owner',       // 负责人
   ANNOTATOR = 'annotator', // 标注员
   REVIEWER = 'reviewer',   // 审核员
@@ -22,13 +23,6 @@ export interface MenuItem {
   path: string;
   roles: Role[];       // 允许查看的角色列表
   children?: MenuItem[];
-}
-
-export interface RouteItem {
-  path: string;
-  element: React.ReactNode;
-  authRequired?: boolean;
-  roles?: Role[];
 }
 
 // ========== 任务类型 ==========
@@ -151,7 +145,7 @@ export enum FieldType {
 
 /** 选项（radio / checkbox / select 共用） */
 export interface FieldOption {
-  id: string;              // 前端生成的稳定 key，用于 React key / 拖拽排序
+  id: string;              // 前端生成的稳定 key，用于列表渲染 / 拖拽排序
   label: string;
   value: string;
 }
@@ -297,8 +291,8 @@ export interface AuditHistoryRecord {
 
 /** 状态流转映射（合法的状态转换） */
 export const STATUS_TRANSITIONS: Record<DataItemStatus, DataItemStatus[]> = {
-  // 允许从 pending 直接提交（无需先保存草稿）
-  [DataItemStatus.PENDING]: [DataItemStatus.DRAFT, DataItemStatus.SUBMITTED],
+  // 允许从 pending 直接提交（无需先保存草稿）；服务端提交后会原子完成 AI 预审并进入待人工审核
+  [DataItemStatus.PENDING]: [DataItemStatus.DRAFT, DataItemStatus.SUBMITTED, DataItemStatus.PENDING_REVIEW],
   [DataItemStatus.DRAFT]: [DataItemStatus.SUBMITTED, DataItemStatus.PENDING],
   // 服务端原子 AI 预审：submitted 可直接到 pending_review（跳过中间态）；
   // 仍保留 → ai_reviewing 供手动重跑 AI 预审使用

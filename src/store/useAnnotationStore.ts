@@ -1,470 +1,427 @@
-import { create } from 'zustand';
-import { type DataItem, type ConflictData } from '../types';
-import { type AIReviewResult } from '../types/aiReview';
+import { computed, ref } from 'vue';
+import { defineStore } from 'pinia';
+import {
+  DataItemStatus,
+  STATUS_TRANSITIONS,
+  type ConflictData,
+  type DataItem,
+  type LockData,
+} from '../types';
+import type { AIReviewResult } from '../types/aiReview';
 import * as annotationApi from '../api/annotation';
-import type { SubmitWithAIReviewResponse, AvailableItem, BatchClaimResult } from '../api/annotation';
+import type { AvailableItem, BatchClaimResult, SubmitWithAIReviewResponse } from '../api/annotation';
 import * as reviewApi from '../api/review';
+
+export { DataItemStatus };
+export type { AIReviewResult, AvailableItem, BatchClaimResult, ConflictData, DataItem, LockData };
+
+export type DataItemStatusTransitionMap = {
+  readonly [Status in DataItemStatus]: readonly DataItemStatus[];
+};
+
+export const DATA_ITEM_STATUS_TRANSITIONS: DataItemStatusTransitionMap = STATUS_TRANSITIONS;
+
+export interface AnnotationState {
+  dataItems: DataItem[];
+  archivedItems: DataItem[];
+  aiReviewResults: AIReviewResult[];
+  currentIndex: number;
+  loading: boolean;
+  error: string | null;
+  conflictInfo: ConflictData | null;
+  lockInfo: LockData | null;
+  availableItems: AvailableItem[];
+  availableLoading: boolean;
+}
 
 function normalizeSubmitResponse(payload: SubmitWithAIReviewResponse | DataItem): {
   item: DataItem;
   review?: AIReviewResult;
 } {
   if ('item' in payload && payload.item) {
-    return {
-      item: payload.item,
-      review: payload.review as unknown as AIReviewResult | undefined,
-    };
+    const review = payload.review as unknown as AIReviewResult | undefined;
+    return review ? { item: payload.item, review } : { item: payload.item };
   }
 
   return { item: payload as DataItem };
 }
 
-interface AnnotationState {
-  dataItems: DataItem[];
-  archivedItems: DataItem[];     // 归档的标注项
-  aiReviewResults: AIReviewResult[];
-  currentIndex: number;
-  loading: boolean;
-  error: string | null;
-  /** 乐观锁冲突信息（HTTP 409） */
-  conflictInfo: ConflictData | null;
-  /** 悲观锁冲突信息（HTTP 423），lockedBy 表示谁正在编辑 */
-  lockInfo: { lockedBy: string; lockedAt: string } | null;
-  /** 从 API 加载标注项 */
-  fetchDataItems: (taskId?: string) => Promise<void>;
-  /** 从 API 加载 AI 审核结果 */
-  fetchAIReviews: (taskId?: string) => Promise<void>;
-  setCurrentIndex: (index: number) => void;
-  /** 保存草稿（含乐观锁 version） */
-  saveDraft: (id: string, data: Record<string, unknown>, annotator: string) => Promise<void>;
-  /** 提交标注（含乐观锁 version）→ 后端自动触发 AI 预审 → 推进状态 */
-  submitAnnotation: (id: string, data: Record<string, unknown>, annotator: string) => Promise<void>;
-  /** 审核通过 */
-  approveItem: (id: string, reviewer: string) => Promise<void>;
-  /** 审核驳回 */
-  rejectItem: (id: string, reviewer: string, reason: string) => Promise<void>;
-  /** 驳回后重新提交（含乐观锁 version） */
-  resubmitItem: (id: string, data: Record<string, unknown>, annotator: string) => Promise<void>;
-  /** 认领（悲观锁）标注项 */
-  claimItem: (id: string) => Promise<boolean>;
-  /** 释放（解锁）标注项 */
-  releaseItem: (id: string) => Promise<void>;
-  /** 释放当前用户持有的所有锁（登出时调用） */
-  releaseAllMyItems: () => Promise<void>;
-  /** 用服务端最新数据覆盖本地（冲突后"放弃自己的修改"） */
-  resolveConflictWithServer: (id: string) => void;
-  /** 清除冲突/锁定提示 */
-  clearConflict: () => void;
-  /** 按 dataItemId 查询 AI 预审结果 */
-  getAIReviewByDataItemId: (dataItemId: string) => AIReviewResult | undefined;
-  /** 获取归档的标注项列表 */
-  fetchArchivedItems: (taskId?: string) => Promise<void>;
-  /** 归档标注项（仅审核通过的项可归档） */
-  archiveItem: (id: string) => Promise<void>;
-  /** 取消归档标注项（仅 Owner 可操作） */
-  unarchiveItem: (id: string) => Promise<void>;
-  /** 可领取的未分配标注项列表 */
-  availableItems: AvailableItem[];
-  /** 可领取列表加载中 */
-  availableLoading: boolean;
-  /** 获取可领取的未分配标注项 */
-  fetchAvailableItems: (taskId?: string) => Promise<void>;
-  /** 手动领取（认领分配）一个未分配的标注项 */
-  claimAssignment: (id: string) => Promise<boolean>;
-  /** 批量领取未分配标注项 */
-  batchClaimAssignments: (ids: string[]) => Promise<BatchClaimResult | null>;
+export function canTransitDataItemStatus(from: DataItemStatus, to: DataItemStatus): boolean {
+  return from === to || DATA_ITEM_STATUS_TRANSITIONS[from].includes(to);
 }
 
-export const useAnnotationStore = create<AnnotationState>()((set, get) => ({
-  dataItems: [],
-  archivedItems: [],
-  aiReviewResults: [],
-  currentIndex: 0,
-  loading: false,
-  error: null,
-  conflictInfo: null,
-  lockInfo: null,
-  availableItems: [],
-  availableLoading: false,
+function assertDataItemStatusTransition(from: DataItemStatus, to: DataItemStatus, action: string): void {
+  if (canTransitDataItemStatus(from, to)) return;
+  throw new Error(`Invalid data item status transition in ${action}: ${from} -> ${to}`);
+}
 
-  async fetchDataItems(taskId) {
-    set({ loading: true, error: null });
+function isApiErrorWithData<T>(error: unknown, code: number): error is { code: number; data: T; message?: string } {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    (error as { code?: number }).code === code &&
+    'data' in error
+  );
+}
+
+function getErrorMessage(error: unknown, fallback: string): string {
+  return error instanceof Error ? error.message : fallback;
+}
+
+const useAnnotationPiniaStore = defineStore('annotation', () => {
+  const dataItems = ref<DataItem[]>([]);
+  const archivedItems = ref<DataItem[]>([]);
+  const aiReviewResults = ref<AIReviewResult[]>([]);
+  const currentIndex = ref(0);
+  const loading = ref(false);
+  const error = ref<string | null>(null);
+  const conflictInfo = ref<ConflictData | null>(null);
+  const lockInfo = ref<LockData | null>(null);
+  const availableItems = ref<AvailableItem[]>([]);
+  const availableLoading = ref(false);
+
+  const currentItem = computed(() => dataItems.value[currentIndex.value] ?? null);
+  const hasConflict = computed(() => Boolean(conflictInfo.value || lockInfo.value));
+  const itemTotal = computed(() => dataItems.value.length);
+
+  function replaceDataItem(updatedItem: DataItem, action: string): void {
+    const current = dataItems.value.find((item) => item.id === updatedItem.id);
+    if (current) {
+      assertDataItemStatusTransition(current.status, updatedItem.status, action);
+    }
+
+    dataItems.value = dataItems.value.map((item) => (item.id === updatedItem.id ? updatedItem : item));
+  }
+
+  function upsertAIReview(dataItemId: string, review?: AIReviewResult): void {
+    if (!review) return;
+    aiReviewResults.value = [
+      ...aiReviewResults.value.filter((item) => item.dataItemId !== dataItemId),
+      review,
+    ];
+  }
+
+  async function fetchDataItems(taskId?: string): Promise<void> {
+    loading.value = true;
+    error.value = null;
     try {
       const params: Record<string, unknown> = {};
       if (taskId) params.taskId = taskId;
       const res = await annotationApi.getAnnotationItemList(params);
-      set({ dataItems: res.data.items, loading: false });
-    } catch (err: any) {
-      set({ error: err?.message || '获取标注数据失败', loading: false });
+      dataItems.value = res.data.items;
+    } catch (err: unknown) {
+      error.value = getErrorMessage(err, '获取标注数据失败');
+    } finally {
+      loading.value = false;
     }
-  },
+  }
 
-  async fetchAIReviews(taskId) {
-    set({ error: null });
+  async function fetchAIReviews(taskId?: string): Promise<void> {
+    error.value = null;
     try {
-      const res = taskId
-        ? await reviewApi.getReviewsByTaskId(taskId)
-        : await reviewApi.getReviewList();
-      set({ aiReviewResults: res.data.items });
-    } catch (err: any) {
-      set({ error: err?.message || '获取审核数据失败' });
+      const res = taskId ? await reviewApi.getReviewsByTaskId(taskId) : await reviewApi.getReviewList();
+      aiReviewResults.value = res.data.items;
+    } catch (err: unknown) {
+      error.value = getErrorMessage(err, '获取审核数据失败');
     }
-  },
+  }
 
-  setCurrentIndex(index) {
-    set({ currentIndex: index, conflictInfo: null, lockInfo: null });
-  },
+  function setCurrentIndex(index: number): void {
+    currentIndex.value = index;
+    conflictInfo.value = null;
+    lockInfo.value = null;
+  }
 
-  /**
-   * 保存草稿：调用后端 PUT /annotation-items/:id/save-draft
-   * 包含乐观锁 version 检查
-   */
-  async saveDraft(id, data, _annotator) {
-    set({ error: null, conflictInfo: null });
+  async function saveDraft(id: string, data: Record<string, unknown>, _annotator: string): Promise<void> {
+    error.value = null;
+    conflictInfo.value = null;
     try {
-      // 从 dataItems 中查找当前版本号
-      const currentItem = get().dataItems.find((d) => d.id === id);
-      const version = currentItem?.version ?? 1;
-
+      const current = dataItems.value.find((item) => item.id === id);
+      const version = current?.version ?? 1;
       const res = await annotationApi.saveDraft(id, data, version);
-      const updatedItem = res.data as DataItem;
-
-      set((state) => ({
-        dataItems: state.dataItems.map((d) => (d.id === id ? updatedItem : d)),
-      }));
-    } catch (err: any) {
-      // 处理乐观锁冲突 (HTTP 409)
-      if (err?.code === 409 && err?.data) {
-        set({
-          conflictInfo: err.data as ConflictData,
-          error: null,
-        });
+      replaceDataItem(res.data, 'saveDraft');
+    } catch (err: unknown) {
+      if (isApiErrorWithData<ConflictData>(err, 409)) {
+        conflictInfo.value = err.data;
+        error.value = null;
         throw err;
       }
-      set({ error: err?.message || '保存草稿失败' });
+      error.value = getErrorMessage(err, '保存草稿失败');
       throw err;
     }
-  },
+  }
 
-  /**
-   * 提交标注 — AI 预审由后端自动触发，前端只接收结果
-   * 包含乐观锁 version 检查
-   */
-  async submitAnnotation(id, data, _annotator) {
-    set({ error: null, conflictInfo: null });
+  async function submitAnnotation(id: string, data: Record<string, unknown>, _annotator: string): Promise<void> {
+    error.value = null;
+    conflictInfo.value = null;
     try {
-      const currentItem = get().dataItems.find((d) => d.id === id);
-      const version = currentItem?.version ?? 1;
-
+      const current = dataItems.value.find((item) => item.id === id);
+      const version = current?.version ?? 1;
       const res = await annotationApi.submitAnnotation(id, data, version);
-
-      // 后端返回 { item, review } （AI 预审已在服务端完成）
-      const { item: updatedItem, review: reviewResult } = normalizeSubmitResponse(res.data);
-
-      set((state) => ({
-        dataItems: state.dataItems.map((d) => (d.id === id ? updatedItem : d)),
-        aiReviewResults: reviewResult
-          ? [
-              ...state.aiReviewResults.filter((r) => r.dataItemId !== id),
-              reviewResult,
-            ]
-          : state.aiReviewResults,
-      }));
-    } catch (err: any) {
-      // 处理乐观锁冲突 (HTTP 409)
-      if (err?.code === 409 && err?.data) {
-        set({
-          conflictInfo: err.data as ConflictData,
-          error: null,
-        });
+      const { item, review } = normalizeSubmitResponse(res.data);
+      replaceDataItem(item, 'submitAnnotation');
+      upsertAIReview(id, review);
+    } catch (err: unknown) {
+      if (isApiErrorWithData<ConflictData>(err, 409)) {
+        conflictInfo.value = err.data;
+        error.value = null;
         throw err;
       }
-      set({ error: err?.message || '提交标注失败' });
+      error.value = getErrorMessage(err, '提交标注失败');
       throw err;
     }
-  },
+  }
 
-  /**
-   * 审核通过：调用后端 PUT /annotation-items/:id/approve
-   * 后端会自动归档审核通过的项，前端需将项从 dataItems 移到 archivedItems
-   */
-  async approveItem(id, _reviewer) {
-    set({ error: null });
+  async function approveItem(id: string, _reviewer: string): Promise<void> {
+    error.value = null;
     try {
       const res = await annotationApi.approveAnnotation(id);
-      const updatedItem = res.data as DataItem;
+      const updatedItem = res.data;
 
       if (updatedItem.archived) {
-        // 后端自动归档了，从 dataItems 移除，加入 archivedItems
-        set((state) => ({
-          dataItems: state.dataItems.filter((d) => d.id !== id),
-          archivedItems: [updatedItem, ...state.archivedItems],
-        }));
+        const current = dataItems.value.find((item) => item.id === id);
+        if (current) {
+          assertDataItemStatusTransition(current.status, updatedItem.status, 'approveItem');
+        }
+        dataItems.value = dataItems.value.filter((item) => item.id !== id);
+        archivedItems.value = [updatedItem, ...archivedItems.value];
       } else {
-        // 未自动归档，仅更新状态
-        set((state) => ({
-          dataItems: state.dataItems.map((d) => (d.id === id ? updatedItem : d)),
-        }));
+        replaceDataItem(updatedItem, 'approveItem');
       }
-    } catch (err: any) {
-      set({ error: err?.message || '审核通过失败' });
+    } catch (err: unknown) {
+      error.value = getErrorMessage(err, '审核通过失败');
     }
-  },
+  }
 
-  /**
-   * 审核驳回：调用后端 PUT /annotation-items/:id/reject
-   */
-  async rejectItem(id, _reviewer, reason) {
-    set({ error: null });
+  async function rejectItem(id: string, _reviewer: string, reason: string): Promise<void> {
+    error.value = null;
     try {
       const res = await annotationApi.rejectAnnotation(id, reason);
-      const updatedItem = res.data as DataItem;
-
-      set((state) => ({
-        dataItems: state.dataItems.map((d) => (d.id === id ? updatedItem : d)),
-      }));
-    } catch (err: any) {
-      set({ error: err?.message || '审核驳回失败' });
+      replaceDataItem(res.data, 'rejectItem');
+    } catch (err: unknown) {
+      error.value = getErrorMessage(err, '审核驳回失败');
     }
-  },
+  }
 
-  /**
-   * 驳回后重新提交 — AI 预审由后端自动触发
-   * 包含乐观锁 version 检查
-   */
-  async resubmitItem(id, data, _annotator) {
-    set({ error: null, conflictInfo: null });
+  async function resubmitItem(id: string, data: Record<string, unknown>, _annotator: string): Promise<void> {
+    error.value = null;
+    conflictInfo.value = null;
     try {
-      const currentItem = get().dataItems.find((d) => d.id === id);
-      const version = currentItem?.version ?? 1;
-
+      const current = dataItems.value.find((item) => item.id === id);
+      const version = current?.version ?? 1;
       const res = await annotationApi.resubmitAnnotation(id, data, version);
-
-      const { item: updatedItem, review: reviewResult } = normalizeSubmitResponse(res.data);
-
-      set((state) => ({
-        dataItems: state.dataItems.map((d) => (d.id === id ? updatedItem : d)),
-        aiReviewResults: reviewResult
-          ? [
-              ...state.aiReviewResults.filter((r) => r.dataItemId !== id),
-              reviewResult,
-            ]
-          : state.aiReviewResults,
-      }));
-    } catch (err: any) {
-      // 处理乐观锁冲突 (HTTP 409)
-      if (err?.code === 409 && err?.data) {
-        set({
-          conflictInfo: err.data as ConflictData,
-          error: null,
-        });
+      const { item, review } = normalizeSubmitResponse(res.data);
+      replaceDataItem(item, 'resubmitItem');
+      upsertAIReview(id, review);
+    } catch (err: unknown) {
+      if (isApiErrorWithData<ConflictData>(err, 409)) {
+        conflictInfo.value = err.data;
+        error.value = null;
         throw err;
       }
-      set({ error: err?.message || '重新提交失败' });
+      error.value = getErrorMessage(err, '重新提交失败');
       throw err;
     }
-  },
+  }
 
-  /**
-   * 认领（悲观锁）标注项
-   * 返回 true 表示认领成功，false 表示被他人锁定
-   */
-  async claimItem(id) {
-    set({ lockInfo: null, error: null });
+  async function claimItem(id: string): Promise<boolean> {
+    lockInfo.value = null;
+    error.value = null;
     try {
       const res = await annotationApi.claimItem(id);
-      const updatedItem = res.data as DataItem;
-
-      set((state) => ({
-        dataItems: state.dataItems.map((d) => (d.id === id ? updatedItem : d)),
-      }));
+      replaceDataItem(res.data, 'claimItem');
       return true;
-    } catch (err: any) {
-      // 处理悲观锁冲突 (HTTP 423)
-      if (err?.code === 423 && err?.data) {
-        set({
-          lockInfo: err.data as { lockedBy: string; lockedAt: string },
-          error: err?.message || '该数据正在被他人编辑',
-        });
+    } catch (err: unknown) {
+      if (isApiErrorWithData<LockData>(err, 423)) {
+        lockInfo.value = err.data;
+        error.value = err.message || '该数据正在被他人编辑';
         return false;
       }
-      set({ error: err?.message || '认领失败' });
+      error.value = getErrorMessage(err, '认领失败');
       return false;
     }
-  },
+  }
 
-  /**
-   * 释放（解锁）标注项
-   */
-  async releaseItem(id) {
-    set({ error: null });
+  async function releaseItem(id: string): Promise<void> {
+    error.value = null;
     try {
       const res = await annotationApi.releaseItem(id);
-      const updatedItem = res.data as DataItem;
-
-      set((state) => ({
-        dataItems: state.dataItems.map((d) => (d.id === id ? updatedItem : d)),
-      }));
-    } catch (err: any) {
-      // 静默失败，释放锁不应阻塞用户操作
-      console.warn('释放锁失败:', err?.message);
+      replaceDataItem(res.data, 'releaseItem');
+    } catch (err: unknown) {
+      console.warn('释放锁失败', getErrorMessage(err, 'unknown error'));
     }
-  },
+  }
 
-  /**
-   * 释放当前用户持有的所有锁（登出时调用）
-   */
-  async releaseAllMyItems() {
+  async function releaseAllMyItems(): Promise<void> {
     try {
       await annotationApi.releaseAllItems();
-    } catch (err: any) {
-      console.warn('释放所有锁失败:', err?.message);
+    } catch (err: unknown) {
+      console.warn('释放所有锁失败:', getErrorMessage(err, 'unknown error'));
     }
-  },
+  }
 
-  /**
-   * 用服务端最新数据覆盖本地（冲突后"放弃自己的修改"）
-   */
-  resolveConflictWithServer(id) {
-    const conflict = get().conflictInfo;
+  function resolveConflictWithServer(id: string): void {
+    const conflict = conflictInfo.value;
     if (conflict?.serverItem) {
-      set((state) => ({
-        dataItems: state.dataItems.map((d) => (d.id === id ? conflict.serverItem : d)),
-        conflictInfo: null,
-        error: null,
-      }));
-    } else {
-      // 如果没有 serverItem，重新拉取
-      set({ conflictInfo: null, error: null });
-      get().fetchDataItems();
+      replaceDataItem(conflict.serverItem, `resolveConflictWithServer:${id}`);
+      conflictInfo.value = null;
+      error.value = null;
+      return;
     }
-  },
 
-  /**
-   * 清除冲突/锁定提示
-   */
-  clearConflict() {
-    set({ conflictInfo: null, lockInfo: null, error: null });
-  },
+    conflictInfo.value = null;
+    error.value = null;
+    void fetchDataItems();
+  }
 
-  /** 按 dataItemId 查询 AI 预审结果 */
-  getAIReviewByDataItemId(dataItemId) {
-    return get().aiReviewResults.find((r) => r.dataItemId === dataItemId);
-  },
+  function clearConflict(): void {
+    conflictInfo.value = null;
+    lockInfo.value = null;
+    error.value = null;
+  }
 
-  /**
-   * 获取归档的标注项列表
-   */
-  async fetchArchivedItems(taskId) {
-    set({ loading: true, error: null });
+  function getAIReviewByDataItemId(dataItemId: string): AIReviewResult | undefined {
+    return aiReviewResults.value.find((item) => item.dataItemId === dataItemId);
+  }
+
+  async function fetchArchivedItems(taskId?: string): Promise<void> {
+    loading.value = true;
+    error.value = null;
     try {
       const params: Record<string, unknown> = { archived: 'true' };
       if (taskId) params.taskId = taskId;
       const res = await annotationApi.getAnnotationItemList(params);
-      set({ archivedItems: res.data.items, loading: false });
-    } catch (err: any) {
-      set({ error: err?.message || '获取归档数据失败', loading: false });
+      archivedItems.value = res.data.items;
+    } catch (err: unknown) {
+      error.value = getErrorMessage(err, '获取归档数据失败');
+    } finally {
+      loading.value = false;
     }
-  },
+  }
 
-  /**
-   * 归档标注项（仅审核通过的项可归档）
-   */
-  async archiveItem(id) {
-    set({ error: null });
+  async function archiveItem(id: string): Promise<void> {
+    error.value = null;
     try {
       const res = await annotationApi.archiveAnnotationItem(id);
-      const updatedItem = res.data as DataItem;
-
-      set((state) => ({
-        // 从 dataItems 中移除
-        dataItems: state.dataItems.filter((d) => d.id !== id),
-        // 添加到 archivedItems
-        archivedItems: [updatedItem, ...state.archivedItems],
-      }));
-    } catch (err: any) {
-      set({ error: err?.message || '归档失败' });
+      dataItems.value = dataItems.value.filter((item) => item.id !== id);
+      archivedItems.value = [res.data, ...archivedItems.value];
+    } catch (err: unknown) {
+      error.value = getErrorMessage(err, '归档失败');
     }
-  },
+  }
 
-  /**
-   * 取消归档标注项（仅 Owner 可操作）
-   */
-  async unarchiveItem(id) {
-    set({ error: null });
+  async function unarchiveItem(id: string): Promise<void> {
+    error.value = null;
     try {
       const res = await annotationApi.unarchiveAnnotationItem(id);
-      const updatedItem = res.data as DataItem;
-
-      set((state) => ({
-        // 从 archivedItems 中移除
-        archivedItems: state.archivedItems.filter((d) => d.id !== id),
-        // 添加回 dataItems
-        dataItems: [updatedItem, ...state.dataItems],
-      }));
-    } catch (err: any) {
-      set({ error: err?.message || '取消归档失败' });
+      archivedItems.value = archivedItems.value.filter((item) => item.id !== id);
+      dataItems.value = [res.data, ...dataItems.value];
+    } catch (err: unknown) {
+      error.value = getErrorMessage(err, '取消归档失败');
     }
-  },
+  }
 
-  /**
-   * 获取可领取的未分配标注项列表
-   */
-  async fetchAvailableItems(taskId) {
-    set({ availableLoading: true, error: null });
+  async function fetchAvailableItems(taskId?: string): Promise<void> {
+    availableLoading.value = true;
+    error.value = null;
     try {
       const params: { taskId?: string } = {};
       if (taskId) params.taskId = taskId;
       const res = await annotationApi.getAvailableItems(params);
-      set({ availableItems: res.data.items, availableLoading: false });
-    } catch (err: any) {
-      set({ error: err?.message || '获取可领取列表失败', availableLoading: false });
+      availableItems.value = res.data.items;
+    } catch (err: unknown) {
+      error.value = getErrorMessage(err, '获取可领取列表失败');
+    } finally {
+      availableLoading.value = false;
     }
-  },
+  }
 
-  /**
-   * 手动领取（认领分配）一个未分配的标注项
-   * 成功后将其加入 dataItems，并从 availableItems 中移除
-   * 返回 true 表示领取成功
-   */
-  async claimAssignment(id) {
-    set({ error: null });
+  async function claimAssignment(id: string): Promise<boolean> {
+    error.value = null;
     try {
       const res = await annotationApi.claimAssignment(id);
-      const claimedItem = res.data as DataItem;
-
-      set((state) => ({
-        // 加入已分配列表
-        dataItems: [claimedItem, ...state.dataItems],
-        // 从可领取列表移除
-        availableItems: state.availableItems.filter((a) => a.id !== id),
-      }));
+      dataItems.value = [res.data, ...dataItems.value];
+      availableItems.value = availableItems.value.filter((item) => item.id !== id);
       return true;
-    } catch (err: any) {
-      set({ error: err?.message || '领取失败' });
+    } catch (err: unknown) {
+      error.value = getErrorMessage(err, '领取失败');
       return false;
     }
-  },
+  }
 
-  async batchClaimAssignments(ids) {
-    set({ error: null });
+  async function batchClaimAssignments(ids: string[]): Promise<BatchClaimResult | null> {
+    error.value = null;
     try {
       const res = await annotationApi.batchClaimAssignments(ids);
-      const result = res.data as BatchClaimResult;
+      const result = res.data;
       const claimedIds = new Set(result.claimed.map((item) => item.id));
 
-      set((state) => ({
-        dataItems: [
-          ...result.claimed,
-          ...state.dataItems.filter((item) => !claimedIds.has(item.id)),
-        ],
-        availableItems: state.availableItems.filter((item) => !claimedIds.has(item.id)),
-      }));
+      dataItems.value = [
+        ...result.claimed,
+        ...dataItems.value.filter((item) => !claimedIds.has(item.id)),
+      ];
+      availableItems.value = availableItems.value.filter((item) => !claimedIds.has(item.id));
 
       return result;
-    } catch (err: any) {
-      set({ error: err?.message || '批量领取失败' });
+    } catch (err: unknown) {
+      error.value = getErrorMessage(err, '批量领取失败');
       return null;
     }
-  },
-}));
+  }
+
+  return {
+    dataItems,
+    archivedItems,
+    aiReviewResults,
+    currentIndex,
+    loading,
+    error,
+    conflictInfo,
+    lockInfo,
+    availableItems,
+    availableLoading,
+    currentItem,
+    hasConflict,
+    itemTotal,
+    fetchDataItems,
+    fetchAIReviews,
+    setCurrentIndex,
+    saveDraft,
+    submitAnnotation,
+    approveItem,
+    rejectItem,
+    resubmitItem,
+    claimItem,
+    releaseItem,
+    releaseAllMyItems,
+    resolveConflictWithServer,
+    clearConflict,
+    getAIReviewByDataItemId,
+    fetchArchivedItems,
+    archiveItem,
+    unarchiveItem,
+    fetchAvailableItems,
+    claimAssignment,
+    batchClaimAssignments,
+  };
+});
+
+export type AnnotationStore = ReturnType<typeof useAnnotationPiniaStore>;
+
+interface UseAnnotationStore {
+  (): AnnotationStore;
+  <T>(selector: (store: AnnotationStore) => T): T;
+  getState: () => AnnotationStore;
+  setState: (patch: Partial<AnnotationState>) => void;
+}
+
+export const useAnnotationStore = ((selector?: (store: AnnotationStore) => unknown) => {
+  const store = useAnnotationPiniaStore();
+  return selector ? selector(store) : store;
+}) as UseAnnotationStore;
+
+useAnnotationStore.getState = () => useAnnotationPiniaStore();
+useAnnotationStore.setState = (patch) => {
+  useAnnotationPiniaStore().$patch(patch as never);
+};

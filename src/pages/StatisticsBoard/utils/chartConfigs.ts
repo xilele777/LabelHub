@@ -1,7 +1,6 @@
 /**
  * ECharts option builders for the statistics board.
  */
-import type { EChartsOption } from 'echarts';
 import type {
   AIRiskDistributionItem,
   AnnotatorRankItem,
@@ -9,8 +8,10 @@ import type {
   StatusDistributionItem,
 } from './computeStatistics';
 
-const textColor = '#1f2937';
-const mutedTextColor = '#6b7280';
+type ChartOption = Record<string, unknown>;
+
+const textColor = '#202124';
+const mutedTextColor = '#5f6368';
 const splitLineColor = '#eef2f7';
 const axisLineColor = '#d9e2ec';
 
@@ -27,10 +28,10 @@ const tooltipStyle = {
   textStyle: {
     color: textColor,
   },
-  extraCssText: 'box-shadow: 0 8px 24px rgba(15, 23, 42, 0.10); border-radius: 8px;',
+  extraCssText: 'box-shadow: 0 2px 6px rgba(60, 64, 67, 0.14), 0 6px 18px rgba(60, 64, 67, 0.08); border-radius: 8px;',
 } as const;
 
-function buildEmptyOption(title: string, description = '暂无数据'): EChartsOption {
+function buildEmptyOption(title: string, description = '暂无数据'): ChartOption {
   return {
     title: {
       text: title,
@@ -52,7 +53,7 @@ function buildEmptyOption(title: string, description = '暂无数据'): EChartsO
   };
 }
 
-export function buildAnnotatorRankOption(data: AnnotatorRankItem[]): EChartsOption {
+export function buildAnnotatorRankOption(data: AnnotatorRankItem[]): ChartOption {
   const sorted = [...data].slice(0, 10).reverse();
 
   if (sorted.length === 0) {
@@ -73,7 +74,7 @@ export function buildAnnotatorRankOption(data: AnnotatorRankItem[]): EChartsOpti
     tooltip: {
       ...tooltipStyle,
       trigger: 'axis',
-      axisPointer: { type: 'shadow', shadowStyle: { color: 'rgba(22, 119, 255, 0.08)' } },
+      axisPointer: { type: 'shadow', shadowStyle: { color: 'rgba(26, 115, 232, 0.08)' } },
       formatter: (params: unknown) => {
         const item = Array.isArray(params) ? params[0] : params;
         if (!item || typeof item !== 'object') {
@@ -124,7 +125,7 @@ export function buildAnnotatorRankOption(data: AnnotatorRankItem[]): EChartsOpti
             x2: 1,
             y2: 0,
             colorStops: [
-              { offset: 0, color: '#1677ff' },
+              { offset: 0, color: '#1a73e8' },
               { offset: 1, color: '#13c2c2' },
             ],
           },
@@ -141,7 +142,7 @@ export function buildAnnotatorRankOption(data: AnnotatorRankItem[]): EChartsOpti
   };
 }
 
-export function buildStatusDistributionOption(data: StatusDistributionItem[]): EChartsOption {
+export function buildStatusDistributionOption(data: StatusDistributionItem[]): ChartOption {
   if (data.length === 0) {
     return buildEmptyOption('数据状态分布');
   }
@@ -205,7 +206,7 @@ export function buildStatusDistributionOption(data: StatusDistributionItem[]): E
   };
 }
 
-export function buildAIRiskDistributionOption(data: AIRiskDistributionItem[]): EChartsOption {
+export function buildAIRiskDistributionOption(data: AIRiskDistributionItem[]): ChartOption {
   if (data.length === 0) {
     return buildEmptyOption('AI 预审风险分布', '暂无 AI 预审结果');
   }
@@ -265,7 +266,7 @@ export function buildAIRiskDistributionOption(data: AIRiskDistributionItem[]): E
   };
 }
 
-export function buildReviewPassRateGaugeOption(rate: ReviewPassRate): EChartsOption {
+export function buildReviewPassRateGaugeOption(rate: ReviewPassRate): ChartOption {
   const percent = Math.round(rate.rate * 100);
   const hasData = rate.total > 0;
 
@@ -297,7 +298,7 @@ export function buildReviewPassRateGaugeOption(rate: ReviewPassRate): EChartsOpt
           show: hasData,
           roundCap: true,
           width: 16,
-          itemStyle: { color: '#1677ff' },
+          itemStyle: { color: '#1a73e8' },
         },
         axisLine: {
           roundCap: true,

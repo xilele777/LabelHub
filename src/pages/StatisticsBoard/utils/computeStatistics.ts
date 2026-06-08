@@ -14,7 +14,7 @@ import type { AIReviewResult } from '../../../types/aiReview';
 const STATUS_CHART_COLOR_MAP: Record<DataItemStatus, string> = {
   [DataItemStatus.PENDING]: '#8c8c8c',
   [DataItemStatus.DRAFT]: '#faad14',
-  [DataItemStatus.SUBMITTED]: '#1677ff',
+  [DataItemStatus.SUBMITTED]: '#1a73e8',
   [DataItemStatus.AI_REVIEWING]: '#597ef7',
   [DataItemStatus.AI_REVIEWED]: '#13c2c2',
   [DataItemStatus.PENDING_REVIEW]: '#fa8c16',
@@ -174,7 +174,7 @@ export function computeStatistics(
       title: '任务总数',
       value: totalTasks,
       icon: 'UnorderedListOutlined',
-      color: '#1677ff',
+      color: '#1a73e8',
       description: `${inProgressTasks} 个进行中`,
     },
     {

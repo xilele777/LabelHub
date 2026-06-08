@@ -1,50 +1,63 @@
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
+import { fileURLToPath, URL } from 'node:url';
+import { defineConfig, loadEnv } from 'vite';
+import vue from '@vitejs/plugin-vue';
 
-const projectRoot = fileURLToPath(new URL('.', import.meta.url));
-const srcRoot = path.resolve(projectRoot, 'src');
+function toNumber(value: string | undefined, fallback: number) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
 
-export default defineConfig({
-  root: projectRoot,
-  base: './',
-  plugins: [react()],
-  resolve: {
-    alias: { '@': srcRoot },
-  },
-  build: {
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          react: ['react', 'react-dom', 'react-router-dom'],
-          antd: ['antd', '@ant-design/icons'],
-          dnd: ['@dnd-kit/core', '@dnd-kit/sortable', '@dnd-kit/utilities'],
-          charts: ['echarts', 'echarts-for-react'],
-          socket: ['socket.io-client'],
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), '');
+  const apiProxyTarget = env.VITE_API_PROXY_TARGET || 'http://localhost:3001';
+
+  return {
+    base: env.VITE_APP_BASE || '/',
+    plugins: [vue()],
+    resolve: {
+      alias: {
+        '@': fileURLToPath(new URL('./src', import.meta.url)),
+      },
+    },
+    server: {
+      host: env.VITE_DEV_HOST || '127.0.0.1',
+      port: toNumber(env.VITE_DEV_PORT, 3000),
+      strictPort: false,
+      proxy: {
+        '/api': {
+          target: apiProxyTarget,
+          changeOrigin: true,
+        },
+        '/socket.io': {
+          target: apiProxyTarget,
+          changeOrigin: true,
+          ws: true,
         },
       },
     },
-  },
-  server: {
-    host: '127.0.0.1',
-    port: 3000,
-    strictPort: true,
-    proxy: {
-      '/api': {
-        target: 'http://localhost:3001',
-        changeOrigin: true,
-      },
-      '/socket.io': {
-        target: 'http://localhost:3001',
-        changeOrigin: true,
-        ws: true,
+    preview: {
+      host: env.VITE_PREVIEW_HOST || '127.0.0.1',
+      port: toNumber(env.VITE_PREVIEW_PORT, 4173),
+      strictPort: false,
+    },
+    build: {
+      target: 'es2020',
+      sourcemap: mode !== 'production',
+      chunkSizeWarningLimit: 1200,
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            vue: ['vue', 'vue-router', 'pinia'],
+            antd: ['ant-design-vue'],
+            icons: ['@ant-design/icons-vue'],
+            request: ['axios'],
+            realtime: ['socket.io-client'],
+          },
+        },
       },
     },
-  },
-  preview: {
-    host: '127.0.0.1',
-    port: 4173,
-    strictPort: true,
-  },
+    define: {
+      __APP_VERSION__: JSON.stringify(process.env.npm_package_version),
+    },
+  };
 });

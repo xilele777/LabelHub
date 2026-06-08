@@ -1,72 +1,67 @@
-import { create } from 'zustand';
+import { computed, ref } from 'vue';
+import { defineStore } from 'pinia';
 import {
-  type TemplateField,
   FieldType,
+  TaskType,
+  type CheckboxField,
   type FieldOption,
   type InputField,
-  type TextareaField,
   type RadioField,
-  type CheckboxField,
-  type SelectField,
   type RatingField,
+  type SelectField,
   type SwitchField,
+  type TemplateField,
+  type TextareaField,
   type TitleField,
-  type TaskType,
 } from '../../types';
 import * as templateApi from '../../api/template';
 import { clearSchemaCache } from '../../utils/templateSchemaHelper';
 
-// ========== State ==========
+export { FieldType, TaskType };
+export type {
+  CheckboxField,
+  FieldOption,
+  InputField,
+  RadioField,
+  RatingField,
+  SelectField,
+  SwitchField,
+  TemplateField,
+  TextareaField,
+  TitleField,
+};
 
-interface TemplateBuilderState {
-  /** 画布中的字段列表 */
-  fields: TemplateField[];
-  /** 当前选中的字段 ID */
-  selectedFieldId: string | null;
-  /** 当前正在编辑的模板 ID（编辑模式有值，新建模式为 null） */
-  templateId: string | null;
-  /** 模式：create 新建 / edit 编辑已有模板 */
-  mode: 'create' | 'edit';
-  /** 模板元信息（name, description, type 等） */
-  templateMeta: {
-    name: string;
-    description: string;
-    type: TaskType;
-  };
-  /** 是否正在加载/保存 */
-  loading: boolean;
-  /** 保存状态提示 */
-  saving: boolean;
+export type TemplateBuilderMode = 'create' | 'edit';
 
-  addField: (type: FieldType) => void;
-  removeField: (id: string) => void;
-  selectField: (id: string | null) => void;
-  updateField: (id: string, updates: Partial<TemplateField>) => void;
-  moveField: (fromIndex: number, toIndex: number) => void;
-  /** 从外部加载字段（导入或编辑已有模板） */
-  loadFields: (fields: TemplateField[]) => void;
-  /** 根据 ID 从服务端加载模板数据（编辑模式） */
-  loadTemplate: (id: string) => Promise<void>;
-  /** 初始化新建模式 */
-  initCreateMode: () => void;
-  /** 保存当前画布字段到服务端（新建用 POST，编辑用 PUT） */
-  saveTemplate: (creator?: string) => Promise<string>;
-  /** 设置模板元信息 */
-  setTemplateMeta: (meta: Partial<{ name: string; description: string; type: TaskType }>) => void;
-  /** 重置 store（离开搭建页面时调用） */
-  reset: () => void;
+export interface TemplateMeta {
+  name: string;
+  description: string;
+  type: TaskType;
 }
 
-// ========== Helpers ==========
+export interface TemplateBuilderState {
+  fields: TemplateField[];
+  selectedFieldId: string | null;
+  templateId: string | null;
+  mode: TemplateBuilderMode;
+  templateMeta: TemplateMeta;
+  loading: boolean;
+  saving: boolean;
+}
 
 let fieldSeq = 0;
-function nextId(): string {
-  return 'field_' + Date.now().toString(36) + '_' + (++fieldSeq);
-}
 let optSeq = 0;
-function nextOptId(): string {
-  return 'opt_' + Date.now().toString(36) + '_' + (++optSeq);
+
+function nextId(): string {
+  fieldSeq += 1;
+  return `field_${Date.now().toString(36)}_${fieldSeq}`;
 }
+
+function nextOptId(): string {
+  optSeq += 1;
+  return `opt_${Date.now().toString(36)}_${optSeq}`;
+}
+
 function makeOption(label: string, value: string): FieldOption {
   return { id: nextOptId(), label, value };
 }
@@ -75,9 +70,16 @@ function defaultFieldKey(type: FieldType): string {
   return `${type}_${fieldSeq}`;
 }
 
-function createDefaultField(type: FieldType): TemplateField {
+export function createDefaultField(type: FieldType): TemplateField {
   const id = nextId();
-  const base = { id, fieldKey: defaultFieldKey(type), label: '', required: false, placeholder: '', description: '' };
+  const base = {
+    id,
+    fieldKey: defaultFieldKey(type),
+    label: '',
+    required: false,
+    placeholder: '',
+    description: '',
+  };
 
   switch (type) {
     case FieldType.INPUT:
@@ -85,172 +87,239 @@ function createDefaultField(type: FieldType): TemplateField {
     case FieldType.TEXTAREA:
       return { ...base, type, label: '多行文本', placeholder: '请输入', autoSize: true } satisfies TextareaField;
     case FieldType.RADIO:
-      return { ...base, type, label: '单选', options: [makeOption('选项1', 'opt1'), makeOption('选项2', 'opt2')], direction: 'vertical' } satisfies RadioField;
+      return {
+        ...base,
+        type,
+        label: '单选',
+        options: [makeOption('选项1', 'opt1'), makeOption('选项2', 'opt2')],
+        direction: 'vertical',
+      } satisfies RadioField;
     case FieldType.CHECKBOX:
-      return { ...base, type, label: '多选', options: [makeOption('选项1', 'opt1'), makeOption('选项2', 'opt2')], direction: 'horizontal' } satisfies CheckboxField;
+      return {
+        ...base,
+        type,
+        label: '多选',
+        options: [makeOption('选项1', 'opt1'), makeOption('选项2', 'opt2')],
+        direction: 'horizontal',
+      } satisfies CheckboxField;
     case FieldType.SELECT:
-      return { ...base, type, label: '下拉选择', placeholder: '请选择', options: [makeOption('选项1', 'opt1'), makeOption('选项2', 'opt2')], searchable: false } satisfies SelectField;
+      return {
+        ...base,
+        type,
+        label: '下拉选择',
+        placeholder: '请选择',
+        options: [makeOption('选项1', 'opt1'), makeOption('选项2', 'opt2')],
+        searchable: false,
+      } satisfies SelectField;
     case FieldType.RATING:
       return { ...base, type, label: '评分', maxScore: 5, allowHalf: false } satisfies RatingField;
     case FieldType.SWITCH:
-      return { ...base, type, label: '开关', defaultValue: false, checkedChildren: '是', unCheckedChildren: '否' } satisfies SwitchField;
+      return {
+        ...base,
+        type,
+        label: '开关',
+        defaultValue: false,
+        checkedChildren: '是',
+        unCheckedChildren: '否',
+      } satisfies SwitchField;
     case FieldType.TITLE:
-      return { ...base, type, fieldKey: '', label: '说明标题', content: '', description: '说明文字', level: 4 } satisfies TitleField;
+      return {
+        ...base,
+        type,
+        fieldKey: '',
+        label: '说明标题',
+        content: '',
+        description: '说明文字',
+        level: 4,
+      } satisfies TitleField;
     default: {
-      const _exhaustive: never = type;
-      return _exhaustive;
+      const exhaustive: never = type;
+      return exhaustive;
     }
   }
 }
 
-const DEFAULT_META: { name: string; description: string; type: TaskType } = {
+const DEFAULT_META: TemplateMeta = {
   name: '新建模板',
   description: '',
-  type: 'image_classification' as TaskType,
+  type: TaskType.IMAGE_CLASSIFICATION,
 };
 
-// ========== Store ==========
+const useTemplateBuilderPiniaStore = defineStore('templateBuilder', () => {
+  const fields = ref<TemplateField[]>([]);
+  const selectedFieldId = ref<string | null>(null);
+  const templateId = ref<string | null>(null);
+  const mode = ref<TemplateBuilderMode>('create');
+  const templateMeta = ref<TemplateMeta>({ ...DEFAULT_META });
+  const loading = ref(false);
+  const saving = ref(false);
 
-export const useTemplateBuilderStore = create<TemplateBuilderState>()((set, get) => ({
-  fields: [],
-  selectedFieldId: null,
-  templateId: null,
-  mode: 'create',
-  templateMeta: { ...DEFAULT_META },
-  loading: false,
-  saving: false,
+  const selectedField = computed(() =>
+    selectedFieldId.value ? fields.value.find((field) => field.id === selectedFieldId.value) ?? null : null,
+  );
+  const fieldCount = computed(() => fields.value.length);
+  const isEditMode = computed(() => mode.value === 'edit');
 
-  addField(type) {
+  function addField(type: FieldType): void {
     const field = createDefaultField(type);
-    set((state) => ({
-      fields: [...state.fields, field],
-      selectedFieldId: field.id,
-    }));
-  },
+    fields.value = [...fields.value, field];
+    selectedFieldId.value = field.id;
+  }
 
-  removeField(id) {
-    set((state) => ({
-      fields: state.fields.filter((f) => f.id !== id),
-      selectedFieldId: state.selectedFieldId === id ? null : state.selectedFieldId,
-    }));
-  },
+  function removeField(id: string): void {
+    fields.value = fields.value.filter((field) => field.id !== id);
+    if (selectedFieldId.value === id) {
+      selectedFieldId.value = null;
+    }
+  }
 
-  selectField(id) {
-    set({ selectedFieldId: id });
-  },
+  function selectField(id: string | null): void {
+    selectedFieldId.value = id;
+  }
 
-  updateField(id, updates) {
-    set((state) => ({
-      fields: state.fields.map((f) =>
-        f.id === id ? ({ ...f, ...updates } as TemplateField) : f,
-      ),
-    }));
-  },
+  function updateField(id: string, updates: Partial<TemplateField>): void {
+    fields.value = fields.value.map((field) =>
+      field.id === id ? ({ ...field, ...updates } as TemplateField) : field,
+    );
+  }
 
-  moveField(fromIndex, toIndex) {
-    set((state) => {
-      const next = [...state.fields];
-      const removed = next.splice(fromIndex, 1);
-      next.splice(toIndex, 0, removed[0]!);
-      return { fields: next };
-    });
-  },
+  function moveField(fromIndex: number, toIndex: number): void {
+    const nextFields = [...fields.value];
+    const [removed] = nextFields.splice(fromIndex, 1);
+    if (!removed) return;
+    nextFields.splice(toIndex, 0, removed);
+    fields.value = nextFields;
+  }
 
-  loadFields(fields) {
-    set({ fields, selectedFieldId: null });
-  },
+  function loadFields(nextFields: TemplateField[]): void {
+    fields.value = nextFields;
+    selectedFieldId.value = null;
+  }
 
-  async loadTemplate(id) {
-    set({ loading: true, templateId: id, mode: 'edit' });
+  async function loadTemplate(id: string): Promise<void> {
+    loading.value = true;
+    templateId.value = id;
+    mode.value = 'edit';
+
     try {
       const res = await templateApi.getTemplate(id);
-      const data = res.data as any; // TemplateItem with fields
-      set({
-        templateMeta: {
-          name: data.name || '',
-          description: data.description || '',
-          type: data.type || 'image_classification',
-        },
-        fields: data.fields || [],
-        selectedFieldId: null,
-        loading: false,
-      });
-    } catch (err: any) {
-      console.error('[TemplateBuilder] Failed to load template:', err?.message);
-      set({ loading: false });
+      const data = res.data;
+      templateMeta.value = {
+        name: data.name || '',
+        description: data.description || '',
+        type: data.type || TaskType.IMAGE_CLASSIFICATION,
+      };
+      fields.value = data.fields || [];
+      selectedFieldId.value = null;
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : '加载模板失败';
+      console.error('[TemplateBuilder] Failed to load template:', message);
+    } finally {
+      loading.value = false;
     }
-  },
+  }
 
-  initCreateMode() {
-    set({
-      templateId: null,
-      mode: 'create',
-      templateMeta: { ...DEFAULT_META },
-      fields: [],
-      selectedFieldId: null,
-    });
-  },
+  function initCreateMode(): void {
+    templateId.value = null;
+    mode.value = 'create';
+    templateMeta.value = { ...DEFAULT_META };
+    fields.value = [];
+    selectedFieldId.value = null;
+  }
 
-  async saveTemplate(creator?: string) {
-    const { templateId, fields, templateMeta, mode } = get();
-    set({ saving: true });
+  async function saveTemplate(creator?: string): Promise<string> {
+    saving.value = true;
+
     try {
-      if (mode === 'create' || !templateId) {
-        // 新建模式：POST 创建模板
+      if (mode.value === 'create' || !templateId.value) {
         const payload = {
-          name: templateMeta.name || '新建模板',
-          description: templateMeta.description || '',
-          type: templateMeta.type,
-          fieldCount: fields.length,
-          fields,
+          name: templateMeta.value.name || '新建模板',
+          description: templateMeta.value.description || '',
+          type: templateMeta.value.type,
+          fieldCount: fields.value.length,
+          fields: fields.value,
           creator: creator || 'unknown',
         };
+
         const res = await templateApi.createTemplate(payload);
-        const created = res.data;
-        // 创建成功后切换为编辑模式，后续保存走 PUT
-        set({
-          templateId: created.id,
-          mode: 'edit',
-          saving: false,
-        });
+        templateId.value = res.data.id;
+        mode.value = 'edit';
         clearSchemaCache();
-        return created.id;
-      } else {
-        // 编辑模式：PUT 更新模板
-        const updates = {
-          name: templateMeta.name,
-          description: templateMeta.description,
-          type: templateMeta.type,
-          fieldCount: fields.length,
-          fields,
-        };
-        await templateApi.updateTemplate(templateId, updates);
-        clearSchemaCache();
-        set({ saving: false });
-        return templateId;
+        return res.data.id;
       }
-    } catch (err: any) {
-      console.error('[TemplateBuilder] Failed to save template:', err?.message);
-      set({ saving: false });
+
+      await templateApi.updateTemplate(templateId.value, {
+        name: templateMeta.value.name,
+        description: templateMeta.value.description,
+        type: templateMeta.value.type,
+        fieldCount: fields.value.length,
+        fields: fields.value,
+      });
+      clearSchemaCache();
+      return templateId.value;
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : '保存模板失败';
+      console.error('[TemplateBuilder] Failed to save template:', message);
       throw err;
+    } finally {
+      saving.value = false;
     }
-  },
+  }
 
-  setTemplateMeta(meta) {
-    set((state) => ({
-      templateMeta: { ...state.templateMeta, ...meta },
-    }));
-  },
+  function setTemplateMeta(meta: Partial<TemplateMeta>): void {
+    templateMeta.value = { ...templateMeta.value, ...meta };
+  }
 
-  reset() {
-    set({
-      fields: [],
-      selectedFieldId: null,
-      templateId: null,
-      mode: 'create',
-      templateMeta: { ...DEFAULT_META },
-      loading: false,
-      saving: false,
-    });
-  },
-}));
+  function reset(): void {
+    fields.value = [];
+    selectedFieldId.value = null;
+    templateId.value = null;
+    mode.value = 'create';
+    templateMeta.value = { ...DEFAULT_META };
+    loading.value = false;
+    saving.value = false;
+  }
+
+  return {
+    fields,
+    selectedFieldId,
+    templateId,
+    mode,
+    templateMeta,
+    loading,
+    saving,
+    selectedField,
+    fieldCount,
+    isEditMode,
+    addField,
+    removeField,
+    selectField,
+    updateField,
+    moveField,
+    loadFields,
+    loadTemplate,
+    initCreateMode,
+    saveTemplate,
+    setTemplateMeta,
+    reset,
+  };
+});
+
+export type TemplateBuilderStore = ReturnType<typeof useTemplateBuilderPiniaStore>;
+
+interface UseTemplateBuilderStore {
+  (): TemplateBuilderStore;
+  <T>(selector: (store: TemplateBuilderStore) => T): T;
+  getState: () => TemplateBuilderStore;
+  setState: (patch: Partial<TemplateBuilderState>) => void;
+}
+
+export const useTemplateBuilderStore = ((selector?: (store: TemplateBuilderStore) => unknown) => {
+  const store = useTemplateBuilderPiniaStore();
+  return selector ? selector(store) : store;
+}) as UseTemplateBuilderStore;
+
+useTemplateBuilderStore.getState = () => useTemplateBuilderPiniaStore();
+useTemplateBuilderStore.setState = (patch) => {
+  useTemplateBuilderPiniaStore().$patch(patch as never);
+};

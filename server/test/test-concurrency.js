@@ -1,70 +1,119 @@
 /**
- * Quick test for concurrency control: optimistic lock + pessimistic lock
+ * Tests optimistic versioning and pessimistic item locks.
  */
+const assert = require('assert');
 const db = require('../store/db');
 
-console.log('=== Testing Concurrency Control ===\n');
+function withTempData(fn) {
+  const originalTasks = db.getAll('tasks');
+  const originalItems = db.getAll('annotation-items');
 
-// Test 1: Version field exists on seed data
-console.log('--- Test 1: Version field ---');
-const item = db.getById('annotation-items', 'd001');
-console.log('d001 version:', item?.version, '(expected: 1)');
-console.log('d001 lockedBy:', item?.lockedBy, '(expected: null)');
-console.log('PASS:', item?.version === 1 && item?.lockedBy === null);
+  try {
+    db.seed('annotation-items', []);
+    db.seed('tasks', [
+      {
+        id: 'concurrency_task',
+        name: 'Concurrency task',
+        description: 'test',
+        type: 'image_classification',
+        owner: 'owner',
+        templateId: null,
+        templateName: null,
+        instructions: '',
+        status: 'in_progress',
+        archived: false,
+      },
+    ]);
+    db.seed('annotation-items', [
+      {
+        id: 'concurrency_item_1',
+        taskId: 'concurrency_task',
+        rawData: { text: 'one' },
+        status: 'pending',
+        annotationData: null,
+        annotator: null,
+        submittedAt: null,
+        reviewer: null,
+        reviewedAt: null,
+        rejectReason: null,
+        auditHistory: [],
+        version: 1,
+        lockedBy: null,
+        lockedAt: null,
+        archived: false,
+        archivedAt: null,
+      },
+      {
+        id: 'concurrency_item_2',
+        taskId: 'concurrency_task',
+        rawData: { text: 'two' },
+        status: 'pending',
+        annotationData: null,
+        annotator: null,
+        submittedAt: null,
+        reviewer: null,
+        reviewedAt: null,
+        rejectReason: null,
+        auditHistory: [],
+        version: 1,
+        lockedBy: null,
+        lockedAt: null,
+        archived: false,
+        archivedAt: null,
+      },
+    ]);
 
-// Test 2: Update increments version
-console.log('\n--- Test 2: Update increments version ---');
-const updated = db.updateById('annotation-items', 'd001', { status: 'draft' });
-console.log('After update, version:', updated?.version, '(expected: 2)');
-console.log('PASS:', updated?.version === 2);
+    fn();
+  } finally {
+    db.seed('annotation-items', []);
+    db.seed('tasks', originalTasks);
+    db.seed('annotation-items', originalItems);
+  }
+}
 
-// Reset
-db.updateById('annotation-items', 'd001', { status: 'pending' });
-// Version is now 3
+withTempData(() => {
+  const item = db.getById('annotation-items', 'concurrency_item_1');
+  assert.strictEqual(item.version, 1, 'seeded item should start at version 1');
+  assert.strictEqual(item.lockedBy, null, 'seeded item should start unlocked');
 
-// Test 3: Claim (pessimistic lock)
-console.log('\n--- Test 3: Claim (pessimistic lock) ---');
-const claimResult = db.claimItem('d001', 'annotator1', 1800000);
-console.log('Claim result:', claimResult.claimed ? 'CLAIMED' : 'FAILED');
-console.log('lockedBy:', claimResult.item?.lockedBy, '(expected: annotator1)');
-console.log('Version after claim:', claimResult.item?.version, '(should NOT have incremented)');
-// Version should stay at 3 (claim doesn't increment version)
-console.log('PASS:', claimResult.claimed && claimResult.item?.lockedBy === 'annotator1');
+  const updated = db.updateById('annotation-items', 'concurrency_item_1', { status: 'draft' });
+  assert.strictEqual(updated.version, 2, 'content update should increment version');
 
-// Test 4: Second claim attempt should fail
-console.log('\n--- Test 4: Second claim fails ---');
-const claimResult2 = db.claimItem('d001', 'annotator2', 1800000);
-console.log('Second claim result:', claimResult2.claimed ? 'CLAIMED (WRONG!)' : 'BLOCKED');
-console.log('lockedBy:', claimResult2.lockedBy, '(expected: annotator1)');
-console.log('PASS:', !claimResult2.claimed && claimResult2.lockedBy === 'annotator1');
+  const conflict = db.updateWithVersionCheck('concurrency_item_1', { status: 'pending' }, 1);
+  assert.strictEqual(conflict.conflict, true, 'stale version should conflict');
+  assert.strictEqual(conflict.currentVersion, 2, 'conflict should report current version');
 
-// Test 5: Release
-console.log('\n--- Test 5: Release ---');
-const releaseResult = db.releaseItem('d001', 'annotator1');
-console.log('Release result:', releaseResult.released ? 'RELEASED' : 'FAILED');
-console.log('lockedBy after release:', releaseResult.item?.lockedBy, '(expected: null)');
-console.log('PASS:', releaseResult.released && releaseResult.item?.lockedBy === null);
+  const ok = db.updateWithVersionCheck('concurrency_item_1', { status: 'pending' }, 2);
+  assert.strictEqual(ok.conflict, false, 'matching version should update');
+  assert.strictEqual(ok.updatedItem.version, 3, 'version-checked update should increment version');
 
-// Test 6: Release all by user
-console.log('\n--- Test 6: Release all by user ---');
-db.claimItem('d001', 'annotator1', 1800000);
-db.claimItem('d002', 'annotator1', 1800000);
-const count = db.releaseAllByUser('annotator1');
-console.log('Released count:', count, '(expected: 2)');
-const d001 = db.getById('annotation-items', 'd001');
-const d002 = db.getById('annotation-items', 'd002');
-console.log('d001 lockedBy:', d001?.lockedBy, '(expected: null)');
-console.log('d002 lockedBy:', d002?.lockedBy, '(expected: null)');
-console.log('PASS:', count === 2 && d001?.lockedBy === null && d002?.lockedBy === null);
+  const claim = db.claimItem('concurrency_item_1', 'annotator1', 30 * 60 * 1000);
+  assert.strictEqual(claim.claimed, true, 'first claim should succeed');
+  assert.strictEqual(claim.item.lockedBy, 'annotator1', 'claim should record lock owner');
+  assert.strictEqual(claim.item.version, 3, 'claim should not increment content version');
 
-// Test 7: Expired lock cleanup
-console.log('\n--- Test 7: Expired lock cleanup ---');
-db.claimItem('d001', 'annotator1', 1); // 1ms timeout = already expired
-setTimeout(() => {
-  db.cleanExpiredLocks(1);
-  const afterCleanup = db.getById('annotation-items', 'd001');
-  console.log('After cleanup, lockedBy:', afterCleanup?.lockedBy, '(expected: null)');
-  console.log('PASS:', afterCleanup?.lockedBy === null);
+  const blockedClaim = db.claimItem('concurrency_item_1', 'annotator2', 30 * 60 * 1000);
+  assert.strictEqual(blockedClaim.claimed, false, 'second claim by another user should be blocked');
+  assert.strictEqual(blockedClaim.lockedBy, 'annotator1', 'blocked claim should report owner');
 
-  console.log('\n=== All Concurrency Tests Complete ===');
-}, 10);
+  const release = db.releaseItem('concurrency_item_1', 'annotator1');
+  assert.strictEqual(release.released, true, 'lock owner should release lock');
+  assert.strictEqual(release.item.lockedBy, null, 'release should clear lock owner');
+
+  db.claimItem('concurrency_item_1', 'annotator1', 30 * 60 * 1000);
+  db.claimItem('concurrency_item_2', 'annotator1', 30 * 60 * 1000);
+  assert.strictEqual(db.releaseAllByUser('annotator1'), 2, 'releaseAllByUser should clear all user locks');
+  assert.strictEqual(db.getById('annotation-items', 'concurrency_item_1').lockedBy, null);
+  assert.strictEqual(db.getById('annotation-items', 'concurrency_item_2').lockedBy, null);
+
+  db.claimItem('concurrency_item_1', 'annotator1', 1);
+  const expiredLock = db.updateById('annotation-items', 'concurrency_item_1', {
+    lockedAt: new Date(Date.now() - 1000).toISOString(),
+    _skipVersionIncrement: true,
+  });
+  assert.strictEqual(expiredLock.lockedBy, 'annotator1');
+  assert.strictEqual(db.cleanExpiredLocks(1), 1, 'expired lock cleanup should clear stale lock');
+  assert.strictEqual(db.getById('annotation-items', 'concurrency_item_1').lockedBy, null);
+});
+
+console.log('concurrency control tests passed');

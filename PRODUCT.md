@@ -15,12 +15,12 @@
 
 | 层级 | 技术 |
 |------|------|
-| 前端框架 | React 19 + TypeScript |
-| UI 组件 | Ant Design 5 |
-| 状态管理 | Zustand |
-| 路由 | React Router v7 |
+| 前端框架 | Vue 3 + TypeScript |
+| UI 组件 | Ant Design Vue |
+| 状态管理 | Pinia |
+| 路由 | Vue Router 4 |
 | 图表 | ECharts |
-| 拖拽 | dnd-kit |
+| 拖拽 | vue-draggable-plus |
 | 构建工具 | Vite |
 | 后端框架 | Express |
 | 数据库 | SQLite（better-sqlite3） |

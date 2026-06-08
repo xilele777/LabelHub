@@ -1,12 +1,23 @@
-/**
- * 角色相关辅助工具
- * 原数据来自 mock/users.ts，后续可从 API 配置获取
- */
 import { Role } from '../types';
 
-/** 根据角色获取默认登录后跳转路径 */
-export function getDefaultPath(role: Role): string {
-  switch (role) {
+export function normalizeRole(role: Role | string | null | undefined): Role | null {
+  if (!role) return null;
+  if (role === Role.ADMIN || role === Role.OWNER) return Role.ADMIN;
+  if (role === Role.ANNOTATOR) return Role.ANNOTATOR;
+  if (role === Role.REVIEWER) return Role.REVIEWER;
+  return null;
+}
+
+export function hasRouteRole(currentRole: Role | string | null | undefined, requiredRoles: Role[]): boolean {
+  const normalizedCurrent = normalizeRole(currentRole);
+  if (!normalizedCurrent) return false;
+
+  return requiredRoles.some((role) => normalizeRole(role) === normalizedCurrent);
+}
+
+export function getDefaultPath(role: Role | string): string {
+  switch (normalizeRole(role)) {
+    case Role.ADMIN:
     case Role.OWNER:
       return '/dashboard';
     case Role.ANNOTATOR:

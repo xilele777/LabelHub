@@ -4,7 +4,11 @@
  */
 const http = require('http');
 
-const BASE = { hostname: 'localhost', port: 3001 };
+const baseUrl = new URL(process.env.BASE_URL || 'http://localhost:3001');
+const BASE = {
+  hostname: baseUrl.hostname,
+  port: baseUrl.port || (baseUrl.protocol === 'https:' ? 443 : 80),
+};
 let ownerToken = '';
 let annotatorToken = '';
 let reviewerToken = '';
@@ -382,7 +386,9 @@ async function runTests() {
   }
 
   // 尝试对 pending 项直接审核
-  const anyPending = Array.isArray(annoList) ? annoList.find((i) => i.status === 'pending') : null;
+  const currentItemsForState = await GET('/api/annotation-items?taskId=t001', ownerToken);
+  const currentItemList = currentItemsForState.data.data?.items || currentItemsForState.data.data;
+  const anyPending = Array.isArray(currentItemList) ? currentItemList.find((i) => i.status === 'pending') : null;
   if (anyPending) {
     const approvePending = await PUT(`/api/annotation-items/${anyPending.id}/approve`, {
       reason: 'Should fail',

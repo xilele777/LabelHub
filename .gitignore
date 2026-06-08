@@ -7,9 +7,10 @@ dist/
 build/
 
 # SQLite database
-server/data/labelhub.db
-server/data/labelhub.db-wal
-server/data/labelhub.db-shm
+server/data/*.db
+server/data/*.db-wal
+server/data/*.db-shm
+server/data/.write-probe.txt
 
 # IDE
 .vscode/

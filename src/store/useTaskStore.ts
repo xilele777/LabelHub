@@ -1,138 +1,174 @@
-﻿import { create } from 'zustand';
+import { computed, ref } from 'vue';
+import { defineStore } from 'pinia';
 import { TaskStatus, type TaskItem } from '../types';
 import * as taskApi from '../api/task';
 
-interface TaskState {
+export { TaskStatus };
+export type { TaskItem };
+
+export interface TaskState {
   tasks: TaskItem[];
   archivedTasks: TaskItem[];
   loading: boolean;
   error: string | null;
-  fetchTasks: () => Promise<void>;
-  fetchArchivedTasks: () => Promise<void>;
-  addTask: (task: Partial<TaskItem>) => Promise<void>;
-  updateTask: (id: string, updates: Partial<TaskItem>) => Promise<void>;
-  deleteTask: (id: string) => Promise<void>;
-  publishTask: (id: string) => Promise<void>;
-  endTask: (id: string) => Promise<void>;
-  archiveTask: (id: string) => Promise<void>;
-  unarchiveTask: (id: string) => Promise<void>;
 }
 
-export const useTaskStore = create<TaskState>()((set, _get) => ({
-  tasks: [],
-  archivedTasks: [],
-  loading: false,
-  error: null,
+const useTaskPiniaStore = defineStore('task', () => {
+  const tasks = ref<TaskItem[]>([]);
+  const archivedTasks = ref<TaskItem[]>([]);
+  const loading = ref(false);
+  const error = ref<string | null>(null);
 
-  async fetchTasks() {
-    set({ loading: true, error: null });
+  const activeTasks = computed(() => tasks.value.filter((task) => !task.archived));
+  const runningTasks = computed(() => tasks.value.filter((task) => task.status === TaskStatus.IN_PROGRESS));
+  const taskTotal = computed(() => tasks.value.length);
+
+  function replaceTask(nextTask: TaskItem) {
+    tasks.value = tasks.value.map((task) => (task.id === nextTask.id ? nextTask : task));
+  }
+
+  async function fetchTasks(): Promise<void> {
+    loading.value = true;
+    error.value = null;
     try {
       const res = await taskApi.getTaskList();
-      set({ tasks: res.data.items, loading: false });
-    } catch (err: any) {
-      set({ error: err?.message || '获取任务列表失败', loading: false });
+      tasks.value = res.data.items;
+    } catch (err: unknown) {
+      error.value = err instanceof Error ? err.message : '获取任务列表失败';
+    } finally {
+      loading.value = false;
     }
-  },
+  }
 
-  async fetchArchivedTasks() {
-    set({ loading: true, error: null });
+  async function fetchArchivedTasks(): Promise<void> {
+    loading.value = true;
+    error.value = null;
     try {
       const res = await taskApi.getArchivedTaskList();
-      set({ archivedTasks: res.data.items, loading: false });
-    } catch (err: any) {
-      set({ error: err?.message || '获取归档任务列表失败', loading: false });
+      archivedTasks.value = res.data.items;
+    } catch (err: unknown) {
+      error.value = err instanceof Error ? err.message : '获取归档任务列表失败';
+    } finally {
+      loading.value = false;
     }
-  },
+  }
 
-  async addTask(task) {
-    set({ loading: true, error: null });
+  async function addTask(task: Partial<TaskItem>): Promise<void> {
+    loading.value = true;
+    error.value = null;
     try {
       const res = await taskApi.createTask(task);
-      set((state) => ({ tasks: [res.data, ...state.tasks], loading: false }));
-    } catch (err: any) {
-      const msg = err?.message || '创建任务失败';
-      set({ error: msg, loading: false });
-      throw err; // Re-throw so caller knows it failed
+      tasks.value = [res.data, ...tasks.value];
+    } catch (err: unknown) {
+      error.value = err instanceof Error ? err.message : '创建任务失败';
+      throw err;
+    } finally {
+      loading.value = false;
     }
-  },
+  }
 
-  async updateTask(id, updates) {
-    set({ error: null });
+  async function updateTask(id: string, updates: Partial<TaskItem>): Promise<void> {
+    error.value = null;
     try {
       const res = await taskApi.updateTask(id, updates);
-      set((state) => ({
-        tasks: state.tasks.map((t) => (t.id === id ? res.data : t)),
-      }));
-    } catch (err: any) {
-      const msg = err?.message || '更新任务失败';
-      set({ error: msg });
-      throw err; // Re-throw so caller knows it failed
+      replaceTask(res.data);
+    } catch (err: unknown) {
+      error.value = err instanceof Error ? err.message : '更新任务失败';
+      throw err;
     }
-  },
+  }
 
-  async deleteTask(id) {
-    set({ error: null });
+  async function deleteTask(id: string): Promise<void> {
+    error.value = null;
     try {
       await taskApi.deleteTask(id);
-      set((state) => ({ tasks: state.tasks.filter((t) => t.id !== id) }));
-    } catch (err: any) {
-      set({ error: err?.message || '删除任务失败' });
+      tasks.value = tasks.value.filter((task) => task.id !== id);
+    } catch (err: unknown) {
+      error.value = err instanceof Error ? err.message : '删除任务失败';
     }
-  },
+  }
 
-  async publishTask(id) {
-    set({ error: null });
+  async function publishTask(id: string): Promise<void> {
+    error.value = null;
     try {
       const res = await taskApi.updateTask(id, { status: TaskStatus.IN_PROGRESS });
-      set((state) => ({
-        tasks: state.tasks.map((t) => (t.id === id ? res.data : t)),
-      }));
-    } catch (err: any) {
-      set({ error: err?.message || '发布任务失败' });
+      replaceTask(res.data);
+    } catch (err: unknown) {
+      error.value = err instanceof Error ? err.message : '发布任务失败';
       throw err;
     }
-  },
+  }
 
-  async endTask(id) {
-    set({ error: null });
+  async function endTask(id: string): Promise<void> {
+    error.value = null;
     try {
       const res = await taskApi.updateTask(id, { status: TaskStatus.ENDED });
-      set((state) => ({
-        tasks: state.tasks.map((t) => (t.id === id ? res.data : t)),
-      }));
-    } catch (err: any) {
-      set({ error: err?.message || '结束任务失败' });
+      replaceTask(res.data);
+    } catch (err: unknown) {
+      error.value = err instanceof Error ? err.message : '结束任务失败';
       throw err;
     }
-  },
+  }
 
-  async archiveTask(id) {
-    set({ error: null });
+  async function archiveTask(id: string): Promise<void> {
+    error.value = null;
     try {
       const res = await taskApi.archiveTask(id);
-      // Remove from tasks list, add to archivedTasks
-      set((state) => ({
-        tasks: state.tasks.filter((t) => t.id !== id),
-        archivedTasks: [res.data, ...state.archivedTasks],
-      }));
-    } catch (err: any) {
-      set({ error: err?.message || '归档任务失败' });
+      tasks.value = tasks.value.filter((task) => task.id !== id);
+      archivedTasks.value = [res.data, ...archivedTasks.value];
+    } catch (err: unknown) {
+      error.value = err instanceof Error ? err.message : '归档任务失败';
       throw err;
     }
-  },
+  }
 
-  async unarchiveTask(id) {
-    set({ error: null });
+  async function unarchiveTask(id: string): Promise<void> {
+    error.value = null;
     try {
       const res = await taskApi.unarchiveTask(id);
-      // Remove from archivedTasks, add back to tasks
-      set((state) => ({
-        archivedTasks: state.archivedTasks.filter((t) => t.id !== id),
-        tasks: [res.data, ...state.tasks],
-      }));
-    } catch (err: any) {
-      set({ error: err?.message || '取消归档失败' });
+      archivedTasks.value = archivedTasks.value.filter((task) => task.id !== id);
+      tasks.value = [res.data, ...tasks.value];
+    } catch (err: unknown) {
+      error.value = err instanceof Error ? err.message : '取消归档失败';
       throw err;
     }
-  },
-}));
+  }
+
+  return {
+    tasks,
+    archivedTasks,
+    loading,
+    error,
+    activeTasks,
+    runningTasks,
+    taskTotal,
+    fetchTasks,
+    fetchArchivedTasks,
+    addTask,
+    updateTask,
+    deleteTask,
+    publishTask,
+    endTask,
+    archiveTask,
+    unarchiveTask,
+  };
+});
+
+export type TaskStore = ReturnType<typeof useTaskPiniaStore>;
+
+interface UseTaskStore {
+  (): TaskStore;
+  <T>(selector: (store: TaskStore) => T): T;
+  getState: () => TaskStore;
+  setState: (patch: Partial<TaskState>) => void;
+}
+
+export const useTaskStore = ((selector?: (store: TaskStore) => unknown) => {
+  const store = useTaskPiniaStore();
+  return selector ? selector(store) : store;
+}) as UseTaskStore;
+
+useTaskStore.getState = () => useTaskPiniaStore();
+useTaskStore.setState = (patch) => {
+  useTaskPiniaStore().$patch(patch as never);
+};

@@ -9,7 +9,7 @@
     "seed": "node seed.js",
     "test:reset": "node test/reset-db.js",
     "test:e2e": "node test/e2e-test.js",
-    "test": "node test/reset-db.js && node test/e2e-test.js"
+    "test": "node test/run-e2e-isolated.js"
   },
   "dependencies": {
     "better-sqlite3": "^12.10.0",

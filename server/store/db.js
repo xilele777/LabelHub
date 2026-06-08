@@ -7,7 +7,14 @@ if (!fs.existsSync(DATA_DIR)) {
   fs.mkdirSync(DATA_DIR, { recursive: true });
 }
 
-const DB_PATH = path.join(DATA_DIR, 'labelhub.db');
+const configuredDbPath = process.env.LABELHUB_DB_PATH;
+const DB_PATH = configuredDbPath
+  ? path.resolve(configuredDbPath)
+  : path.join(DATA_DIR, 'labelhub.db');
+const dbDir = path.dirname(DB_PATH);
+if (!fs.existsSync(dbDir)) {
+  fs.mkdirSync(dbDir, { recursive: true });
+}
 
 // ─── Initialize SQLite database ────────────────────────────
 const db = new Database(DB_PATH);
@@ -42,21 +49,24 @@ const migrations = [
   { table: 'annotation_items', column: 'archivedAt', type: "TEXT" },
 ];
 
-for (const mig of migrations) {
-  try {
-    // Check if column already exists
-    const cols = db.pragma(`table_info(${mig.table})`);
-    const exists = cols.some(c => c.name === mig.column);
-    if (!exists) {
-      db.exec(`ALTER TABLE ${mig.table} ADD COLUMN ${mig.column} ${mig.type}`);
-      console.log(`[DB Migration] Added column ${mig.column} to ${mig.table}`);
+function runMigrations() {
+  for (const mig of migrations) {
+    try {
+      // Check if column already exists
+      const cols = db.pragma(`table_info(${mig.table})`);
+      const exists = cols.some(c => c.name === mig.column);
+      if (!exists) {
+        db.exec(`ALTER TABLE ${mig.table} ADD COLUMN ${mig.column} ${mig.type}`);
+        console.log(`[DB Migration] Added column ${mig.column} to ${mig.table}`);
+      }
+    } catch (err) {
+      console.warn(`[DB Migration] Skipped ${mig.table}.${mig.column}: ${err.message}`);
     }
-  } catch (err) {
-    console.warn(`[DB Migration] Skipped ${mig.table}.${mig.column}: ${err.message}`);
-  }
 }
 
 // ─── Create tables ─────────────────────────────────────────
+}
+
 db.exec(`
   CREATE TABLE IF NOT EXISTS users (
     id          TEXT PRIMARY KEY,
@@ -123,6 +133,8 @@ db.exec(`
     version         INTEGER NOT NULL DEFAULT 1,
     lockedBy        TEXT,
     lockedAt        TEXT,
+    archived        INTEGER NOT NULL DEFAULT 0,
+    archivedAt      TEXT,
     FOREIGN KEY (taskId) REFERENCES tasks(id) ON DELETE CASCADE
   );
 
@@ -176,6 +188,8 @@ db.exec(`
 `);
 
 // ─── Prepared statements (for performance) ─────────────────
+runMigrations();
+
 const stmts = {
   users: {
     getAll:    db.prepare('SELECT * FROM users'),

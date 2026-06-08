@@ -25,8 +25,12 @@ const DATA_ITEM_STATUS = {
  * Key = current status, Value = array of allowed next statuses.
  */
 const DATA_ITEM_TRANSITIONS = {
-  // 允许从 pending 直接提交（无需先保存草稿）
-  [DATA_ITEM_STATUS.PENDING]: [DATA_ITEM_STATUS.DRAFT, DATA_ITEM_STATUS.SUBMITTED],
+  // 允许从 pending 直接提交（无需先保存草稿）；服务端提交后会原子完成 AI 预审并进入待人工审核
+  [DATA_ITEM_STATUS.PENDING]: [
+    DATA_ITEM_STATUS.DRAFT,
+    DATA_ITEM_STATUS.SUBMITTED,
+    DATA_ITEM_STATUS.PENDING_REVIEW,
+  ],
   [DATA_ITEM_STATUS.DRAFT]: [DATA_ITEM_STATUS.SUBMITTED, DATA_ITEM_STATUS.PENDING],
   // 服务端原子 AI 预审：submitted 可直接到 pending_review（跳过中间态）；
   // 仍保留 → ai_reviewing 供手动重跑 AI 预审使用
