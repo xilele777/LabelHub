@@ -96,7 +96,9 @@ export function connectNotificationWS(token: string): void {
   socket.on('connect', () => {
     console.log('[WS] 连接成功:', socket?.id);
     reconnectAttempts = 0;
-    useNotificationStore.getState().setConnected(true);
+    const store = useNotificationStore.getState();
+    store.setConnected(true);
+    void store.fetchNotifications();
   });
 
   socket.on('disconnect', (reason) => {

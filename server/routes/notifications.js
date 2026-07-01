@@ -85,10 +85,6 @@ router.get('/', (req, res) => {
   const username = req.currentUser.username;
   const visibleTypes = getVisibleTypes(req);
 
-  if (visibleTypes) {
-    db.clearNotificationsForUserExceptTypes(username, visibleTypes);
-  }
-
   const items = visibleTypes
     ? db.getNotificationsForUserByTypes(username, visibleTypes, { limit })
     : db.getNotificationsForUser(username, { limit });

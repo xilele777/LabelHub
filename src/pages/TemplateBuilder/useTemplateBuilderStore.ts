@@ -1,4 +1,4 @@
-import { computed, ref } from 'vue';
+import { computed, ref, shallowReactive, shallowRef } from 'vue';
 import { defineStore } from 'pinia';
 import {
   FieldType,
@@ -146,7 +146,8 @@ const DEFAULT_META: TemplateMeta = {
 };
 
 const useTemplateBuilderPiniaStore = defineStore('templateBuilder', () => {
-  const fields = ref<TemplateField[]>([]);
+  const fieldIds = shallowRef<string[]>([]);
+  const fieldsById = shallowReactive<Record<string, TemplateField>>({});
   const selectedFieldId = ref<string | null>(null);
   const templateId = ref<string | null>(null);
   const mode = ref<TemplateBuilderMode>('create');
@@ -154,20 +155,45 @@ const useTemplateBuilderPiniaStore = defineStore('templateBuilder', () => {
   const loading = ref(false);
   const saving = ref(false);
 
-  const selectedField = computed(() =>
-    selectedFieldId.value ? fields.value.find((field) => field.id === selectedFieldId.value) ?? null : null,
+  const fields = computed<TemplateField[]>(() =>
+    fieldIds.value.map((id) => fieldsById[id]).filter((field): field is TemplateField => Boolean(field)),
   );
-  const fieldCount = computed(() => fields.value.length);
+  const selectedField = computed(() => (selectedFieldId.value ? fieldsById[selectedFieldId.value] ?? null : null));
+  const fieldCount = computed(() => fieldIds.value.length);
   const isEditMode = computed(() => mode.value === 'edit');
+
+  function replaceFields(nextFields: TemplateField[], clearSelection = true): void {
+    Object.keys(fieldsById).forEach((id) => {
+      delete fieldsById[id];
+    });
+
+    const nextIds: string[] = [];
+    nextFields.forEach((field) => {
+      fieldsById[field.id] = field;
+      nextIds.push(field.id);
+    });
+    fieldIds.value = nextIds;
+
+    if (clearSelection || (selectedFieldId.value && !fieldsById[selectedFieldId.value])) {
+      selectedFieldId.value = null;
+    }
+  }
+
+  function hasSameFieldSet(nextFields: TemplateField[]): boolean {
+    if (nextFields.length !== fieldIds.value.length) return false;
+    return nextFields.every((field) => Boolean(fieldsById[field.id]));
+  }
 
   function addField(type: FieldType): void {
     const field = createDefaultField(type);
-    fields.value = [...fields.value, field];
+    fieldsById[field.id] = field;
+    fieldIds.value = [...fieldIds.value, field.id];
     selectedFieldId.value = field.id;
   }
 
   function removeField(id: string): void {
-    fields.value = fields.value.filter((field) => field.id !== id);
+    delete fieldsById[id];
+    fieldIds.value = fieldIds.value.filter((fieldId) => fieldId !== id);
     if (selectedFieldId.value === id) {
       selectedFieldId.value = null;
     }
@@ -178,22 +204,29 @@ const useTemplateBuilderPiniaStore = defineStore('templateBuilder', () => {
   }
 
   function updateField(id: string, updates: Partial<TemplateField>): void {
-    fields.value = fields.value.map((field) =>
-      field.id === id ? ({ ...field, ...updates } as TemplateField) : field,
-    );
+    const current = fieldsById[id];
+    if (!current) return;
+    fieldsById[id] = { ...current, ...updates } as TemplateField;
   }
 
   function moveField(fromIndex: number, toIndex: number): void {
-    const nextFields = [...fields.value];
-    const [removed] = nextFields.splice(fromIndex, 1);
+    const nextIds = [...fieldIds.value];
+    const [removed] = nextIds.splice(fromIndex, 1);
     if (!removed) return;
-    nextFields.splice(toIndex, 0, removed);
-    fields.value = nextFields;
+    nextIds.splice(toIndex, 0, removed);
+    fieldIds.value = nextIds;
   }
 
   function loadFields(nextFields: TemplateField[]): void {
-    fields.value = nextFields;
-    selectedFieldId.value = null;
+    if (hasSameFieldSet(nextFields)) {
+      fieldIds.value = nextFields.map((field) => field.id);
+      if (selectedFieldId.value && !fieldsById[selectedFieldId.value]) {
+        selectedFieldId.value = null;
+      }
+      return;
+    }
+
+    replaceFields(nextFields);
   }
 
   async function loadTemplate(id: string): Promise<void> {
@@ -209,8 +242,7 @@ const useTemplateBuilderPiniaStore = defineStore('templateBuilder', () => {
         description: data.description || '',
         type: data.type || TaskType.IMAGE_CLASSIFICATION,
       };
-      fields.value = data.fields || [];
-      selectedFieldId.value = null;
+      replaceFields(data.fields || []);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : '加载模板失败';
       console.error('[TemplateBuilder] Failed to load template:', message);
@@ -223,8 +255,7 @@ const useTemplateBuilderPiniaStore = defineStore('templateBuilder', () => {
     templateId.value = null;
     mode.value = 'create';
     templateMeta.value = { ...DEFAULT_META };
-    fields.value = [];
-    selectedFieldId.value = null;
+    replaceFields([]);
   }
 
   async function saveTemplate(creator?: string): Promise<string> {
@@ -236,7 +267,7 @@ const useTemplateBuilderPiniaStore = defineStore('templateBuilder', () => {
           name: templateMeta.value.name || '新建模板',
           description: templateMeta.value.description || '',
           type: templateMeta.value.type,
-          fieldCount: fields.value.length,
+          fieldCount: fieldCount.value,
           fields: fields.value,
           creator: creator || 'unknown',
         };
@@ -252,7 +283,7 @@ const useTemplateBuilderPiniaStore = defineStore('templateBuilder', () => {
         name: templateMeta.value.name,
         description: templateMeta.value.description,
         type: templateMeta.value.type,
-        fieldCount: fields.value.length,
+        fieldCount: fieldCount.value,
         fields: fields.value,
       });
       clearSchemaCache();
@@ -271,8 +302,7 @@ const useTemplateBuilderPiniaStore = defineStore('templateBuilder', () => {
   }
 
   function reset(): void {
-    fields.value = [];
-    selectedFieldId.value = null;
+    replaceFields([]);
     templateId.value = null;
     mode.value = 'create';
     templateMeta.value = { ...DEFAULT_META };
@@ -281,6 +311,8 @@ const useTemplateBuilderPiniaStore = defineStore('templateBuilder', () => {
   }
 
   return {
+    fieldIds,
+    fieldsById,
     fields,
     selectedFieldId,
     templateId,
@@ -321,5 +353,15 @@ export const useTemplateBuilderStore = ((selector?: (store: TemplateBuilderStore
 
 useTemplateBuilderStore.getState = () => useTemplateBuilderPiniaStore();
 useTemplateBuilderStore.setState = (patch) => {
-  useTemplateBuilderPiniaStore().$patch(patch as never);
+  const store = useTemplateBuilderPiniaStore();
+  const hasPatch = <K extends keyof TemplateBuilderState>(key: K) =>
+    Object.prototype.hasOwnProperty.call(patch, key);
+
+  if (hasPatch('fields') && patch.fields) store.loadFields(patch.fields);
+  if (hasPatch('selectedFieldId')) store.selectedFieldId = patch.selectedFieldId ?? null;
+  if (hasPatch('templateId')) store.templateId = patch.templateId ?? null;
+  if (hasPatch('mode') && patch.mode) store.mode = patch.mode;
+  if (hasPatch('templateMeta') && patch.templateMeta) store.templateMeta = patch.templateMeta;
+  if (hasPatch('loading') && typeof patch.loading === 'boolean') store.loading = patch.loading;
+  if (hasPatch('saving') && typeof patch.saving === 'boolean') store.saving = patch.saving;
 };

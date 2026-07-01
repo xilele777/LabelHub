@@ -313,6 +313,21 @@ function getReviewerUsernamesForItem(item) {
   return db.find('users', { role: 'reviewer' }).map((user) => user.username);
 }
 
+function getUsernamesByRole(role) {
+  return db.find('users', { role }).map((user) => user.username);
+}
+
+function getUsernamesForTask(taskId) {
+  return db
+    .getAll('users')
+    .filter((user) => canAccessTaskRoom(user, taskId))
+    .map((user) => user.username);
+}
+
+function getAllUsernames() {
+  return db.getAll('users').map((user) => user.username);
+}
+
 /**
  * 向一组用户名发送通知，并在通知体中写入 targetUsers，便于前端/日志明确归属。
  */
@@ -403,7 +418,7 @@ function notifyUser(userId, notification) {
  * @param {Object} notification - 通知内容
  */
 function notifyUserByUsername(username, notification) {
-  notifyUsersByUsername([username], notification);
+  return notifyUsersByUsername([username], notification);
 }
 
 /**
@@ -412,8 +427,7 @@ function notifyUserByUsername(username, notification) {
  * @param {Object} notification - 通知内容
  */
 function notifyRole(role, notification) {
-  if (!io) return;
-  io.to(`role:${role}`).emit('notification', notification);
+  return notifyUsersByUsername(getUsernamesByRole(role), notification);
 }
 
 /**
@@ -422,8 +436,7 @@ function notifyRole(role, notification) {
  * @param {Object} notification - 通知内容
  */
 function notifyTask(taskId, notification) {
-  if (!io) return;
-  io.to(`task:${taskId}`).emit('notification', notification);
+  return notifyUsersByUsername(getUsernamesForTask(taskId), notification);
 }
 
 /**
@@ -431,8 +444,7 @@ function notifyTask(taskId, notification) {
  * @param {Object} notification - 通知内容
  */
 function broadcastNotification(notification) {
-  if (!io) return;
-  io.emit('notification', notification);
+  return notifyUsersByUsername(getAllUsernames(), notification);
 }
 
 // ===== 业务通知方法 =====

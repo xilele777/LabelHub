@@ -317,7 +317,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+import { computed, markRaw, onBeforeUnmount, onMounted, ref, shallowRef } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { message } from 'ant-design-vue';
 import {
@@ -403,15 +403,15 @@ const taskTypeOptions = [
   { value: TaskType.TEXT_NER, label: '文本 NER' },
 ];
 
-const paletteItems = ref<PaletteItem[]>([
-  { type: FieldType.INPUT, label: '单行输入', icon: FormOutlined },
-  { type: FieldType.TEXTAREA, label: '多行文本', icon: AlignLeftOutlined },
-  { type: FieldType.RADIO, label: '单选', icon: AudioOutlined },
-  { type: FieldType.CHECKBOX, label: '多选', icon: CheckSquareOutlined },
-  { type: FieldType.SELECT, label: '下拉选择', icon: DownCircleOutlined },
-  { type: FieldType.RATING, label: '评分', icon: StarOutlined },
-  { type: FieldType.SWITCH, label: '开关', icon: SwapOutlined },
-  { type: FieldType.TITLE, label: '说明块', icon: ReadOutlined },
+const paletteItems = shallowRef<PaletteItem[]>([
+  { type: FieldType.INPUT, label: '单行输入', icon: markRaw(FormOutlined) },
+  { type: FieldType.TEXTAREA, label: '多行文本', icon: markRaw(AlignLeftOutlined) },
+  { type: FieldType.RADIO, label: '单选', icon: markRaw(AudioOutlined) },
+  { type: FieldType.CHECKBOX, label: '多选', icon: markRaw(CheckSquareOutlined) },
+  { type: FieldType.SELECT, label: '下拉选择', icon: markRaw(DownCircleOutlined) },
+  { type: FieldType.RATING, label: '评分', icon: markRaw(StarOutlined) },
+  { type: FieldType.SWITCH, label: '开关', icon: markRaw(SwapOutlined) },
+  { type: FieldType.TITLE, label: '说明块', icon: markRaw(ReadOutlined) },
 ]);
 
 const fieldTypeLabelMap: Record<FieldType, string> = {
@@ -520,17 +520,7 @@ const selectedOptions = computed(() => {
 const isCreateMode = computed(() => store.mode === 'create');
 const requiredCount = computed(() => store.fields.filter((field) => field.type !== FieldType.TITLE && field.required).length);
 const titleCount = computed(() => store.fields.filter((field) => field.type === FieldType.TITLE).length);
-const schema = computed(() => ({
-  version: 1,
-  meta: {
-    name: store.templateMeta.name,
-    description: store.templateMeta.description,
-    type: store.templateMeta.type,
-  },
-  fieldCount: store.fields.length,
-  fields: store.fields.map(cleanFieldForSchema),
-}));
-const schemaJson = computed(() => JSON.stringify(schema.value, null, 2));
+const schemaJson = computed(() => (rightTab.value === 'schema' ? formatSchemaJson() : ''));
 
 onMounted(() => {
   const templateId = typeof route.query.id === 'string' ? route.query.id : null;
@@ -656,6 +646,23 @@ function cleanFieldForSchema(field: TemplateField): Record<string, unknown> {
   return result;
 }
 
+function formatSchemaJson(): string {
+  return JSON.stringify(
+    {
+      version: 1,
+      meta: {
+        name: store.templateMeta.name,
+        description: store.templateMeta.description,
+        type: store.templateMeta.type,
+      },
+      fieldCount: store.fields.length,
+      fields: store.fields.map(cleanFieldForSchema),
+    },
+    null,
+    2,
+  );
+}
+
 function validateBeforeSave(): string | null {
   if (!store.templateMeta.name.trim()) {
     return '请填写模板名称';
@@ -713,8 +720,9 @@ function copySchema() {
     return;
   }
 
+  const json = formatSchemaJson();
   navigator.clipboard
-    .writeText(schemaJson.value)
+    .writeText(json)
     .then(() => message.success('Schema JSON 已复制到剪贴板'))
     .catch(() => message.error('复制失败，请手动复制'));
 }
@@ -725,7 +733,7 @@ function exportSchema() {
     return;
   }
 
-  const blob = new Blob([schemaJson.value], { type: 'application/json' });
+  const blob = new Blob([formatSchemaJson()], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement('a');
   anchor.href = url;
