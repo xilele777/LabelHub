@@ -70,7 +70,12 @@
       </a-card>
 
       <div class="builder-main">
-        <a-card title="物料" size="small" class="palette-card" :body-style="{ padding: '8px 12px' }">
+        <a-card
+          title="物料"
+          size="small"
+          class="palette-card"
+          :body-style="{ padding: '8px 12px' }"
+        >
           <a-typography-text type="secondary" class="palette-hint">
             拖入画布，或点击快速添加
           </a-typography-text>
@@ -98,7 +103,12 @@
           </VueDraggable>
         </a-card>
 
-        <a-card title="画布" size="small" class="canvas-card" :body-style="{ padding: '12px 16px' }">
+        <a-card
+          title="画布"
+          size="small"
+          class="canvas-card"
+          :body-style="{ padding: '12px 16px' }"
+        >
           <VueDraggable
             v-model="canvasFields"
             class="canvas-list"
@@ -124,25 +134,39 @@
               <div class="field-content">
                 <div class="field-title">
                   {{ field.label || fieldTypeLabelMap[field.type] }}
-                  <a-tag v-if="field.required && field.type !== FieldType.TITLE" color="red" class="required-tag">
+                  <a-tag
+                    v-if="field.required && field.type !== FieldType.TITLE"
+                    color="red"
+                    class="required-tag"
+                  >
                     必填
                   </a-tag>
                 </div>
-                <div v-if="field.description" class="field-description">{{ field.description }}</div>
+                <div v-if="field.description" class="field-description">
+                  {{ field.description }}
+                </div>
                 <div class="field-preview">
-                  <template v-if="field.type === FieldType.INPUT || field.type === FieldType.TEXTAREA">
+                  <template
+                    v-if="field.type === FieldType.INPUT || field.type === FieldType.TEXTAREA"
+                  >
                     {{ field.placeholder || '请输入' }}
                   </template>
                   <template v-else-if="hasOptions(field)">
-                    <a-space :direction="getDirection(field) === 'horizontal' ? 'horizontal' : 'vertical'" wrap>
-                      <a-tag v-for="option in field.options" :key="option.id">{{ option.label }}</a-tag>
+                    <a-space
+                      :direction="getDirection(field) === 'horizontal' ? 'horizontal' : 'vertical'"
+                      wrap
+                    >
+                      <a-tag v-for="option in field.options" :key="option.id">{{
+                        option.label
+                      }}</a-tag>
                     </a-space>
                   </template>
                   <template v-else-if="field.type === FieldType.RATING">
                     最高 {{ getNumberField(field, 'maxScore', 5) }} 分
                   </template>
                   <template v-else-if="field.type === FieldType.SWITCH">
-                    {{ getStringField(field, 'checkedChildren', '是') }} / {{ getStringField(field, 'unCheckedChildren', '否') }}
+                    {{ getStringField(field, 'checkedChildren', '是') }} /
+                    {{ getStringField(field, 'unCheckedChildren', '否') }}
                   </template>
                   <template v-else-if="field.type === FieldType.TITLE">
                     {{ getStringField(field, 'content', '') || '说明内容' }}
@@ -162,7 +186,7 @@
         </a-card>
 
         <a-card size="small" class="inspector-card" :body-style="{ padding: '0' }">
-          <a-tabs v-model:activeKey="rightTab" class="inspector-tabs">
+          <a-tabs v-model:active-key="rightTab" class="inspector-tabs">
             <a-tab-pane key="config" tab="属性">
               <div class="inspector-pane">
                 <template v-if="selectedField">
@@ -194,7 +218,11 @@
                       <a-divider class="compact-divider" />
                       <a-typography-text type="secondary">{{ item.label }}</a-typography-text>
                       <div class="options-editor">
-                        <div v-for="(option, index) in selectedOptions" :key="option.id" class="option-row">
+                        <div
+                          v-for="(option, index) in selectedOptions"
+                          :key="option.id"
+                          class="option-row"
+                        >
                           <a-input
                             size="small"
                             :value="option.label"
@@ -243,15 +271,20 @@
                         :min="item.min"
                         :max="item.max"
                         :placeholder="item.placeholder"
-                        @update:value="(value: number | null) => updateSelectedField(item.key, value ?? undefined)"
+                        @update:value="
+                          (value: number | null) =>
+                            updateSelectedField(item.key, value ?? undefined)
+                        "
                       />
                       <a-select
                         v-else-if="item.type === 'select'"
                         size="small"
                         class="select-input"
-                        :value="getSelectedValue(item.key) as string | number | undefined"
+                        :value="getSelectedValue(item.key)"
                         :options="item.options"
-                        @update:value="(value: string | number) => updateSelectedField(item.key, value)"
+                        @update:value="
+                          (value: string | number) => updateSelectedField(item.key, value)
+                        "
                       />
                     </template>
                   </div>
@@ -374,10 +407,7 @@ interface NumberConfigItem extends BaseConfigItem {
   max?: number;
 }
 
-type ConfigItem =
-  | BaseConfigItem
-  | SelectConfigItem
-  | NumberConfigItem;
+type ConfigItem = BaseConfigItem | SelectConfigItem | NumberConfigItem;
 
 interface PaletteItem {
   type: FieldType;
@@ -452,7 +482,10 @@ const fieldConfigMap: Record<FieldType, ConfigItem[]> = {
       key: 'direction',
       label: '排列方向',
       type: 'select',
-      options: [{ label: '垂直', value: 'vertical' }, { label: '水平', value: 'horizontal' }],
+      options: [
+        { label: '垂直', value: 'vertical' },
+        { label: '水平', value: 'horizontal' },
+      ],
     },
   ],
   [FieldType.CHECKBOX]: [
@@ -465,7 +498,10 @@ const fieldConfigMap: Record<FieldType, ConfigItem[]> = {
       key: 'direction',
       label: '排列方向',
       type: 'select',
-      options: [{ label: '垂直', value: 'vertical' }, { label: '水平', value: 'horizontal' }],
+      options: [
+        { label: '垂直', value: 'vertical' },
+        { label: '水平', value: 'horizontal' },
+      ],
     },
     { key: 'maxCheck', label: '最多可选数 (maxCheck)', type: 'number', min: 1 },
   ],
@@ -483,7 +519,14 @@ const fieldConfigMap: Record<FieldType, ConfigItem[]> = {
     { key: 'label', label: '标题 (label)', type: 'text', placeholder: '字段标题' },
     { key: 'required', label: '必填 (required)', type: 'switch' },
     { key: 'description', label: '补充说明 (description)', type: 'textarea', placeholder: '可选' },
-    { key: 'maxScore', label: '最高分 (maxScore)', type: 'number', min: 1, max: 10, placeholder: '5' },
+    {
+      key: 'maxScore',
+      label: '最高分 (maxScore)',
+      type: 'number',
+      min: 1,
+      max: 10,
+      placeholder: '5',
+    },
     { key: 'allowHalf', label: '允许半星 (allowHalf)', type: 'switch' },
   ],
   [FieldType.SWITCH]: [
@@ -492,15 +535,30 @@ const fieldConfigMap: Record<FieldType, ConfigItem[]> = {
     { key: 'required', label: '必填 (required)', type: 'switch' },
     { key: 'description', label: '补充说明 (description)', type: 'textarea', placeholder: '可选' },
     { key: 'defaultValue', label: '默认值 (defaultValue)', type: 'switch' },
-    { key: 'checkedChildren', label: '开启文字 (checkedChildren)', type: 'text', placeholder: '是' },
-    { key: 'unCheckedChildren', label: '关闭文字 (unCheckedChildren)', type: 'text', placeholder: '否' },
+    {
+      key: 'checkedChildren',
+      label: '开启文字 (checkedChildren)',
+      type: 'text',
+      placeholder: '是',
+    },
+    {
+      key: 'unCheckedChildren',
+      label: '关闭文字 (unCheckedChildren)',
+      type: 'text',
+      placeholder: '否',
+    },
   ],
   [FieldType.TITLE]: [
     { key: 'fieldKey', label: '字段标识 (fieldKey)', type: 'text', placeholder: '如 section1' },
     { key: 'label', label: '标题 (label)', type: 'text', placeholder: '说明标题' },
     { key: 'content', label: '说明正文 (content)', type: 'textarea', placeholder: '说明内容' },
     { key: 'description', label: '补充说明 (description)', type: 'textarea', placeholder: '可选' },
-    { key: 'level', label: '标题级别 (level)', type: 'select', options: [1, 2, 3, 4, 5].map((value) => ({ label: `H${value}`, value })) },
+    {
+      key: 'level',
+      label: '标题级别 (level)',
+      type: 'select',
+      options: [1, 2, 3, 4, 5].map((value) => ({ label: `H${value}`, value })),
+    },
   ],
 };
 
@@ -512,14 +570,20 @@ const canvasFields = computed<TemplateField[]>({
 });
 
 const selectedField = computed(() => store.selectedField);
-const currentConfigItems = computed(() => (selectedField.value ? fieldConfigMap[selectedField.value.type] : []));
+const currentConfigItems = computed(() =>
+  selectedField.value ? fieldConfigMap[selectedField.value.type] : [],
+);
 const selectedOptions = computed(() => {
   const field = selectedField.value;
   return field && hasOptions(field) ? field.options : [];
 });
 const isCreateMode = computed(() => store.mode === 'create');
-const requiredCount = computed(() => store.fields.filter((field) => field.type !== FieldType.TITLE && field.required).length);
-const titleCount = computed(() => store.fields.filter((field) => field.type === FieldType.TITLE).length);
+const requiredCount = computed(
+  () => store.fields.filter((field) => field.type !== FieldType.TITLE && field.required).length,
+);
+const titleCount = computed(
+  () => store.fields.filter((field) => field.type === FieldType.TITLE).length,
+);
 const schemaJson = computed(() => (rightTab.value === 'schema' ? formatSchemaJson() : ''));
 
 onMounted(() => {
@@ -577,7 +641,9 @@ function removeSelectedField() {
 }
 
 function getSelectedValue(key: string): unknown {
-  return selectedField.value ? (selectedField.value as unknown as Record<string, unknown>)[key] : undefined;
+  return selectedField.value
+    ? (selectedField.value as unknown as Record<string, unknown>)[key]
+    : undefined;
 }
 
 function updateSelectedField(key: string, value: unknown) {
@@ -601,7 +667,9 @@ function addOption() {
     label: `选项${index}`,
     value: `opt${index}`,
   };
-  store.updateField(selectedField.value.id, { options: [...selectedField.value.options, option] } as Partial<TemplateField>);
+  store.updateField(selectedField.value.id, {
+    options: [...selectedField.value.options, option],
+  } as Partial<TemplateField>);
 }
 
 function removeOption(index: number) {
@@ -638,7 +706,10 @@ function cleanFieldForSchema(field: TemplateField): Record<string, unknown> {
   Object.entries(field).forEach(([key, value]) => {
     if (value === '' || value === undefined || value === null) return;
     if (key === 'options' && Array.isArray(value)) {
-      result.options = value.map(({ label, value: optionValue }) => ({ label, value: optionValue }));
+      result.options = value.map(({ label, value: optionValue }) => ({
+        label,
+        value: optionValue,
+      }));
       return;
     }
     result[key] = value;
@@ -709,7 +780,8 @@ async function handleSave() {
     message.success(wasCreateMode ? '模板创建成功' : '模板已保存');
     await router.push('/templates');
   } catch (error) {
-    const errorMessage = error instanceof Error && error.message ? error.message : '保存失败，请重试';
+    const errorMessage =
+      error instanceof Error && error.message ? error.message : '保存失败，请重试';
     message.error(errorMessage);
   }
 }
@@ -911,7 +983,10 @@ function goBack() {
   border-radius: 6px;
   cursor: grab;
   text-align: left;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.15s ease;
 }
 
 .palette-item:hover {
@@ -955,7 +1030,10 @@ function goBack() {
   border-radius: 6px;
   cursor: pointer;
   box-shadow: none;
-  transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    transform 0.15s ease;
 }
 
 .canvas-field:hover {

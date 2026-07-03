@@ -14,6 +14,7 @@ export default tseslint.config(
       '**/*.db-wal',
       '**/*.db-shm',
       'logs/**',
+      'coverage/**',
       '*.md',
     ],
   },
@@ -37,6 +38,11 @@ export default tseslint.config(
     rules: {
       'vue/multi-word-component-names': 'off',
       'vue/no-v-html': 'warn',
+      // 以下规则与 Prettier 冲突，关闭避免 CI 警告溢出
+      'vue/max-attributes-per-line': 'off',
+      'vue/singleline-html-element-content-newline': 'off',
+      'vue/html-indent': 'off',
+      'vue/html-self-closing': 'off',
       '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
       '@typescript-eslint/no-explicit-any': 'warn',
       'no-console': 'warn',
@@ -71,6 +77,7 @@ export default tseslint.config(
     rules: {
       '@typescript-eslint/no-require-imports': 'off',
       'no-console': 'off',
+      'no-undef': 'off',
     },
   },
 );
