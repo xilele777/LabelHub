@@ -9,7 +9,11 @@ import {
 } from '../types';
 import type { AIReviewResult } from '../types/aiReview';
 import * as annotationApi from '../api/annotation';
-import type { AvailableItem, BatchClaimResult, SubmitWithAIReviewResponse } from '../api/annotation';
+import type {
+  AvailableItem,
+  BatchClaimResult,
+  SubmitWithAIReviewResponse,
+} from '../api/annotation';
 import * as reviewApi from '../api/review';
 
 export { DataItemStatus };
@@ -50,12 +54,19 @@ export function canTransitDataItemStatus(from: DataItemStatus, to: DataItemStatu
   return from === to || DATA_ITEM_STATUS_TRANSITIONS[from].includes(to);
 }
 
-function assertDataItemStatusTransition(from: DataItemStatus, to: DataItemStatus, action: string): void {
+function assertDataItemStatusTransition(
+  from: DataItemStatus,
+  to: DataItemStatus,
+  action: string,
+): void {
   if (canTransitDataItemStatus(from, to)) return;
   throw new Error(`Invalid data item status transition in ${action}: ${from} -> ${to}`);
 }
 
-function isApiErrorWithData<T>(error: unknown, code: number): error is { code: number; data: T; message?: string } {
+function isApiErrorWithData<T>(
+  error: unknown,
+  code: number,
+): error is { code: number; data: T; message?: string } {
   return (
     typeof error === 'object' &&
     error !== null &&
@@ -91,7 +102,9 @@ const useAnnotationPiniaStore = defineStore('annotation', () => {
       assertDataItemStatusTransition(current.status, updatedItem.status, action);
     }
 
-    dataItems.value = dataItems.value.map((item) => (item.id === updatedItem.id ? updatedItem : item));
+    dataItems.value = dataItems.value.map((item) =>
+      item.id === updatedItem.id ? updatedItem : item,
+    );
   }
 
   function upsertAIReview(dataItemId: string, review?: AIReviewResult): void {
@@ -120,7 +133,9 @@ const useAnnotationPiniaStore = defineStore('annotation', () => {
   async function fetchAIReviews(taskId?: string): Promise<void> {
     error.value = null;
     try {
-      const res = taskId ? await reviewApi.getReviewsByTaskId(taskId) : await reviewApi.getReviewList();
+      const res = taskId
+        ? await reviewApi.getReviewsByTaskId(taskId)
+        : await reviewApi.getReviewList();
       aiReviewResults.value = res.data.items;
     } catch (err: unknown) {
       error.value = getErrorMessage(err, '获取审核数据失败');
@@ -133,7 +148,11 @@ const useAnnotationPiniaStore = defineStore('annotation', () => {
     lockInfo.value = null;
   }
 
-  async function saveDraft(id: string, data: Record<string, unknown>, _annotator: string): Promise<void> {
+  async function saveDraft(
+    id: string,
+    data: Record<string, unknown>,
+    _annotator: string,
+  ): Promise<void> {
     error.value = null;
     conflictInfo.value = null;
     try {
@@ -152,7 +171,11 @@ const useAnnotationPiniaStore = defineStore('annotation', () => {
     }
   }
 
-  async function submitAnnotation(id: string, data: Record<string, unknown>, _annotator: string): Promise<void> {
+  async function submitAnnotation(
+    id: string,
+    data: Record<string, unknown>,
+    _annotator: string,
+  ): Promise<void> {
     error.value = null;
     conflictInfo.value = null;
     try {
@@ -204,7 +227,11 @@ const useAnnotationPiniaStore = defineStore('annotation', () => {
     }
   }
 
-  async function resubmitItem(id: string, data: Record<string, unknown>, _annotator: string): Promise<void> {
+  async function resubmitItem(
+    id: string,
+    data: Record<string, unknown>,
+    _annotator: string,
+  ): Promise<void> {
     error.value = null;
     conflictInfo.value = null;
     try {

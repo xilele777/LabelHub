@@ -4,7 +4,9 @@
       <a-space>
         <a-typography-title :level="4" class="page-title">审核工作台</a-typography-title>
         <a-tag color="blue">{{ filteredItems.length }} / {{ reviewableItems.length }} 条</a-tag>
-        <a-tag :color="socketConnected ? 'green' : 'default'">{{ socketConnected ? '实时已连接' : '实时未连接' }}</a-tag>
+        <a-tag :color="socketConnected ? 'green' : 'default'">
+          {{ socketConnected ? '实时已连接' : '实时未连接' }}
+        </a-tag>
       </a-space>
       <a-space wrap>
         <a-button size="small" @click="openClaimModal">
@@ -103,7 +105,9 @@
       <a-card v-if="reviewableItems.length === 0" class="empty-card">
         <a-empty description="暂无已领取的审核数据">
           <a-space direction="vertical" align="center">
-            <a-typography-text type="secondary">可点击“领取审核”从任务池领取待审数据。</a-typography-text>
+            <a-typography-text type="secondary">
+              可点击“领取审核”从任务池领取待审数据。
+            </a-typography-text>
             <a-button type="primary" @click="openClaimModal">
               <template #icon><InboxOutlined /></template>
               领取审核
@@ -114,7 +118,11 @@
 
       <div v-else class="review-main">
         <a-card title="审核列表" size="small" class="review-list-card" :body-style="{ padding: 0 }">
-          <a-empty v-if="filteredItems.length === 0" description="没有匹配筛选条件的数据" class="list-empty" />
+          <a-empty
+            v-if="filteredItems.length === 0"
+            description="没有匹配筛选条件的数据"
+            class="list-empty"
+          />
           <div v-else class="review-list">
             <template v-for="group in groupedItems" :key="group.taskId">
               <div class="group-title">任务：{{ taskName(group.taskId) }}</div>
@@ -130,7 +138,9 @@
                   <a-typography-text strong ellipsis class="item-title">
                     {{ String(item.rawData.fileName ?? item.id) }}
                   </a-typography-text>
-                  <a-tag :color="itemStatusTag(item).color" class="item-tag">{{ itemStatusTag(item).label }}</a-tag>
+                  <a-tag :color="itemStatusTag(item).color" class="item-tag">
+                    {{ itemStatusTag(item).label }}
+                  </a-tag>
                 </div>
                 <a-typography-paragraph type="secondary" :ellipsis="{ rows: 1 }" class="item-desc">
                   {{ String(item.rawData.description ?? '') }}
@@ -146,9 +156,25 @@
         <a-card title="审核内容" size="small" class="content-card">
           <a-empty v-if="!selectedItem" description="请选择待审核数据" />
           <template v-else>
-            <a-descriptions title="原始数据" size="small" bordered :column="1" class="content-section">
-              <a-descriptions-item v-for="[key, value] in Object.entries(selectedItem.rawData)" :key="key" :label="key">
-                <a v-if="key === 'imageUrl'" :href="String(value)" target="_blank" rel="noopener noreferrer">{{ String(value) }}</a>
+            <a-descriptions
+              title="原始数据"
+              size="small"
+              bordered
+              :column="1"
+              class="content-section"
+            >
+              <a-descriptions-item
+                v-for="[key, value] in Object.entries(selectedItem.rawData)"
+                :key="key"
+                :label="key"
+              >
+                <a
+                  v-if="key === 'imageUrl'"
+                  :href="String(value)"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  >{{ String(value) }}</a
+                >
                 <span v-else>{{ String(value) }}</span>
               </a-descriptions-item>
             </a-descriptions>
@@ -192,11 +218,21 @@
               :description="selectedAIReview.summary"
             />
 
-            <a-space v-if="selectedAIReview?.fieldWarnings?.length" direction="vertical" class="warning-stack">
+            <a-space
+              v-if="selectedAIReview?.fieldWarnings?.length"
+              direction="vertical"
+              class="warning-stack"
+            >
               <a-alert
                 v-for="(warning, index) in selectedAIReview.fieldWarnings"
                 :key="`${warning.fieldKey}-${index}`"
-                :type="warning.severity === 'error' ? 'error' : warning.severity === 'warning' ? 'warning' : 'info'"
+                :type="
+                  warning.severity === 'error'
+                    ? 'error'
+                    : warning.severity === 'warning'
+                      ? 'warning'
+                      : 'info'
+                "
                 show-icon
                 :message="warning.fieldLabel"
                 :description="warning.message"
@@ -224,73 +260,91 @@
       </div>
     </a-spin>
 
-    <a-modal v-model:open="claimModalOpen" title="领取审核任务" width="780px" :footer="null" destroy-on-close>
+    <a-modal
+      v-model:open="claimModalOpen"
+      title="领取审核任务"
+      width="780px"
+      :footer="null"
+      destroy-on-close
+    >
       <div class="lh-modal-stack">
-      <a-space wrap class="claim-toolbar lh-modal-toolbar">
-        <a-button size="small" :loading="reviewPoolLoading" @click="loadReviewPool">
-          <template #icon><ReloadOutlined /></template>
-          刷新
-        </a-button>
-        <a-button
+        <a-space wrap class="claim-toolbar lh-modal-toolbar">
+          <a-button size="small" :loading="reviewPoolLoading" @click="loadReviewPool">
+            <template #icon><ReloadOutlined /></template>
+            刷新
+          </a-button>
+          <a-button
+            size="small"
+            type="primary"
+            :loading="batchClaiming"
+            :disabled="selectedClaimIds.length === 0"
+            @click="batchClaimReviews"
+          >
+            批量领取 {{ selectedClaimIds.length || '' }}
+          </a-button>
+          <a-checkbox v-model:checked="continuousClaimEnabled">连续领取</a-checkbox>
+          <a-typography-text type="secondary">仅展示尚未分配审核员的待审数据。</a-typography-text>
+        </a-space>
+        <a-table
+          row-key="id"
           size="small"
-          type="primary"
-          :loading="batchClaiming"
-          :disabled="selectedClaimIds.length === 0"
-          @click="batchClaimReviews"
+          class="lh-modal-table"
+          :loading="reviewPoolLoading"
+          :data-source="reviewPoolItems"
+          :columns="claimColumns"
+          :pagination="{ pageSize: 8 }"
+          :row-selection="{ selectedRowKeys: selectedClaimIds, onChange: onClaimSelectionChange }"
         >
-          批量领取 {{ selectedClaimIds.length || '' }}
-        </a-button>
-        <a-checkbox v-model:checked="continuousClaimEnabled">连续领取</a-checkbox>
-        <a-typography-text type="secondary">仅展示尚未分配审核员的待审数据。</a-typography-text>
-      </a-space>
-      <a-table
-        row-key="id"
-        size="small"
-        class="lh-modal-table"
-        :loading="reviewPoolLoading"
-        :data-source="reviewPoolItems"
-        :columns="claimColumns"
-        :pagination="{ pageSize: 8 }"
-        :row-selection="{ selectedRowKeys: selectedClaimIds, onChange: onClaimSelectionChange }"
-      >
-        <template #bodyCell="{ column, record }">
-          <template v-if="column.key === 'taskId'">{{ taskName(record.taskId) }}</template>
-          <template v-else-if="column.key === 'annotator'">{{ record.annotator || '未分配' }}</template>
-          <template v-else-if="column.key === 'action'">
-            <a-button type="link" size="small" :loading="claimingId === record.id" @click="claimReview(record.id)">
-              领取
-            </a-button>
+          <template #bodyCell="{ column, record }">
+            <template v-if="column.key === 'taskId'">{{ taskName(record.taskId) }}</template>
+            <template v-else-if="column.key === 'annotator'">
+              {{ record.annotator || '未分配' }}
+            </template>
+            <template v-else-if="column.key === 'action'">
+              <a-button
+                type="link"
+                size="small"
+                :loading="claimingId === record.id"
+                @click="claimReview(record.id)"
+              >
+                领取
+              </a-button>
+            </template>
           </template>
-        </template>
-      </a-table>
+        </a-table>
       </div>
     </a-modal>
 
     <a-modal v-model:open="flowModalOpen" title="流转记录" width="760px" :footer="null">
       <div class="lh-modal-detail">
-      <a-empty v-if="!selectedItem || selectedItem.auditHistory.length === 0" description="暂无审核记录" />
-      <a-timeline v-else mode="left" class="audit-timeline">
-        <a-timeline-item
-          v-for="record in selectedItem.auditHistory"
-          :key="record.id"
-          :color="actionMeta(record.actionType).color"
-        >
-          <div class="timeline-row">
-            <a-space wrap>
-              <a-tag :color="actionMeta(record.actionType).tagColor">{{ actionMeta(record.actionType).label }}</a-tag>
-              <a-tag>{{ statusLabel(record.fromStatus) }}</a-tag>
-              <span class="timeline-arrow">→</span>
-              <a-tag>{{ statusLabel(record.toStatus) }}</a-tag>
-            </a-space>
-            <div class="timeline-meta">
-              {{ record.operator }} · {{ formatTime(record.timestamp) }}
+        <a-empty
+          v-if="!selectedItem || selectedItem.auditHistory.length === 0"
+          description="暂无审核记录"
+        />
+        <a-timeline v-else mode="left" class="audit-timeline">
+          <a-timeline-item
+            v-for="record in selectedItem.auditHistory"
+            :key="record.id"
+            :color="actionMeta(record.actionType).color"
+          >
+            <div class="timeline-row">
+              <a-space wrap>
+                <a-tag :color="actionMeta(record.actionType).tagColor">
+                  {{ actionMeta(record.actionType).label }}
+                </a-tag>
+                <a-tag>{{ statusLabel(record.fromStatus) }}</a-tag>
+                <span class="timeline-arrow">→</span>
+                <a-tag>{{ statusLabel(record.toStatus) }}</a-tag>
+              </a-space>
+              <div class="timeline-meta">
+                {{ record.operator }} · {{ formatTime(record.timestamp) }}
+              </div>
+              <a-typography-paragraph v-if="record.reason" class="timeline-reason">
+                {{ record.reason }}
+              </a-typography-paragraph>
             </div>
-            <a-typography-paragraph v-if="record.reason" class="timeline-reason">
-              {{ record.reason }}
-            </a-typography-paragraph>
-          </div>
-        </a-timeline-item>
-      </a-timeline>
+          </a-timeline-item>
+        </a-timeline>
       </div>
     </a-modal>
 
@@ -304,13 +358,19 @@
       @ok="rejectSelected"
     >
       <div class="lh-modal-stack">
-      <a-alert
-        type="warning"
-        show-icon
-        message="驳回后数据会返回给标注员重新修改，请填写清晰的原因。"
-        class="reject-alert"
-      />
-      <a-textarea v-model:value="rejectReason" :rows="5" :maxlength="500" show-count placeholder="请输入驳回原因" />
+        <a-alert
+          type="warning"
+          show-icon
+          message="驳回后数据会返回给标注员重新修改，请填写清晰的原因。"
+          class="reject-alert"
+        />
+        <a-textarea
+          v-model:value="rejectReason"
+          :rows="5"
+          :maxlength="500"
+          show-count
+          placeholder="请输入驳回原因"
+        />
       </div>
     </a-modal>
   </section>
@@ -390,8 +450,12 @@ const socketConnected = ref(false);
 const templateMap = ref<Record<string, TemplateField[]>>({});
 const joinedTaskIds = new Set<string>();
 
-const queryTaskId = computed(() => (typeof route.query.taskId === 'string' ? route.query.taskId : undefined));
-const queryDataItemId = computed(() => (typeof route.query.dataItemId === 'string' ? route.query.dataItemId : undefined));
+const queryTaskId = computed(() =>
+  typeof route.query.taskId === 'string' ? route.query.taskId : undefined,
+);
+const queryDataItemId = computed(() =>
+  typeof route.query.dataItemId === 'string' ? route.query.dataItemId : undefined,
+);
 
 const statusFilterOptions = [
   { label: 'AI 预审中', value: 'ai_reviewing_group' },
@@ -406,7 +470,14 @@ const aiReviewFilterOptions = [
 ];
 const claimColumns: TableColumnsType<AvailableItem> = [
   { title: 'ID', dataIndex: 'id', key: 'id', width: 112, ellipsis: true },
-  { title: '任务', dataIndex: 'taskId', key: 'taskId', width: 128, ellipsis: true, responsive: ['md'] },
+  {
+    title: '任务',
+    dataIndex: 'taskId',
+    key: 'taskId',
+    width: 128,
+    ellipsis: true,
+    responsive: ['md'],
+  },
   { title: '状态', dataIndex: 'status', key: 'status', width: 96 },
   { title: '标注员', dataIndex: 'annotator', key: 'annotator', width: 96, responsive: ['lg'] },
   { title: '数据摘要', dataIndex: 'rawDataPreview', key: 'rawDataPreview', ellipsis: true },
@@ -420,16 +491,17 @@ const REVIEW_ACTIONABLE_STATUSES = new Set<DataItemStatus>([
 ]);
 
 const reviewableItems = computed(() =>
-  annotationStore.dataItems.filter((item) =>
-    !item.archived &&
-    [
-      DataItemStatus.SUBMITTED,
-      DataItemStatus.AI_REVIEWING,
-      DataItemStatus.AI_REVIEWED,
-      DataItemStatus.PENDING_REVIEW,
-      DataItemStatus.REVIEWED,
-      DataItemStatus.REJECTED,
-    ].includes(item.status),
+  annotationStore.dataItems.filter(
+    (item) =>
+      !item.archived &&
+      [
+        DataItemStatus.SUBMITTED,
+        DataItemStatus.AI_REVIEWING,
+        DataItemStatus.AI_REVIEWED,
+        DataItemStatus.PENDING_REVIEW,
+        DataItemStatus.REVIEWED,
+        DataItemStatus.REJECTED,
+      ].includes(item.status),
   ),
 );
 
@@ -450,7 +522,9 @@ const annotatorOptions = computed(() => {
   reviewableItems.value.forEach((item) => {
     if (item.annotator) annotators.add(item.annotator);
   });
-  return Array.from(annotators).sort().map((annotator) => ({ label: annotator, value: annotator }));
+  return Array.from(annotators)
+    .sort()
+    .map((annotator) => ({ label: annotator, value: annotator }));
 });
 
 const filteredItems = computed(() => {
@@ -458,7 +532,11 @@ const filteredItems = computed(() => {
   if (filters.status) {
     if (filters.status === 'ai_reviewing_group') {
       result = result.filter((item) =>
-        [DataItemStatus.SUBMITTED, DataItemStatus.AI_REVIEWING, DataItemStatus.AI_REVIEWED].includes(item.status),
+        [
+          DataItemStatus.SUBMITTED,
+          DataItemStatus.AI_REVIEWING,
+          DataItemStatus.AI_REVIEWED,
+        ].includes(item.status),
       );
     } else {
       result = result.filter((item) => item.status === filters.status);
@@ -467,14 +545,20 @@ const filteredItems = computed(() => {
   if (filters.taskId) result = result.filter((item) => item.taskId === filters.taskId);
   if (filters.annotator) result = result.filter((item) => item.annotator === filters.annotator);
   if (filters.aiReviewResult) {
-    result = result.filter((item) => aiResultMap.value.get(item.id)?.reviewStatus === filters.aiReviewResult);
+    result = result.filter(
+      (item) => aiResultMap.value.get(item.id)?.reviewStatus === filters.aiReviewResult,
+    );
   }
   if (filters.keyword) {
     const keyword = filters.keyword.toLowerCase();
     result = result.filter((item) => {
       const fileName = String(item.rawData.fileName ?? '').toLowerCase();
       const description = String(item.rawData.description ?? '').toLowerCase();
-      return fileName.includes(keyword) || description.includes(keyword) || item.id.toLowerCase().includes(keyword);
+      return (
+        fileName.includes(keyword) ||
+        description.includes(keyword) ||
+        item.id.toLowerCase().includes(keyword)
+      );
     });
   }
   return result;
@@ -490,9 +574,23 @@ const groupedItems = computed<GroupedItems[]>(() => {
   return Array.from(groups.entries()).map(([taskId, items]) => ({ taskId, items }));
 });
 
-const hasActiveFilters = computed(() => Boolean(filters.status || filters.taskId || filters.annotator || filters.aiReviewResult || filters.keyword));
-const selectedItem = computed(() => (selectedId.value ? annotationStore.dataItems.find((item) => item.id === selectedId.value) ?? null : null));
-const selectedAIReview = computed(() => (selectedItem.value ? aiResultMap.value.get(selectedItem.value.id) : undefined));
+const hasActiveFilters = computed(() =>
+  Boolean(
+    filters.status ||
+    filters.taskId ||
+    filters.annotator ||
+    filters.aiReviewResult ||
+    filters.keyword,
+  ),
+);
+const selectedItem = computed(() =>
+  selectedId.value
+    ? (annotationStore.dataItems.find((item) => item.id === selectedId.value) ?? null)
+    : null,
+);
+const selectedAIReview = computed(() =>
+  selectedItem.value ? aiResultMap.value.get(selectedItem.value.id) : undefined,
+);
 const canReviewSelected = computed(() => {
   const status = selectedItem.value?.status;
   return status ? REVIEW_ACTIONABLE_STATUSES.has(status) : false;
@@ -547,7 +645,10 @@ watch(
 watch(
   () => filteredItems.value.map((item) => item.id),
   (ids) => {
-    const preferredId = filteredItems.value.find((item) => REVIEW_ACTIONABLE_STATUSES.has(item.status))?.id ?? ids[0] ?? null;
+    const preferredId =
+      filteredItems.value.find((item) => REVIEW_ACTIONABLE_STATUSES.has(item.status))?.id ??
+      ids[0] ??
+      null;
     if (selectedId.value && !ids.includes(selectedId.value)) {
       selectedId.value = preferredId;
     } else if (!selectedId.value && ids.length > 0) {
@@ -630,16 +731,22 @@ function clearFilters() {
 
 async function preloadTemplates() {
   const next: Record<string, TemplateField[]> = {};
-  await Promise.all(tasks.value.map(async (task) => {
-    const schema = await getTemplateSchemaAsync(task.templateId);
-    if (schema) next[task.templateId] = schema.fields;
-  }));
+  await Promise.all(
+    tasks.value.map(async (task) => {
+      const schema = await getTemplateSchemaAsync(task.templateId);
+      if (schema) next[task.templateId] = schema.fields;
+    }),
+  );
   templateMap.value = next;
 }
 
 function fieldLabel(fieldKey: string) {
-  const task = selectedItem.value ? tasks.value.find((item) => item.id === selectedItem.value?.taskId) : undefined;
-  const field = task ? templateMap.value[task.templateId]?.find((item) => item.fieldKey === fieldKey) : undefined;
+  const task = selectedItem.value
+    ? tasks.value.find((item) => item.id === selectedItem.value?.taskId)
+    : undefined;
+  const field = task
+    ? templateMap.value[task.templateId]?.find((item) => item.fieldKey === fieldKey)
+    : undefined;
   return field?.label || fieldKey;
 }
 
@@ -650,9 +757,15 @@ function taskName(taskId: string) {
 function itemStatusTag(item: DataItem) {
   if (item.status === DataItemStatus.PENDING_REVIEW) {
     const ai = aiResultMap.value.get(item.id);
-    return ai ? { color: aiStatusMeta(ai.reviewStatus).tagColor, label: `${ai.score} 分` } : { color: 'processing', label: '待审核' };
+    return ai
+      ? { color: aiStatusMeta(ai.reviewStatus).tagColor, label: `${ai.score} 分` }
+      : { color: 'processing', label: '待审核' };
   }
-  if ([DataItemStatus.SUBMITTED, DataItemStatus.AI_REVIEWING, DataItemStatus.AI_REVIEWED].includes(item.status)) {
+  if (
+    [DataItemStatus.SUBMITTED, DataItemStatus.AI_REVIEWING, DataItemStatus.AI_REVIEWED].includes(
+      item.status,
+    )
+  ) {
     return { color: 'purple', label: '预审中' };
   }
   if (item.status === DataItemStatus.REVIEWED) return { color: 'success', label: '已通过' };
@@ -661,8 +774,10 @@ function itemStatusTag(item: DataItem) {
 }
 
 function aiStatusMeta(status: ReviewStatus) {
-  if (status === ReviewStatus.PASS) return { label: 'AI 通过', tagColor: 'success', alertType: 'success' as const };
-  if (status === ReviewStatus.RISK) return { label: 'AI 风险', tagColor: 'warning', alertType: 'warning' as const };
+  if (status === ReviewStatus.PASS)
+    return { label: 'AI 通过', tagColor: 'success', alertType: 'success' as const };
+  if (status === ReviewStatus.RISK)
+    return { label: 'AI 风险', tagColor: 'warning', alertType: 'warning' as const };
   return { label: 'AI 不通过', tagColor: 'error', alertType: 'error' as const };
 }
 
@@ -686,8 +801,16 @@ const actionDisplay: Record<AuditActionType, { label: string; color: string; tag
   [AuditActionType.APPROVE]: { label: '审核通过', color: '#52c41a', tagColor: 'success' },
   [AuditActionType.REJECT]: { label: '审核驳回', color: '#ff4d4f', tagColor: 'error' },
   [AuditActionType.RESUBMIT]: { label: '重新提交', color: '#1890ff', tagColor: 'processing' },
-  [AuditActionType.RELEASE_ANNOTATION_DUE_OVERDUE]: { label: '标注逾期释放', color: '#fa8c16', tagColor: 'warning' },
-  [AuditActionType.RELEASE_REVIEW_DUE_OVERDUE]: { label: '审核逾期释放', color: '#fa8c16', tagColor: 'warning' },
+  [AuditActionType.RELEASE_ANNOTATION_DUE_OVERDUE]: {
+    label: '标注逾期释放',
+    color: '#fa8c16',
+    tagColor: 'warning',
+  },
+  [AuditActionType.RELEASE_REVIEW_DUE_OVERDUE]: {
+    label: '审核逾期释放',
+    color: '#fa8c16',
+    tagColor: 'warning',
+  },
   [AuditActionType.ARCHIVE]: { label: '归档', color: '#52c41a', tagColor: 'success' },
   [AuditActionType.UNARCHIVE]: { label: '取消归档', color: '#faad14', tagColor: 'warning' },
 };
@@ -697,7 +820,14 @@ function formatTime(value: string | null | undefined) {
 }
 
 function formatShortTime(value: string | null | undefined) {
-  return value ? new Date(value).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) : '未提交';
+  return value
+    ? new Date(value).toLocaleString('zh-CN', {
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+      })
+    : '未提交';
 }
 
 async function openClaimModal() {
@@ -709,7 +839,9 @@ async function openClaimModal() {
 async function loadReviewPool() {
   reviewPoolLoading.value = true;
   try {
-    const res = await annotationApi.getReviewAvailableItems(filters.taskId ? { taskId: filters.taskId } : undefined);
+    const res = await annotationApi.getReviewAvailableItems(
+      filters.taskId ? { taskId: filters.taskId } : undefined,
+    );
     reviewPoolItems.value = res.data.items || [];
     return reviewPoolItems.value;
   } catch (error) {
@@ -734,7 +866,10 @@ async function claimReview(id: string) {
     selectedId.value = id;
     claimModalOpen.value = false;
   } catch (error) {
-    Modal.warning({ title: '领取失败', content: error instanceof Error ? error.message : '领取审核项失败' });
+    Modal.warning({
+      title: '领取失败',
+      content: error instanceof Error ? error.message : '领取审核项失败',
+    });
   } finally {
     claimingId.value = null;
   }
@@ -750,7 +885,9 @@ async function batchClaimReviews(ids = selectedClaimIds.value) {
   try {
     const res = await annotationApi.batchClaimReviews(ids);
     const result = res.data;
-    selectedClaimIds.value = selectedClaimIds.value.filter((id) => !result.claimed.some((item) => item.id === id));
+    selectedClaimIds.value = selectedClaimIds.value.filter(
+      (id) => !result.claimed.some((item) => item.id === id),
+    );
     const first = result.claimed[0];
     if (first) {
       message.success(`已领取 ${result.claimedCount} 条审核任务`);
@@ -763,7 +900,10 @@ async function batchClaimReviews(ids = selectedClaimIds.value) {
       message.warning(`${result.failedCount} 条领取失败，可能已被分配或不在可领取状态`);
     }
   } catch (error) {
-    Modal.warning({ title: '批量领取失败', content: error instanceof Error ? error.message : '批量领取审核项失败' });
+    Modal.warning({
+      title: '批量领取失败',
+      content: error instanceof Error ? error.message : '批量领取审核项失败',
+    });
   } finally {
     batchClaiming.value = false;
   }
@@ -789,7 +929,10 @@ async function approveSelected() {
     await refreshData();
     await tryContinuousClaim();
   } catch (error) {
-    Modal.warning({ title: '审核失败', content: error instanceof Error ? error.message : '审核通过失败' });
+    Modal.warning({
+      title: '审核失败',
+      content: error instanceof Error ? error.message : '审核通过失败',
+    });
   } finally {
     approving.value = false;
   }
@@ -814,7 +957,10 @@ async function rejectSelected() {
     await refreshData();
     await tryContinuousClaim();
   } catch (error) {
-    Modal.warning({ title: '审核失败', content: error instanceof Error ? error.message : '驳回失败' });
+    Modal.warning({
+      title: '审核失败',
+      content: error instanceof Error ? error.message : '驳回失败',
+    });
   } finally {
     rejecting.value = false;
   }

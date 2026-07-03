@@ -8,7 +8,10 @@ export function normalizeRole(role: Role | string | null | undefined): Role | nu
   return null;
 }
 
-export function hasRouteRole(currentRole: Role | string | null | undefined, requiredRoles: Role[]): boolean {
+export function hasRouteRole(
+  currentRole: Role | string | null | undefined,
+  requiredRoles: Role[],
+): boolean {
   const normalizedCurrent = normalizeRole(currentRole);
   if (!normalizedCurrent) return false;
 

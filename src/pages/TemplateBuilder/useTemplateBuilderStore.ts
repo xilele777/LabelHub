@@ -83,9 +83,21 @@ export function createDefaultField(type: FieldType): TemplateField {
 
   switch (type) {
     case FieldType.INPUT:
-      return { ...base, type, label: '单行输入', placeholder: '请输入', maxLength: 200 } satisfies InputField;
+      return {
+        ...base,
+        type,
+        label: '单行输入',
+        placeholder: '请输入',
+        maxLength: 200,
+      } satisfies InputField;
     case FieldType.TEXTAREA:
-      return { ...base, type, label: '多行文本', placeholder: '请输入', autoSize: true } satisfies TextareaField;
+      return {
+        ...base,
+        type,
+        label: '多行文本',
+        placeholder: '请输入',
+        autoSize: true,
+      } satisfies TextareaField;
     case FieldType.RADIO:
       return {
         ...base,
@@ -156,9 +168,13 @@ const useTemplateBuilderPiniaStore = defineStore('templateBuilder', () => {
   const saving = ref(false);
 
   const fields = computed<TemplateField[]>(() =>
-    fieldIds.value.map((id) => fieldsById[id]).filter((field): field is TemplateField => Boolean(field)),
+    fieldIds.value
+      .map((id) => fieldsById[id])
+      .filter((field): field is TemplateField => Boolean(field)),
   );
-  const selectedField = computed(() => (selectedFieldId.value ? fieldsById[selectedFieldId.value] ?? null : null));
+  const selectedField = computed(() =>
+    selectedFieldId.value ? (fieldsById[selectedFieldId.value] ?? null) : null,
+  );
   const fieldCount = computed(() => fieldIds.value.length);
   const isEditMode = computed(() => mode.value === 'edit');
 

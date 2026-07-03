@@ -15,12 +15,33 @@
           class="login-card__alert"
         />
 
-        <a-form :model="formState" :rules="rules" size="large" autocomplete="off" @finish="handleFinish">
-          <input type="text" name="username" autocomplete="username" class="login-card__hidden-input" />
-          <input type="password" name="password" autocomplete="current-password" class="login-card__hidden-input" />
+        <a-form
+          :model="formState"
+          :rules="rules"
+          size="large"
+          autocomplete="off"
+          @finish="handleFinish"
+        >
+          <input
+            type="text"
+            name="username"
+            autocomplete="username"
+            class="login-card__hidden-input"
+          />
+          <input
+            type="password"
+            name="password"
+            autocomplete="current-password"
+            class="login-card__hidden-input"
+          />
 
           <a-form-item name="account">
-            <a-input v-model:value="formState.account" placeholder="用户名" autocomplete="off" :disabled="authStore.loading">
+            <a-input
+              v-model:value="formState.account"
+              placeholder="用户名"
+              autocomplete="off"
+              :disabled="authStore.loading"
+            >
               <template #prefix><UserOutlined /></template>
             </a-input>
           </a-form-item>
@@ -37,7 +58,9 @@
           </a-form-item>
 
           <a-form-item class="login-card__submit">
-            <a-button type="primary" html-type="submit" block :loading="authStore.loading">登录</a-button>
+            <a-button type="primary" html-type="submit" block :loading="authStore.loading">
+              登录
+            </a-button>
           </a-form-item>
         </a-form>
       </a-card>
@@ -97,7 +120,14 @@ function getSafeRedirect(value: unknown, fallback: string) {
   padding: 24px;
   overflow: hidden;
   background:
-    linear-gradient(90deg, rgba(66, 133, 244, 0.12) 0 25%, rgba(234, 67, 53, 0.10) 25% 50%, rgba(251, 188, 4, 0.12) 50% 75%, rgba(52, 168, 83, 0.10) 75% 100%) top / 100% 4px no-repeat,
+    linear-gradient(
+        90deg,
+        rgba(66, 133, 244, 0.12) 0 25%,
+        rgba(234, 67, 53, 0.1) 25% 50%,
+        rgba(251, 188, 4, 0.12) 50% 75%,
+        rgba(52, 168, 83, 0.1) 75% 100%
+      )
+      top / 100% 4px no-repeat,
     linear-gradient(180deg, #ffffff 0%, #f8fafd 100%);
 }
 

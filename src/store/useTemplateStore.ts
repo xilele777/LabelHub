@@ -19,7 +19,9 @@ const useTemplatePiniaStore = defineStore('template', () => {
   const error = ref<string | null>(null);
 
   const templateCount = computed(() => templates.value.length);
-  const templateMap = computed(() => new Map(templates.value.map((template) => [template.id, template])));
+  const templateMap = computed(
+    () => new Map(templates.value.map((template) => [template.id, template])),
+  );
 
   async function fetchTemplates(): Promise<void> {
     loading.value = true;
@@ -52,7 +54,9 @@ const useTemplatePiniaStore = defineStore('template', () => {
     error.value = null;
     try {
       const res = await templateApi.updateTemplate(id, updates);
-      templates.value = templates.value.map((template) => (template.id === id ? res.data : template));
+      templates.value = templates.value.map((template) =>
+        template.id === id ? res.data : template,
+      );
     } catch (err: unknown) {
       error.value = err instanceof Error ? err.message : '更新模板失败';
       throw err;

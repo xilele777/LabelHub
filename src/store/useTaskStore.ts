@@ -20,7 +20,9 @@ const useTaskPiniaStore = defineStore('task', () => {
   const error = ref<string | null>(null);
 
   const activeTasks = computed(() => tasks.value.filter((task) => !task.archived));
-  const runningTasks = computed(() => tasks.value.filter((task) => task.status === TaskStatus.IN_PROGRESS));
+  const runningTasks = computed(() =>
+    tasks.value.filter((task) => task.status === TaskStatus.IN_PROGRESS),
+  );
   const taskTotal = computed(() => tasks.value.length);
 
   function replaceTask(nextTask: TaskItem) {

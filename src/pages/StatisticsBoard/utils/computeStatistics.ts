@@ -93,8 +93,7 @@ function countUniqueRiskRules(aiResults: AIReviewResult[]): number {
   return aiResults
     .filter(
       (result) =>
-        result.reviewStatus === ReviewStatus.RISK ||
-        result.reviewStatus === ReviewStatus.FAIL,
+        result.reviewStatus === ReviewStatus.RISK || result.reviewStatus === ReviewStatus.FAIL,
     )
     .reduce((sum, result) => sum + result.matchedRules.length, 0);
 }
@@ -109,9 +108,15 @@ export function computeStatistics(
   const totalDataItems = dataItems.length;
   const archivedDataItems = dataItems.filter((item) => item.archived).length;
 
-  const passedDataCount = dataItems.filter((item) => item.status === DataItemStatus.REVIEWED).length;
-  const rejectedDataCount = dataItems.filter((item) => item.status === DataItemStatus.REJECTED).length;
-  const reviewPendingCount = dataItems.filter((item) => item.status === DataItemStatus.PENDING_REVIEW).length;
+  const passedDataCount = dataItems.filter(
+    (item) => item.status === DataItemStatus.REVIEWED,
+  ).length;
+  const rejectedDataCount = dataItems.filter(
+    (item) => item.status === DataItemStatus.REJECTED,
+  ).length;
+  const reviewPendingCount = dataItems.filter(
+    (item) => item.status === DataItemStatus.PENDING_REVIEW,
+  ).length;
   const aiRiskHitCount = countUniqueRiskRules(aiResults);
 
   const annotatorSubmitMap = new Map<string, number>();

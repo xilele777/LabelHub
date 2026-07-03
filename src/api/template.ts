@@ -25,7 +25,10 @@ export function createTemplate(data: Partial<TemplateItem> & { schema?: Annotati
 }
 
 /** 更新模板 */
-export function updateTemplate(id: string, data: Partial<TemplateItem> & { schema?: AnnotationTemplate }) {
+export function updateTemplate(
+  id: string,
+  data: Partial<TemplateItem> & { schema?: AnnotationTemplate },
+) {
   return put<TemplateItem>(`/templates/${id}`, data);
 }
 
@@ -36,5 +39,7 @@ export function deleteTemplate(id: string) {
 
 /** 获取用户列表（供下拉选择负责人用） */
 export function getUserList() {
-  return get<{ items: Array<{ id: string; username: string; role: string }>; total: number }>('/users');
+  return get<{ items: Array<{ id: string; username: string; role: string }>; total: number }>(
+    '/users',
+  );
 }

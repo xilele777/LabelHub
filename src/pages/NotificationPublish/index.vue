@@ -17,18 +17,37 @@
       </a-row>
     </a-card>
 
-    <a-alert type="info" show-icon message="通知会进入接收人的通知中心，可按角色、指定人员或两者组合发送。" />
+    <a-alert
+      type="info"
+      show-icon
+      message="通知会进入接收人的通知中心，可按角色、指定人员或两者组合发送。"
+    />
 
     <a-card size="small" class="form-card">
       <a-form ref="formRef" :model="formState" :rules="rules" layout="vertical" autocomplete="off">
         <a-form-item name="title" label="通知标题">
-          <a-input v-model:value="formState.title" :maxlength="60" show-count placeholder="例如：本周审核安排调整" />
+          <a-input
+            v-model:value="formState.title"
+            :maxlength="60"
+            show-count
+            placeholder="例如：本周审核安排调整"
+          />
         </a-form-item>
         <a-form-item name="message" label="通知内容">
-          <a-textarea v-model:value="formState.message" :rows="6" :maxlength="500" show-count placeholder="请输入需要同步给目标人员的内容" />
+          <a-textarea
+            v-model:value="formState.message"
+            :rows="6"
+            :maxlength="500"
+            show-count
+            placeholder="请输入需要同步给目标人员的内容"
+          />
         </a-form-item>
         <a-form-item name="priority" label="优先级">
-          <a-select v-model:value="formState.priority" class="priority-select" :options="priorityOptions" />
+          <a-select
+            v-model:value="formState.priority"
+            class="priority-select"
+            :options="priorityOptions"
+          />
         </a-form-item>
         <a-form-item name="targetRoles" label="按角色发送">
           <a-checkbox-group v-model:value="formState.targetRoles" :options="roleOptions" />
@@ -51,7 +70,9 @@
             发布通知
           </a-button>
           <a-button @click="resetForm">重置</a-button>
-          <a-typography-text type="secondary">角色和人员取并集，重复人员只发送一次。</a-typography-text>
+          <a-typography-text type="secondary">
+            角色和人员取并集，重复人员只发送一次。
+          </a-typography-text>
         </a-space>
       </a-form>
     </a-card>

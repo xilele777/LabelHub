@@ -1,7 +1,8 @@
 import dayjs from 'dayjs';
 import { TaskStatus, type TaskItem } from '../types';
 
-export type TaskTimelinessLevel = 'unset' | 'not_started' | 'normal' | 'due_soon' | 'overdue' | 'closed';
+export type TaskTimelinessLevel =
+  'unset' | 'not_started' | 'normal' | 'due_soon' | 'overdue' | 'closed';
 
 export interface TaskTimelinessInfo {
   level: TaskTimelinessLevel;
@@ -18,12 +19,17 @@ export interface PhaseTimelinessFields {
   reminderHours: number;
 }
 
-export function getTaskTimeliness(task: Pick<TaskItem, 'status' | 'startsAt' | 'dueAt' | 'reminderHours' | 'archived'>): TaskTimelinessInfo {
+export function getTaskTimeliness(
+  task: Pick<TaskItem, 'status' | 'startsAt' | 'dueAt' | 'reminderHours' | 'archived'>,
+): TaskTimelinessInfo {
   return getPhaseTimeliness(task);
 }
 
 export function getReviewTimeliness(
-  task: Pick<TaskItem, 'status' | 'startsAt' | 'dueAt' | 'reviewTimeoutHours' | 'reviewReminderHours' | 'archived'>,
+  task: Pick<
+    TaskItem,
+    'status' | 'startsAt' | 'dueAt' | 'reviewTimeoutHours' | 'reviewReminderHours' | 'archived'
+  >,
 ): TaskTimelinessInfo {
   const taskWindow = getPhaseTimeliness({
     status: task.status,
@@ -45,9 +51,10 @@ export function getReviewTimeliness(
   return {
     ...taskWindow,
     label: timeoutHours > 0 ? `${timeoutText}` : '不限时',
-    description: timeoutHours > 0
-      ? `领取或分配后 ${timeoutText}；任务期限${taskWindow.description}`
-      : `未限制单项审核时长；任务期限${taskWindow.description}`,
+    description:
+      timeoutHours > 0
+        ? `领取或分配后 ${timeoutText}；任务期限${taskWindow.description}`
+        : `未限制单项审核时长；任务期限${taskWindow.description}`,
   };
 }
 
@@ -57,7 +64,9 @@ export function getPhaseTimeliness(task: PhaseTimelinessFields): TaskTimelinessI
       level: 'closed',
       label: '已收口',
       color: 'default',
-      description: task.dueAt ? `截止于 ${dayjs(task.dueAt).format('YYYY-MM-DD HH:mm')}` : '任务已完成或结束',
+      description: task.dueAt
+        ? `截止于 ${dayjs(task.dueAt).format('YYYY-MM-DD HH:mm')}`
+        : '任务已完成或结束',
     };
   }
 
@@ -118,7 +127,9 @@ export function formatTaskTimeRange(task: Pick<TaskItem, 'startsAt' | 'dueAt'>) 
 }
 
 export function formatReviewTimeRange(task: Pick<TaskItem, 'reviewStartsAt' | 'reviewDueAt'>) {
-  const start = task.reviewStartsAt ? dayjs(task.reviewStartsAt).format('YYYY-MM-DD HH:mm') : '立即开始';
+  const start = task.reviewStartsAt
+    ? dayjs(task.reviewStartsAt).format('YYYY-MM-DD HH:mm')
+    : '立即开始';
   const due = task.reviewDueAt ? dayjs(task.reviewDueAt).format('YYYY-MM-DD HH:mm') : '未设置截止';
   return `${start} - ${due}`;
 }

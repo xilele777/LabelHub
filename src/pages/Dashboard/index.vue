@@ -4,7 +4,9 @@
       <div class="app-page-title">
         <a-typography-title :level="4" class="page-title">仪表盘</a-typography-title>
         <a-typography-text class="app-page-desc" type="secondary">
-          欢迎回来，<a-typography-text strong>{{ authStore.user?.username ?? '-' }}</a-typography-text>
+          欢迎回来，<a-typography-text strong>
+            {{ authStore.user?.username ?? '-' }}
+          </a-typography-text>
           <a-tag :color="roleColor" class="role-tag">{{ roleLabel }}</a-tag>
         </a-typography-text>
       </div>
@@ -20,25 +22,33 @@
       <a-col :xs="24" :sm="12" :lg="6">
         <a-card class="metric-card metric-card--blue" hoverable>
           <a-statistic title="任务总数" :value="taskStore.tasks.length" />
-          <a-typography-text type="secondary" class="metric-card__hint">平台任务总量</a-typography-text>
+          <a-typography-text type="secondary" class="metric-card__hint">
+            平台任务总量
+          </a-typography-text>
         </a-card>
       </a-col>
       <a-col :xs="24" :sm="12" :lg="6">
         <a-card class="metric-card metric-card--green" hoverable>
           <a-statistic title="进行中任务" :value="runningTaskCount" />
-          <a-typography-text type="secondary" class="metric-card__hint">当前需要跟进</a-typography-text>
+          <a-typography-text type="secondary" class="metric-card__hint">
+            当前需要跟进
+          </a-typography-text>
         </a-card>
       </a-col>
       <a-col :xs="24" :sm="12" :lg="6">
         <a-card class="metric-card metric-card--purple" hoverable>
           <a-statistic title="模板总数" :value="templateStore.templates.length" />
-          <a-typography-text type="secondary" class="metric-card__hint">可复用标注配置</a-typography-text>
+          <a-typography-text type="secondary" class="metric-card__hint">
+            可复用标注配置
+          </a-typography-text>
         </a-card>
       </a-col>
       <a-col :xs="24" :sm="12" :lg="6">
         <a-card class="metric-card metric-card--orange" hoverable>
           <a-statistic title="当前角色" :value="roleLabel" />
-          <a-typography-text type="secondary" class="metric-card__hint">已按角色过滤菜单</a-typography-text>
+          <a-typography-text type="secondary" class="metric-card__hint">
+            已按角色过滤菜单
+          </a-typography-text>
         </a-card>
       </a-col>
     </a-row>
@@ -74,7 +84,9 @@
             <template #renderItem="{ item }">
               <a-list-item>
                 <div class="template-stat">
-                  <a-tag :color="getTaskTypeMeta(item.type).color">{{ getTaskTypeMeta(item.type).label }}</a-tag>
+                  <a-tag :color="getTaskTypeMeta(item.type).color">
+                    {{ getTaskTypeMeta(item.type).label }}
+                  </a-tag>
                   <a-typography-text strong>{{ item.count }}</a-typography-text>
                 </div>
               </a-list-item>
@@ -99,7 +111,9 @@ const taskStore = useTaskStore();
 const templateStore = useTemplateStore();
 
 const loading = computed(() => taskStore.loading || templateStore.loading);
-const runningTaskCount = computed(() => taskStore.tasks.filter((task) => task.status === TaskStatus.IN_PROGRESS).length);
+const runningTaskCount = computed(
+  () => taskStore.tasks.filter((task) => task.status === TaskStatus.IN_PROGRESS).length,
+);
 const recentTasks = computed(() => [...taskStore.tasks].slice(0, 6));
 const roleLabel = computed(() => getRoleLabel(authStore.user?.role));
 const roleColor = computed(() => getRoleColor(authStore.user?.role));
@@ -188,7 +202,9 @@ function getTaskTypeMeta(type: TaskType) {
 }
 
 .metric-card {
-  transition: background-color 0.16s ease, transform 0.16s ease;
+  transition:
+    background-color 0.16s ease,
+    transform 0.16s ease;
 }
 
 .metric-card:hover {

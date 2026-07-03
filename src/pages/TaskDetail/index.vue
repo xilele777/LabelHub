@@ -11,19 +11,30 @@
         <a-descriptions bordered :column="2">
           <a-descriptions-item label="任务名称">{{ task.name }}</a-descriptions-item>
           <a-descriptions-item label="任务类型">
-            <a-tag :color="getTaskTypeMeta(task.type).color">{{ getTaskTypeMeta(task.type).label }}</a-tag>
+            <a-tag :color="getTaskTypeMeta(task.type).color">
+              {{ getTaskTypeMeta(task.type).label }}
+            </a-tag>
           </a-descriptions-item>
           <a-descriptions-item label="负责人">{{ task.owner }}</a-descriptions-item>
           <a-descriptions-item label="状态">
-            <a-tag :color="getTaskStatusMeta(task.status).color">{{ getTaskStatusMeta(task.status).label }}</a-tag>
+            <a-tag :color="getTaskStatusMeta(task.status).color">
+              {{ getTaskStatusMeta(task.status).label }}
+            </a-tag>
           </a-descriptions-item>
           <a-descriptions-item label="绑定模板">{{ task.templateName }}</a-descriptions-item>
-          <a-descriptions-item label="创建时间">{{ formatDate(task.createdAt) }}</a-descriptions-item>
-          <a-descriptions-item label="任务时间窗口">{{ formatRange(task.startsAt, task.dueAt) }}</a-descriptions-item>
-          <a-descriptions-item label="单项时限">
-            标注 {{ task.annotationTimeoutHours ?? 24 }} 小时 / 审核 {{ task.reviewTimeoutHours ?? 24 }} 小时
+          <a-descriptions-item label="创建时间">
+            {{ formatDate(task.createdAt) }}
           </a-descriptions-item>
-          <a-descriptions-item label="任务描述" :span="2">{{ task.description || '-' }}</a-descriptions-item>
+          <a-descriptions-item label="任务时间窗口">
+            {{ formatRange(task.startsAt, task.dueAt) }}
+          </a-descriptions-item>
+          <a-descriptions-item label="单项时限">
+            标注 {{ task.annotationTimeoutHours ?? 24 }} 小时 / 审核
+            {{ task.reviewTimeoutHours ?? 24 }} 小时
+          </a-descriptions-item>
+          <a-descriptions-item label="任务描述" :span="2">
+            {{ task.description || '-' }}
+          </a-descriptions-item>
           <a-descriptions-item label="任务说明" :span="2">
             <div class="pre-wrap">{{ task.instructions || '-' }}</div>
           </a-descriptions-item>
@@ -34,7 +45,11 @@
             <template #icon><ArrowLeftOutlined /></template>
             {{ isArchived ? '返回归档' : '返回列表' }}
           </a-button>
-          <a-button v-if="canEditTask" type="primary" @click="router.push(`/tasks/edit?id=${task.id}`)">
+          <a-button
+            v-if="canEditTask"
+            type="primary"
+            @click="router.push(`/tasks/edit?id=${task.id}`)"
+          >
             <template #icon><EditOutlined /></template>
             编辑任务
           </a-button>
@@ -46,13 +61,21 @@
             <template #icon><RocketOutlined /></template>
             发布任务
           </a-button>
-          <a-popconfirm v-if="canArchiveTask" title="确认归档该任务？" @confirm="archiveCurrentTask">
+          <a-popconfirm
+            v-if="canArchiveTask"
+            title="确认归档该任务？"
+            @confirm="archiveCurrentTask"
+          >
             <a-button>
               <template #icon><InboxOutlined /></template>
               归档
             </a-button>
           </a-popconfirm>
-          <a-popconfirm v-if="isArchived && isManager" title="确认取消归档？" @confirm="unarchiveCurrentTask">
+          <a-popconfirm
+            v-if="isArchived && isManager"
+            title="确认取消归档？"
+            @confirm="unarchiveCurrentTask"
+          >
             <a-button>
               <template #icon><UndoOutlined /></template>
               取消归档
@@ -72,7 +95,9 @@
         >
           <template #bodyCell="{ column, record }">
             <template v-if="column.key === 'status'">
-              <a-tag :color="getDataStatusMeta(record.status).color">{{ getDataStatusMeta(record.status).label }}</a-tag>
+              <a-tag :color="getDataStatusMeta(record.status).color">
+                {{ getDataStatusMeta(record.status).label }}
+              </a-tag>
             </template>
             <template v-else-if="column.key === 'rawData'">
               <a-tooltip :title="stringify(record.rawData)">
@@ -98,23 +123,23 @@
       @cancel="previewData = []"
     >
       <div class="lh-modal-stack">
-      <a-alert
-        type="info"
-        show-icon
-        message="请上传 JSON 文件，支持数组或 { items: [...] } 格式。每个元素会作为 rawData 导入。"
-        class="import-alert"
-      />
-      <input type="file" accept=".json,application/json" @change="handleFileChange" />
+        <a-alert
+          type="info"
+          show-icon
+          message="请上传 JSON 文件，支持数组或 { items: [...] } 格式。每个元素会作为 rawData 导入。"
+          class="import-alert"
+        />
+        <input type="file" accept=".json,application/json" @change="handleFileChange" />
 
-      <a-table
-        v-if="previewData.length > 0"
-        row-key="key"
-        size="small"
-        class="preview-table lh-modal-table"
-        :columns="previewColumns"
-        :data-source="previewRows"
-        :pagination="{ pageSize: 5, showSizeChanger: false }"
-      />
+        <a-table
+          v-if="previewData.length > 0"
+          row-key="key"
+          size="small"
+          class="preview-table lh-modal-table"
+          :columns="previewColumns"
+          :data-source="previewRows"
+          :pagination="{ pageSize: 5, showSizeChanger: false }"
+        />
       </div>
     </a-modal>
   </section>
@@ -156,12 +181,37 @@ const importLoading = ref(false);
 const previewData = ref<Array<{ rawData: Record<string, unknown> }>>([]);
 
 const taskId = computed(() => (typeof route.query.id === 'string' ? route.query.id : ''));
-const task = computed(() => taskStore.tasks.find((item) => item.id === taskId.value) ?? taskStore.archivedTasks.find((item) => item.id === taskId.value));
+const task = computed(
+  () =>
+    taskStore.tasks.find((item) => item.id === taskId.value) ??
+    taskStore.archivedTasks.find((item) => item.id === taskId.value),
+);
 const isArchived = computed(() => taskStore.archivedTasks.some((item) => item.id === taskId.value));
-const isManager = computed(() => authStore.user?.role === Role.ADMIN || authStore.user?.role === Role.OWNER);
-const canEditTask = computed(() => Boolean(task.value && !isArchived.value && [TaskStatus.DRAFT, TaskStatus.PENDING].includes(task.value.status)));
-const canPublishTask = computed(() => Boolean(task.value && !isArchived.value && [TaskStatus.DRAFT, TaskStatus.PENDING].includes(task.value.status)));
-const canArchiveTask = computed(() => Boolean(task.value && isManager.value && !isArchived.value && [TaskStatus.COMPLETED, TaskStatus.ENDED].includes(task.value.status)));
+const isManager = computed(
+  () => authStore.user?.role === Role.ADMIN || authStore.user?.role === Role.OWNER,
+);
+const canEditTask = computed(() =>
+  Boolean(
+    task.value &&
+    !isArchived.value &&
+    [TaskStatus.DRAFT, TaskStatus.PENDING].includes(task.value.status),
+  ),
+);
+const canPublishTask = computed(() =>
+  Boolean(
+    task.value &&
+    !isArchived.value &&
+    [TaskStatus.DRAFT, TaskStatus.PENDING].includes(task.value.status),
+  ),
+);
+const canArchiveTask = computed(() =>
+  Boolean(
+    task.value &&
+    isManager.value &&
+    !isArchived.value &&
+    [TaskStatus.COMPLETED, TaskStatus.ENDED].includes(task.value.status),
+  ),
+);
 
 const itemColumns: TableColumnsType<DataItem> = [
   { title: 'ID', dataIndex: 'id', key: 'id', width: 120, ellipsis: true },
@@ -169,7 +219,13 @@ const itemColumns: TableColumnsType<DataItem> = [
   { title: '标注员', dataIndex: 'annotator', key: 'annotator', width: 104, responsive: ['md'] },
   { title: '审核员', dataIndex: 'reviewer', key: 'reviewer', width: 104, responsive: ['xl'] },
   { title: '原始数据', dataIndex: 'rawData', key: 'rawData', ellipsis: true },
-  { title: '提交时间', dataIndex: 'submittedAt', key: 'submittedAt', width: 148, responsive: ['lg'] },
+  {
+    title: '提交时间',
+    dataIndex: 'submittedAt',
+    key: 'submittedAt',
+    width: 148,
+    responsive: ['lg'],
+  },
 ];
 
 const previewColumns = [
@@ -230,7 +286,8 @@ function handleFileChange(event: Event) {
         return;
       }
       previewData.value = items.map((item) => ({
-        rawData: item && typeof item === 'object' ? (item as Record<string, unknown>) : { value: item },
+        rawData:
+          item && typeof item === 'object' ? (item as Record<string, unknown>) : { value: item },
       }));
       message.success(`已解析 ${previewData.value.length} 条数据`);
     } catch {

@@ -66,7 +66,10 @@ export interface PublishedNotificationListResult {
 }
 
 export function getPublishedNotifications(params?: { limit?: number }) {
-  return get<PublishedNotificationListResult>('/notifications/published', params as Record<string, unknown>);
+  return get<PublishedNotificationListResult>(
+    '/notifications/published',
+    params as Record<string, unknown>,
+  );
 }
 
 export function getPublishedNotification(id: string) {
@@ -74,7 +77,10 @@ export function getPublishedNotification(id: string) {
 }
 
 export function revokePublishedNotification(id: string) {
-  return put<{ publishId: string; updated: number; revokedAt: string }>(`/notifications/published/${id}/revoke`, {});
+  return put<{ publishId: string; updated: number; revokedAt: string }>(
+    `/notifications/published/${id}/revoke`,
+    {},
+  );
 }
 
 export function markNotificationRead(id: string) {

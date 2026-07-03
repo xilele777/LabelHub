@@ -11,7 +11,9 @@ import { io, Socket } from 'socket.io-client';
 import { useNotificationStore } from '../store/useNotificationStore';
 
 // 默认开发环境直连后端，避免经 Vite 代理转发 WebSocket 产生噪音；生产环境可通过 VITE_WS_URL 覆盖。
-const WS_URL = import.meta.env.VITE_WS_URL || (import.meta.env.DEV ? 'http://localhost:3001' : window.location.origin);
+const WS_URL =
+  import.meta.env.VITE_WS_URL ||
+  (import.meta.env.DEV ? 'http://localhost:3001' : window.location.origin);
 
 let socket: Socket | null = null;
 let activeToken: string | null = null;
@@ -45,7 +47,8 @@ export const NOTIFICATION_PRIORITY = {
   low: 'low',
 } as const;
 
-export type NotificationPriority = (typeof NOTIFICATION_PRIORITY)[keyof typeof NOTIFICATION_PRIORITY];
+export type NotificationPriority =
+  (typeof NOTIFICATION_PRIORITY)[keyof typeof NOTIFICATION_PRIORITY];
 
 /**
  * 通知对象接口

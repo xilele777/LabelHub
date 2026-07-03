@@ -40,8 +40,15 @@ export function saveDraft(id: string, annotationData: Record<string, unknown>, v
 }
 
 /** 提交标注（含乐观锁 version，后端自动触发 AI 预审，返回 { item, review }） */
-export function submitAnnotation(id: string, annotationData: Record<string, unknown>, version: number) {
-  return put<SubmitWithAIReviewResponse>(`/annotation-items/${id}/submit`, { annotationData, version });
+export function submitAnnotation(
+  id: string,
+  annotationData: Record<string, unknown>,
+  version: number,
+) {
+  return put<SubmitWithAIReviewResponse>(`/annotation-items/${id}/submit`, {
+    annotationData,
+    version,
+  });
 }
 
 /** 审核通过 */
@@ -55,8 +62,15 @@ export function rejectAnnotation(id: string, reason: string) {
 }
 
 /** 驳回后重新提交（含乐观锁 version，后端自动触发 AI 预审，返回 { item, review }） */
-export function resubmitAnnotation(id: string, annotationData: Record<string, unknown>, version: number) {
-  return put<SubmitWithAIReviewResponse>(`/annotation-items/${id}/resubmit`, { annotationData, version });
+export function resubmitAnnotation(
+  id: string,
+  annotationData: Record<string, unknown>,
+  version: number,
+) {
+  return put<SubmitWithAIReviewResponse>(`/annotation-items/${id}/resubmit`, {
+    annotationData,
+    version,
+  });
 }
 
 /** 获取可领取的未分配标注项列表 */
@@ -87,11 +101,17 @@ export interface BatchClaimResult {
 }
 
 export function getAvailableItems(params?: { taskId?: string; status?: string }) {
-  return get<AvailableItemsResult>('/annotation-items/available', params as Record<string, unknown>);
+  return get<AvailableItemsResult>(
+    '/annotation-items/available',
+    params as Record<string, unknown>,
+  );
 }
 
 export function getReviewAvailableItems(params?: { taskId?: string; status?: string }) {
-  return get<AvailableItemsResult>('/annotation-items/review-available', params as Record<string, unknown>);
+  return get<AvailableItemsResult>(
+    '/annotation-items/review-available',
+    params as Record<string, unknown>,
+  );
 }
 
 /** 手动领取（认领分配）一个未分配的标注项，将其分配给自己 */
@@ -133,7 +153,10 @@ export interface BatchImportResult {
   items: DataItem[];
 }
 
-export function batchImportItems(taskId: string, items: Array<{ rawData: Record<string, unknown> }>) {
+export function batchImportItems(
+  taskId: string,
+  items: Array<{ rawData: Record<string, unknown> }>,
+) {
   return post<BatchImportResult>('/annotation-items/batch-import', { taskId, items });
 }
 

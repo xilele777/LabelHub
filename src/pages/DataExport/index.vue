@@ -3,7 +3,9 @@
     <header class="app-page-header">
       <div class="app-page-title">
         <a-typography-title :level="4" class="page-title">数据导出</a-typography-title>
-        <a-typography-text class="app-page-desc" type="secondary">选择任务、范围和格式后导出标注数据。</a-typography-text>
+        <a-typography-text class="app-page-desc" type="secondary">
+          选择任务、范围和格式后导出标注数据。
+        </a-typography-text>
       </div>
       <div class="app-page-tools">
         <a-tag color="blue">总数据 {{ stats.total }}</a-tag>
@@ -28,28 +30,51 @@
         </a-col>
         <a-col :xs="24" :md="8">
           <div class="field-label">导出范围</div>
-          <a-radio-group v-model:value="exportRange" option-type="button" button-style="solid" :options="rangeOptions" class="segmented-group" />
+          <a-radio-group
+            v-model:value="exportRange"
+            option-type="button"
+            button-style="solid"
+            :options="rangeOptions"
+            class="segmented-group"
+          />
         </a-col>
         <a-col :xs="24" :md="8">
           <div class="field-label">导出格式</div>
-          <a-radio-group v-model:value="exportFormat" option-type="button" button-style="solid" :options="formatOptions" class="segmented-group" />
+          <a-radio-group
+            v-model:value="exportFormat"
+            option-type="button"
+            button-style="solid"
+            :options="formatOptions"
+            class="segmented-group"
+          />
         </a-col>
       </a-row>
     </a-card>
 
     <a-row :gutter="[16, 16]">
       <a-col :xs="24" :md="6">
-        <a-card class="metric-card metric-card--blue"><a-statistic title="总数据" :value="stats.total" /></a-card>
+        <a-card class="metric-card metric-card--blue">
+          <a-statistic title="总数据" :value="stats.total" />
+        </a-card>
       </a-col>
       <a-col :xs="24" :md="6">
-        <a-card class="metric-card metric-card--green"><a-statistic title="审核通过" :value="stats.approved" /></a-card>
+        <a-card class="metric-card metric-card--green">
+          <a-statistic title="审核通过" :value="stats.approved" />
+        </a-card>
       </a-col>
       <a-col :xs="24" :md="6">
-        <a-card class="metric-card metric-card--red"><a-statistic title="已驳回" :value="stats.rejected" /></a-card>
+        <a-card class="metric-card metric-card--red">
+          <a-statistic title="已驳回" :value="stats.rejected" />
+        </a-card>
       </a-col>
       <a-col :xs="24" :md="6">
         <a-card class="export-card">
-          <a-button type="primary" block :disabled="exportRecords.length === 0" @click="handleExport">
+          <a-button
+            type="primary"
+            block
+            :disabled="exportRecords.length === 0"
+            @click="handleExport"
+          >
             <template #icon><DownloadOutlined /></template>
             导出 {{ exportFormat.toUpperCase() }}
           </a-button>
@@ -75,7 +100,9 @@
       >
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'status'">
-            <a-tag :color="getDataStatusMeta(record.status).color">{{ getDataStatusMeta(record.status).label }}</a-tag>
+            <a-tag :color="getDataStatusMeta(record.status).color">
+              {{ getDataStatusMeta(record.status).label }}
+            </a-tag>
           </template>
           <template v-else-if="column.key === 'rawData'">
             <a-tooltip :title="stringify(record.rawData)">
@@ -92,7 +119,10 @@
             <a-tag v-else>无</a-tag>
           </template>
           <template v-else-if="column.key === 'humanReview'">
-            <a-tag v-if="record.humanReviewResult?.result" :color="record.humanReviewResult.result === 'approved' ? 'success' : 'error'">
+            <a-tag
+              v-if="record.humanReviewResult?.result"
+              :color="record.humanReviewResult.result === 'approved' ? 'success' : 'error'"
+            >
               {{ record.humanReviewResult.result === 'approved' ? '通过' : '驳回' }}
             </a-tag>
             <a-tag v-else>无</a-tag>
@@ -139,7 +169,14 @@ const formatOptions = [
 
 const columns: TableColumnsType<ExportRecord> = [
   { title: '数据ID', dataIndex: 'id', key: 'id', width: 112, ellipsis: true },
-  { title: '任务ID', dataIndex: 'taskId', key: 'taskId', width: 112, ellipsis: true, responsive: ['xl'] },
+  {
+    title: '任务ID',
+    dataIndex: 'taskId',
+    key: 'taskId',
+    width: 112,
+    ellipsis: true,
+    responsive: ['xl'],
+  },
   { title: '状态', dataIndex: 'status', key: 'status', width: 96 },
   { title: '原始数据', dataIndex: 'rawData', key: 'rawData', ellipsis: true },
   { title: '标注结果', dataIndex: 'annotationResult', key: 'annotationResult', ellipsis: true },
@@ -159,7 +196,9 @@ const allExportRecords = computed(() => {
   annotationStore.dataItems.forEach((item) => itemMap.set(item.id, item));
   annotationStore.archivedItems.forEach((item) => itemMap.set(item.id, item));
 
-  const items = Array.from(itemMap.values()).filter((item) => !selectedTaskId.value || item.taskId === selectedTaskId.value);
+  const items = Array.from(itemMap.values()).filter(
+    (item) => !selectedTaskId.value || item.taskId === selectedTaskId.value,
+  );
   return buildExportRecords(items, annotationStore.aiReviewResults);
 });
 
@@ -167,8 +206,10 @@ const exportRecords = computed(() => filterByRange(allExportRecords.value, expor
 
 const stats = computed(() => ({
   total: allExportRecords.value.length,
-  approved: allExportRecords.value.filter((record) => record.status === DataItemStatus.REVIEWED).length,
-  rejected: allExportRecords.value.filter((record) => record.status === DataItemStatus.REJECTED).length,
+  approved: allExportRecords.value.filter((record) => record.status === DataItemStatus.REVIEWED)
+    .length,
+  rejected: allExportRecords.value.filter((record) => record.status === DataItemStatus.REJECTED)
+    .length,
 }));
 
 onMounted(() => {

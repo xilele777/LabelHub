@@ -3,7 +3,9 @@
     <header class="app-page-header">
       <div class="app-page-title">
         <a-typography-title :level="4" class="page-title">任务列表</a-typography-title>
-        <a-typography-text class="app-page-desc" type="secondary">管理任务生命周期、时效和归档动作。</a-typography-text>
+        <a-typography-text class="app-page-desc" type="secondary">
+          管理任务生命周期、时效和归档动作。
+        </a-typography-text>
       </div>
       <div class="app-toolbar">
         <a-input-search
@@ -56,18 +58,26 @@
       >
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'type'">
-            <a-tag :color="getTaskTypeMeta(record.type).color">{{ getTaskTypeMeta(record.type).label }}</a-tag>
+            <a-tag :color="getTaskTypeMeta(record.type).color">
+              {{ getTaskTypeMeta(record.type).label }}
+            </a-tag>
           </template>
 
           <template v-else-if="column.key === 'status'">
-            <a-tag :color="getTaskStatusMeta(record.status).color">{{ getTaskStatusMeta(record.status).label }}</a-tag>
+            <a-tag :color="getTaskStatusMeta(record.status).color">
+              {{ getTaskStatusMeta(record.status).label }}
+            </a-tag>
           </template>
 
           <template v-else-if="column.key === 'timeliness'">
             <a-space direction="vertical" :size="2">
               <a-space :size="4" wrap>
-                <a-tag :color="getTaskTimeliness(record).color">标注 {{ getTaskTimeliness(record).label }}</a-tag>
-                <a-tag :color="getReviewTimeliness(record).color">审核 {{ getReviewTimeliness(record).label }}</a-tag>
+                <a-tag :color="getTaskTimeliness(record).color">
+                  标注 {{ getTaskTimeliness(record).label }}
+                </a-tag>
+                <a-tag :color="getReviewTimeliness(record).color">
+                  审核 {{ getReviewTimeliness(record).label }}
+                </a-tag>
               </a-space>
               <a-typography-text type="secondary" class="timeliness-desc">
                 标注：{{ getTaskTimeliness(record).description }}
@@ -84,21 +94,38 @@
 
           <template v-else-if="column.key === 'action'">
             <a-space size="small" wrap>
-              <a-button type="link" size="small" @click="router.push(`/tasks/detail?id=${record.id}`)">
+              <a-button
+                type="link"
+                size="small"
+                @click="router.push(`/tasks/detail?id=${record.id}`)"
+              >
                 <template #icon><EyeOutlined /></template>
                 详情
               </a-button>
-              <a-button v-if="canEdit(record.status)" type="link" size="small" @click="router.push(`/tasks/edit?id=${record.id}`)">
+              <a-button
+                v-if="canEdit(record.status)"
+                type="link"
+                size="small"
+                @click="router.push(`/tasks/edit?id=${record.id}`)"
+              >
                 <template #icon><EditOutlined /></template>
                 编辑
               </a-button>
-              <a-popconfirm v-if="canPublish(record.status)" title="确认发布该任务？" @confirm="handlePublish(record.id)">
+              <a-popconfirm
+                v-if="canPublish(record.status)"
+                title="确认发布该任务？"
+                @confirm="handlePublish(record.id)"
+              >
                 <a-button type="link" size="small">
                   <template #icon><RocketOutlined /></template>
                   发布
                 </a-button>
               </a-popconfirm>
-              <a-popconfirm v-if="canEnd(record.status)" title="确认结束该任务？结束后无法恢复。" @confirm="handleEnd(record.id)">
+              <a-popconfirm
+                v-if="canEnd(record.status)"
+                title="确认结束该任务？结束后无法恢复。"
+                @confirm="handleEnd(record.id)"
+              >
                 <a-button type="link" size="small" danger>
                   <template #icon><StopOutlined /></template>
                   结束
@@ -126,7 +153,14 @@
 import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { message, type TableColumnsType, type TablePaginationConfig } from 'ant-design-vue';
-import { EditOutlined, EyeOutlined, InboxOutlined, PlusOutlined, RocketOutlined, StopOutlined } from '@ant-design/icons-vue';
+import {
+  EditOutlined,
+  EyeOutlined,
+  InboxOutlined,
+  PlusOutlined,
+  RocketOutlined,
+  StopOutlined,
+} from '@ant-design/icons-vue';
 import { Role, TaskStatus, TaskType, type TaskItem } from '../../types';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useTaskStore } from '../../store/useTaskStore';
@@ -142,7 +176,9 @@ const keyword = ref('');
 const statusFilter = ref<TaskStatus | undefined>();
 const current = ref(1);
 
-const canCreateTask = computed(() => authStore.user?.role === Role.ADMIN || authStore.user?.role === Role.OWNER);
+const canCreateTask = computed(
+  () => authStore.user?.role === Role.ADMIN || authStore.user?.role === Role.OWNER,
+);
 
 const statusOptions = Object.values(TaskStatus).map((value) => ({
   value,
@@ -154,7 +190,14 @@ const columns: TableColumnsType<TaskItem> = [
   { title: '类型', dataIndex: 'type', key: 'type', width: 112 },
   { title: '状态', dataIndex: 'status', key: 'status', width: 96 },
   { title: '负责人', dataIndex: 'owner', key: 'owner', width: 88, responsive: ['xl'] },
-  { title: '模板', dataIndex: 'templateName', key: 'templateName', ellipsis: true, width: 132, responsive: ['lg'] },
+  {
+    title: '模板',
+    dataIndex: 'templateName',
+    key: 'templateName',
+    ellipsis: true,
+    width: 132,
+    responsive: ['lg'],
+  },
   { title: '时效', key: 'timeliness', width: 148, responsive: ['xl'] },
   { title: '创建时间', dataIndex: 'createdAt', key: 'createdAt', width: 148, responsive: ['xxl'] },
   { title: '操作', key: 'action', width: 172 },
@@ -163,7 +206,8 @@ const columns: TableColumnsType<TaskItem> = [
 const filteredTasks = computed(() => {
   const normalizedKeyword = keyword.value.trim().toLowerCase();
   return taskStore.tasks.filter((task) => {
-    const matchesKeyword = !normalizedKeyword || task.name.toLowerCase().includes(normalizedKeyword);
+    const matchesKeyword =
+      !normalizedKeyword || task.name.toLowerCase().includes(normalizedKeyword);
     const matchesStatus = !statusFilter.value || task.status === statusFilter.value;
     return matchesKeyword && matchesStatus;
   });

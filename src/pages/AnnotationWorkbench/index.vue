@@ -11,9 +11,14 @@
         @close="annotationStore.error = null"
       />
 
-      <a-empty v-if="!annotationStore.loading && annotationStore.dataItems.length === 0" description="暂无分配给您的标注数据">
+      <a-empty
+        v-if="!annotationStore.loading && annotationStore.dataItems.length === 0"
+        description="暂无分配给您的标注数据"
+      >
         <a-space direction="vertical" align="center">
-          <a-typography-text type="secondary">可以等待负责人分配，或从任务池领取待标注数据。</a-typography-text>
+          <a-typography-text type="secondary">
+            可以等待负责人分配，或从任务池领取待标注数据。
+          </a-typography-text>
           <a-button type="primary" @click="openClaimModal">领取标注任务</a-button>
         </a-space>
       </a-empty>
@@ -22,9 +27,13 @@
         <a-card size="small" class="workbench-header">
           <div class="header-row">
             <a-space wrap>
-              <a-typography-title :level="5" class="task-title">{{ currentTask?.name || '标注任务' }}</a-typography-title>
+              <a-typography-title :level="5" class="task-title">
+                {{ currentTask?.name || '标注任务' }}
+              </a-typography-title>
               <a-tag :color="statusMeta.color">{{ statusMeta.label }}</a-tag>
-              <a-typography-text type="secondary">{{ currentIndexInTask + 1 }} / {{ sameTaskItems.length }}</a-typography-text>
+              <a-typography-text type="secondary">
+                {{ currentIndexInTask + 1 }} / {{ sameTaskItems.length }}
+              </a-typography-text>
             </a-space>
             <a-steps
               size="small"
@@ -33,7 +42,11 @@
               :items="progressItems"
             />
           </div>
-          <a-typography-text v-if="currentTask?.instructions" type="secondary" class="task-instructions">
+          <a-typography-text
+            v-if="currentTask?.instructions"
+            type="secondary"
+            class="task-instructions"
+          >
             {{ currentTask.instructions }}
           </a-typography-text>
         </a-card>
@@ -88,7 +101,9 @@
                   <component :is="`h${getTitleLevel(field)}`" class="schema-title">
                     {{ field.label }}
                   </component>
-                  <p v-if="getStringField(field, 'content')" class="schema-copy">{{ getStringField(field, 'content') }}</p>
+                  <p v-if="getStringField(field, 'content')" class="schema-copy">
+                    {{ getStringField(field, 'content') }}
+                  </p>
                   <p v-if="field.description" class="schema-description">{{ field.description }}</p>
                 </section>
 
@@ -123,7 +138,9 @@
                     :placeholder="field.placeholder"
                     :maxlength="getNumberField(field, 'maxLength')"
                     :show-count="Boolean(getNumberField(field, 'maxLength'))"
-                    :auto-size="getBooleanField(field, 'autoSize') ? { minRows: 3, maxRows: 8 } : false"
+                    :auto-size="
+                      getBooleanField(field, 'autoSize') ? { minRows: 3, maxRows: 8 } : false
+                    "
                   />
 
                   <a-radio-group
@@ -186,19 +203,19 @@
               <a-tag color="blue">提示 {{ riskStats.info }}</a-tag>
             </a-space>
 
-            <a-empty v-if="liveReviewResult.fieldWarnings.length === 0" description="未发现预审风险" />
-            <a-list
-              v-else
-              size="small"
-              :data-source="sortedWarnings"
-              class="warning-list"
-            >
+            <a-empty
+              v-if="liveReviewResult.fieldWarnings.length === 0"
+              description="未发现预审风险"
+            />
+            <a-list v-else size="small" :data-source="sortedWarnings" class="warning-list">
               <template #renderItem="{ item }">
                 <a-list-item class="warning-item" @click="scrollToField(item.fieldKey)">
                   <a-list-item-meta>
                     <template #title>
                       <a-space>
-                        <a-tag :color="severityColor(item.severity)">{{ severityLabel(item.severity) }}</a-tag>
+                        <a-tag :color="severityColor(item.severity)">
+                          {{ severityLabel(item.severity) }}
+                        </a-tag>
                         <a-typography-text strong>{{ item.fieldLabel }}</a-typography-text>
                       </a-space>
                     </template>
@@ -220,7 +237,11 @@
               <a-button @click="openClaimModal">领取更多</a-button>
             </a-space>
             <a-space>
-              <a-button v-if="canSaveDraft" :disabled="Boolean(annotationStore.conflictInfo)" @click="saveDraft">
+              <a-button
+                v-if="canSaveDraft"
+                :disabled="Boolean(annotationStore.conflictInfo)"
+                @click="saveDraft"
+              >
                 保存草稿
               </a-button>
               <a-button
@@ -241,47 +262,58 @@
       <a-spin v-else class="page-loading" />
     </section>
 
-    <a-modal v-model:open="claimModalOpen" title="领取标注任务" width="760px" :footer="null" destroy-on-close>
+    <a-modal
+      v-model:open="claimModalOpen"
+      title="领取标注任务"
+      width="760px"
+      :footer="null"
+      destroy-on-close
+    >
       <div class="lh-modal-stack">
-      <a-space wrap class="claim-toolbar lh-modal-toolbar">
-        <a-select
-          v-model:value="claimTaskId"
-          allow-clear
-          placeholder="全部任务"
-          class="claim-select"
-          :options="runningTaskOptions"
-        />
-        <a-button @click="fetchAvailableItems">刷新</a-button>
-        <a-button
-          type="primary"
-          :loading="batchClaiming"
-          :disabled="selectedClaimIds.length === 0"
-          @click="claimSelectedItems"
+        <a-space wrap class="claim-toolbar lh-modal-toolbar">
+          <a-select
+            v-model:value="claimTaskId"
+            allow-clear
+            placeholder="全部任务"
+            class="claim-select"
+            :options="runningTaskOptions"
+          />
+          <a-button @click="fetchAvailableItems">刷新</a-button>
+          <a-button
+            type="primary"
+            :loading="batchClaiming"
+            :disabled="selectedClaimIds.length === 0"
+            @click="claimSelectedItems"
+          >
+            批量领取 {{ selectedClaimIds.length || '' }}
+          </a-button>
+        </a-space>
+        <a-table
+          row-key="id"
+          size="small"
+          class="lh-modal-table"
+          :loading="annotationStore.availableLoading"
+          :data-source="annotationStore.availableItems"
+          :pagination="{ pageSize: 8 }"
+          :row-selection="{ selectedRowKeys: selectedClaimIds, onChange: onClaimSelectionChange }"
+          :columns="claimColumns"
         >
-          批量领取 {{ selectedClaimIds.length || '' }}
-        </a-button>
-      </a-space>
-      <a-table
-        row-key="id"
-        size="small"
-        class="lh-modal-table"
-        :loading="annotationStore.availableLoading"
-        :data-source="annotationStore.availableItems"
-        :pagination="{ pageSize: 8 }"
-        :row-selection="{ selectedRowKeys: selectedClaimIds, onChange: onClaimSelectionChange }"
-        :columns="claimColumns"
-      >
-        <template #bodyCell="{ column, record }">
-          <template v-if="column.key === 'taskId'">
-            {{ taskName(record.taskId) }}
+          <template #bodyCell="{ column, record }">
+            <template v-if="column.key === 'taskId'">
+              {{ taskName(record.taskId) }}
+            </template>
+            <template v-else-if="column.key === 'action'">
+              <a-button
+                size="small"
+                type="primary"
+                :loading="claimingId === record.id"
+                @click="claimOneItem(record.id)"
+              >
+                领取
+              </a-button>
+            </template>
           </template>
-          <template v-else-if="column.key === 'action'">
-            <a-button size="small" type="primary" :loading="claimingId === record.id" @click="claimOneItem(record.id)">
-              领取
-            </a-button>
-          </template>
-        </template>
-      </a-table>
+        </a-table>
       </div>
     </a-modal>
   </a-spin>
@@ -302,7 +334,12 @@ import {
   type TaskItem,
   type TemplateField,
 } from '../../types';
-import { ReviewStatus, type AIReviewResult, type FieldWarning, type Severity } from '../../types/aiReview';
+import {
+  ReviewStatus,
+  type AIReviewResult,
+  type FieldWarning,
+  type Severity,
+} from '../../types/aiReview';
 import { useAnnotationStore, type AvailableItem } from '../../store/useAnnotationStore';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useTaskStore } from '../../store/useTaskStore';
@@ -331,19 +368,31 @@ const batchClaiming = ref(false);
 const selectedClaimIds = ref<string[]>([]);
 const joinedTaskIds = new Set<string>();
 
-const queryTaskId = computed(() => (typeof route.query.taskId === 'string' ? route.query.taskId : undefined));
-const queryDataItemId = computed(() => (typeof route.query.dataItemId === 'string' ? route.query.dataItemId : undefined));
+const queryTaskId = computed(() =>
+  typeof route.query.taskId === 'string' ? route.query.taskId : undefined,
+);
+const queryDataItemId = computed(() =>
+  typeof route.query.dataItemId === 'string' ? route.query.dataItemId : undefined,
+);
 
-const currentItem = computed<DataItem | undefined>(() => annotationStore.dataItems[annotationStore.currentIndex]);
+const currentItem = computed<DataItem | undefined>(
+  () => annotationStore.dataItems[annotationStore.currentIndex],
+);
 const liveReviewResult = ref<AIReviewResult>(createEmptyReview());
 const currentTask = computed<TaskItem | undefined>(() =>
-  currentItem.value ? taskStore.tasks.find((task) => task.id === currentItem.value?.taskId) : undefined,
+  currentItem.value
+    ? taskStore.tasks.find((task) => task.id === currentItem.value?.taskId)
+    : undefined,
 );
 const sameTaskItems = computed(() =>
-  currentItem.value ? annotationStore.dataItems.filter((item) => item.taskId === currentItem.value?.taskId) : [],
+  currentItem.value
+    ? annotationStore.dataItems.filter((item) => item.taskId === currentItem.value?.taskId)
+    : [],
 );
 const currentIndexInTask = computed(() =>
-  currentItem.value ? sameTaskItems.value.findIndex((item) => item.id === currentItem.value?.id) : -1,
+  currentItem.value
+    ? sameTaskItems.value.findIndex((item) => item.id === currentItem.value?.id)
+    : -1,
 );
 const canPrev = computed(() => annotationStore.currentIndex > 0);
 const canNext = computed(() => annotationStore.currentIndex < annotationStore.dataItems.length - 1);
@@ -358,7 +407,9 @@ const isReadOnly = computed(() => {
   );
 });
 const isEditable = computed(() => !isReadOnly.value && !annotationStore.conflictInfo);
-const canSaveDraft = computed(() => !isReadOnly.value && currentItem.value?.status !== DataItemStatus.REJECTED);
+const canSaveDraft = computed(
+  () => !isReadOnly.value && currentItem.value?.status !== DataItemStatus.REJECTED,
+);
 
 const statusMeta = computed(() => {
   const status = currentItem.value?.status ?? DataItemStatus.PENDING;
@@ -366,8 +417,18 @@ const statusMeta = computed(() => {
 });
 const progressCurrent = computed(() => {
   const status = currentItem.value?.status;
-  if (status === DataItemStatus.PENDING || status === DataItemStatus.DRAFT || status === DataItemStatus.REJECTED) return 0;
-  if (status === DataItemStatus.SUBMITTED || status === DataItemStatus.AI_REVIEWING || status === DataItemStatus.AI_REVIEWED) return 1;
+  if (
+    status === DataItemStatus.PENDING ||
+    status === DataItemStatus.DRAFT ||
+    status === DataItemStatus.REJECTED
+  )
+    return 0;
+  if (
+    status === DataItemStatus.SUBMITTED ||
+    status === DataItemStatus.AI_REVIEWING ||
+    status === DataItemStatus.AI_REVIEWED
+  )
+    return 1;
   if (status === DataItemStatus.PENDING_REVIEW) return 2;
   return 3;
 });
@@ -388,11 +449,14 @@ const riskStats = computed(() => {
 });
 const sortedWarnings = computed(() => {
   const order: Record<Severity, number> = { error: 0, warning: 1, info: 2 };
-  return [...liveReviewResult.value.fieldWarnings].sort((a, b) => order[a.severity] - order[b.severity]);
+  return [...liveReviewResult.value.fieldWarnings].sort(
+    (a, b) => order[a.severity] - order[b.severity],
+  );
 });
 const liveReviewMeta = computed(() => reviewStatusMeta[liveReviewResult.value.reviewStatus]);
 const reviewDescription = computed(() => {
-  if (liveReviewResult.value.fieldWarnings.length === 0) return '当前表单数据未触发必填、评分范围或文本长度等预审规则。';
+  if (liveReviewResult.value.fieldWarnings.length === 0)
+    return '当前表单数据未触发必填、评分范围或文本长度等预审规则。';
   return `发现 ${riskStats.value.error} 个严重问题、${riskStats.value.warning} 个警告、${riskStats.value.info} 个提示。`;
 });
 
@@ -403,7 +467,14 @@ const runningTaskOptions = computed(() =>
 );
 const claimColumns: TableColumnsType<AvailableItem> = [
   { title: 'ID', dataIndex: 'id', key: 'id', width: 116, ellipsis: true },
-  { title: '任务', dataIndex: 'taskId', key: 'taskId', width: 132, ellipsis: true, responsive: ['md'] },
+  {
+    title: '任务',
+    dataIndex: 'taskId',
+    key: 'taskId',
+    width: 132,
+    ellipsis: true,
+    responsive: ['md'],
+  },
   { title: '数据预览', dataIndex: 'rawDataPreview', key: 'rawDataPreview', ellipsis: true },
   { title: '操作', key: 'action', width: 76 },
 ];
@@ -419,10 +490,33 @@ const dataStatusMeta: Record<DataItemStatus, { label: string; color: string }> =
   [DataItemStatus.REJECTED]: { label: '已驳回', color: 'red' },
 };
 
-const reviewStatusMeta: Record<ReviewStatus, { label: string; tagColor: string; strokeColor: string; alertType: 'success' | 'warning' | 'error' }> = {
-  [ReviewStatus.PASS]: { label: '通过', tagColor: 'success', strokeColor: '#52c41a', alertType: 'success' },
-  [ReviewStatus.RISK]: { label: '风险', tagColor: 'warning', strokeColor: '#faad14', alertType: 'warning' },
-  [ReviewStatus.FAIL]: { label: '不通过', tagColor: 'error', strokeColor: '#ff4d4f', alertType: 'error' },
+const reviewStatusMeta: Record<
+  ReviewStatus,
+  {
+    label: string;
+    tagColor: string;
+    strokeColor: string;
+    alertType: 'success' | 'warning' | 'error';
+  }
+> = {
+  [ReviewStatus.PASS]: {
+    label: '通过',
+    tagColor: 'success',
+    strokeColor: '#52c41a',
+    alertType: 'success',
+  },
+  [ReviewStatus.RISK]: {
+    label: '风险',
+    tagColor: 'warning',
+    strokeColor: '#faad14',
+    alertType: 'warning',
+  },
+  [ReviewStatus.FAIL]: {
+    label: '不通过',
+    tagColor: 'error',
+    strokeColor: '#ff4d4f',
+    alertType: 'error',
+  },
 };
 
 onMounted(() => {
@@ -441,11 +535,18 @@ onBeforeUnmount(() => {
 });
 
 watch(
-  () => [annotationStore.dataItems.length, queryDataItemId.value, annotationStore.currentIndex] as const,
+  () =>
+    [
+      annotationStore.dataItems.length,
+      queryDataItemId.value,
+      annotationStore.currentIndex,
+    ] as const,
   () => {
     if (annotationStore.dataItems.length === 0) return;
     if (queryDataItemId.value) {
-      const targetIndex = annotationStore.dataItems.findIndex((item) => item.id === queryDataItemId.value);
+      const targetIndex = annotationStore.dataItems.findIndex(
+        (item) => item.id === queryDataItemId.value,
+      );
       if (targetIndex >= 0 && targetIndex !== annotationStore.currentIndex) {
         annotationStore.setCurrentIndex(targetIndex);
       }
@@ -620,7 +721,11 @@ function runReactivePreReview(): AIReviewResult {
       }
     }
 
-    if ([FieldType.RADIO, FieldType.CHECKBOX, FieldType.SELECT].includes(field.type) && !field.required && isEmpty(value)) {
+    if (
+      [FieldType.RADIO, FieldType.CHECKBOX, FieldType.SELECT].includes(field.type) &&
+      !field.required &&
+      isEmpty(value)
+    ) {
       warnings.push({
         fieldKey: field.fieldKey,
         fieldLabel: field.label,
@@ -659,24 +764,35 @@ function calculateScore(warnings: FieldWarning[]) {
 }
 
 function deriveReviewStatus(score: number, warnings: FieldWarning[]) {
-  if (warnings.some((warning) => warning.severity === 'error') || score < 60) return ReviewStatus.FAIL;
-  if (warnings.some((warning) => warning.severity === 'warning') || score < 80) return ReviewStatus.RISK;
+  if (warnings.some((warning) => warning.severity === 'error') || score < 60)
+    return ReviewStatus.FAIL;
+  if (warnings.some((warning) => warning.severity === 'warning') || score < 80)
+    return ReviewStatus.RISK;
   return ReviewStatus.PASS;
 }
 
 function buildReviewSummary(status: ReviewStatus, score: number, warnings: FieldWarning[]) {
   if (status === ReviewStatus.PASS) return `实时预审通过，质量评分 ${score} 分。`;
-  if (status === ReviewStatus.RISK) return `实时预审发现风险项，质量评分 ${score} 分，建议提交前复核。`;
+  if (status === ReviewStatus.RISK)
+    return `实时预审发现风险项，质量评分 ${score} 分，建议提交前复核。`;
   return `实时预审未通过，质量评分 ${score} 分，请修正严重问题后提交。`;
 }
 
 function isEmpty(value: unknown) {
-  return value === undefined || value === null || value === '' || (Array.isArray(value) && value.length === 0);
+  return (
+    value === undefined ||
+    value === null ||
+    value === '' ||
+    (Array.isArray(value) && value.length === 0)
+  );
 }
 
 function getOptions(field: TemplateField) {
   if (!('options' in field)) return [];
-  return (field.options as FieldOption[]).map((option) => ({ label: option.label, value: option.value }));
+  return (field.options as FieldOption[]).map((option) => ({
+    label: option.label,
+    value: option.value,
+  }));
 }
 
 function getDirection(field: TemplateField) {
@@ -718,7 +834,11 @@ function fieldValidateStatus(fieldKey: string) {
 }
 
 function fieldHelp(fieldKey: string) {
-  return fieldWarnings(fieldKey).map((warning) => warning.message).join('；') || undefined;
+  return (
+    fieldWarnings(fieldKey)
+      .map((warning) => warning.message)
+      .join('；') || undefined
+  );
 }
 
 function severityColor(severity: Severity) {
@@ -730,7 +850,9 @@ function severityLabel(severity: Severity) {
 }
 
 function scrollToField(fieldKey: string) {
-  document.querySelector(`[data-field-key="${fieldKey}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  document
+    .querySelector(`[data-field-key="${fieldKey}"]`)
+    ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
 function goPrev() {
@@ -744,7 +866,11 @@ function goNext() {
 async function saveDraft() {
   if (!currentItem.value || !authStore.user) return;
   try {
-    await annotationStore.saveDraft(currentItem.value.id, { ...formState }, authStore.user.username);
+    await annotationStore.saveDraft(
+      currentItem.value.id,
+      { ...formState },
+      authStore.user.username,
+    );
     message.success('草稿已保存');
   } catch (error) {
     if (!isConflictError(error)) message.error('保存草稿失败');
@@ -756,10 +882,18 @@ async function submitCurrent() {
   try {
     submitting.value = true;
     if (currentItem.value.status === DataItemStatus.REJECTED) {
-      await annotationStore.resubmitItem(currentItem.value.id, { ...formState }, authStore.user.username);
+      await annotationStore.resubmitItem(
+        currentItem.value.id,
+        { ...formState },
+        authStore.user.username,
+      );
       message.success('标注已重新提交，AI 预审已完成');
     } else {
-      await annotationStore.submitAnnotation(currentItem.value.id, { ...formState }, authStore.user.username);
+      await annotationStore.submitAnnotation(
+        currentItem.value.id,
+        { ...formState },
+        authStore.user.username,
+      );
       message.success('标注已提交，AI 预审已完成');
     }
   } catch (error) {
@@ -775,7 +909,12 @@ async function submitCurrent() {
 }
 
 function isConflictError(error: unknown) {
-  return typeof error === 'object' && error !== null && 'code' in error && (error as { code?: number }).code === 409;
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    (error as { code?: number }).code === 409
+  );
 }
 
 function resolveConflict() {

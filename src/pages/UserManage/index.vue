@@ -3,7 +3,9 @@
     <header class="app-page-header">
       <div class="app-page-title">
         <a-typography-title :level="5" class="page-title">用户管理</a-typography-title>
-        <a-typography-text class="app-page-desc" type="secondary">维护平台用户和角色权限。</a-typography-text>
+        <a-typography-text class="app-page-desc" type="secondary">
+          维护平台用户和角色权限。
+        </a-typography-text>
       </div>
       <div class="app-page-tools">
         <a-button :loading="loading" @click="fetchUsers">
@@ -28,7 +30,9 @@
       >
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'role'">
-            <a-tag :color="getRoleMeta(record.role).color">{{ getRoleMeta(record.role).label }}</a-tag>
+            <a-tag :color="getRoleMeta(record.role).color">
+              {{ getRoleMeta(record.role).label }}
+            </a-tag>
           </template>
           <template v-else-if="column.key === 'action'">
             <a-space size="small">
@@ -40,7 +44,10 @@
                 <template #icon><KeyOutlined /></template>
                 改密
               </a-button>
-              <a-popconfirm :title="`确定删除用户 ${record.username} 吗？`" @confirm="handleDelete(record.id)">
+              <a-popconfirm
+                :title="`确定删除用户 ${record.username} 吗？`"
+                @confirm="handleDelete(record.id)"
+              >
                 <a-button type="link" size="small" danger>
                   <template #icon><DeleteOutlined /></template>
                   删除
@@ -52,22 +59,58 @@
       </a-table>
     </a-card>
 
-    <a-modal v-model:open="createModalOpen" title="新增用户" width="520px" ok-text="创建" :confirm-loading="submitting" @ok="handleCreate">
-      <a-form ref="createFormRef" :model="createForm" :rules="createRules" layout="vertical" autocomplete="off" class="modal-form">
+    <a-modal
+      v-model:open="createModalOpen"
+      title="新增用户"
+      width="520px"
+      ok-text="创建"
+      :confirm-loading="submitting"
+      @ok="handleCreate"
+    >
+      <a-form
+        ref="createFormRef"
+        :model="createForm"
+        :rules="createRules"
+        layout="vertical"
+        autocomplete="off"
+        class="modal-form"
+      >
         <a-form-item name="username" label="用户名">
           <a-input v-model:value="createForm.username" :maxlength="30" placeholder="请输入用户名" />
         </a-form-item>
         <a-form-item name="password" label="密码">
-          <a-input-password v-model:value="createForm.password" :maxlength="50" placeholder="请输入密码" />
+          <a-input-password
+            v-model:value="createForm.password"
+            :maxlength="50"
+            placeholder="请输入密码"
+          />
         </a-form-item>
         <a-form-item name="role" label="角色">
-          <a-select v-model:value="createForm.role" :options="roleOptions" placeholder="请选择角色" />
+          <a-select
+            v-model:value="createForm.role"
+            :options="roleOptions"
+            placeholder="请选择角色"
+          />
         </a-form-item>
       </a-form>
     </a-modal>
 
-    <a-modal v-model:open="editModalOpen" title="编辑用户" width="520px" ok-text="保存" :confirm-loading="submitting" @ok="handleEdit">
-      <a-form ref="editFormRef" :model="editForm" :rules="editRules" layout="vertical" autocomplete="off" class="modal-form">
+    <a-modal
+      v-model:open="editModalOpen"
+      title="编辑用户"
+      width="520px"
+      ok-text="保存"
+      :confirm-loading="submitting"
+      @ok="handleEdit"
+    >
+      <a-form
+        ref="editFormRef"
+        :model="editForm"
+        :rules="editRules"
+        layout="vertical"
+        autocomplete="off"
+        class="modal-form"
+      >
         <a-form-item name="username" label="用户名">
           <a-input v-model:value="editForm.username" :maxlength="30" placeholder="请输入用户名" />
         </a-form-item>
@@ -77,13 +120,35 @@
       </a-form>
     </a-modal>
 
-    <a-modal v-model:open="passwordModalOpen" title="修改密码" width="520px" ok-text="确认修改" :confirm-loading="submitting" @ok="handleChangePassword">
-      <a-form ref="passwordFormRef" :model="passwordForm" :rules="passwordRules" layout="vertical" autocomplete="off" class="modal-form">
+    <a-modal
+      v-model:open="passwordModalOpen"
+      title="修改密码"
+      width="520px"
+      ok-text="确认修改"
+      :confirm-loading="submitting"
+      @ok="handleChangePassword"
+    >
+      <a-form
+        ref="passwordFormRef"
+        :model="passwordForm"
+        :rules="passwordRules"
+        layout="vertical"
+        autocomplete="off"
+        class="modal-form"
+      >
         <a-form-item name="newPassword" label="新密码">
-          <a-input-password v-model:value="passwordForm.newPassword" :maxlength="50" placeholder="请输入新密码" />
+          <a-input-password
+            v-model:value="passwordForm.newPassword"
+            :maxlength="50"
+            placeholder="请输入新密码"
+          />
         </a-form-item>
         <a-form-item name="confirmPassword" label="确认密码">
-          <a-input-password v-model:value="passwordForm.confirmPassword" :maxlength="50" placeholder="请再次输入新密码" />
+          <a-input-password
+            v-model:value="passwordForm.confirmPassword"
+            :maxlength="50"
+            placeholder="请再次输入新密码"
+          />
         </a-form-item>
       </a-form>
     </a-modal>
@@ -93,7 +158,13 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue';
 import { message, type FormInstance, type FormProps, type TableColumnsType } from 'ant-design-vue';
-import { DeleteOutlined, EditOutlined, KeyOutlined, ReloadOutlined, UserAddOutlined } from '@ant-design/icons-vue';
+import {
+  DeleteOutlined,
+  EditOutlined,
+  KeyOutlined,
+  ReloadOutlined,
+  UserAddOutlined,
+} from '@ant-design/icons-vue';
 import * as authApi from '../../api/auth';
 import { Role, type UserInfo } from '../../types';
 
@@ -128,18 +199,30 @@ const columns: TableColumnsType<UserInfo> = [
 ];
 
 const createRules: FormProps['rules'] = {
-  username: [{ required: true, message: '请输入用户名' }, { min: 2, message: '用户名至少 2 个字符' }],
-  password: [{ required: true, message: '请输入密码' }, { min: 4, message: '密码至少 4 位' }],
+  username: [
+    { required: true, message: '请输入用户名' },
+    { min: 2, message: '用户名至少 2 个字符' },
+  ],
+  password: [
+    { required: true, message: '请输入密码' },
+    { min: 4, message: '密码至少 4 位' },
+  ],
   role: [{ required: true, message: '请选择角色' }],
 };
 
 const editRules: FormProps['rules'] = {
-  username: [{ required: true, message: '请输入用户名' }, { min: 2, message: '用户名至少 2 个字符' }],
+  username: [
+    { required: true, message: '请输入用户名' },
+    { min: 2, message: '用户名至少 2 个字符' },
+  ],
   role: [{ required: true, message: '请选择角色' }],
 };
 
 const passwordRules: FormProps['rules'] = {
-  newPassword: [{ required: true, message: '请输入新密码' }, { min: 4, message: '密码至少 4 位' }],
+  newPassword: [
+    { required: true, message: '请输入新密码' },
+    { min: 4, message: '密码至少 4 位' },
+  ],
   confirmPassword: [
     { required: true, message: '请确认新密码' },
     {

@@ -20,12 +20,38 @@ export function getAssignmentStats(taskId: string) {
 }
 
 /** 获取待分配数据列表 */
-export function getAssignableItems(taskId: string, params?: { status?: string; includeAssigned?: boolean }) {
-  return get<{ items: Array<{ id: string; taskId: string; status: string; annotator: string | null; rawDataPreview: string }>; total: number }>(`/tasks/${taskId}/assign/items`, params as Record<string, unknown>);
+export function getAssignableItems(
+  taskId: string,
+  params?: { status?: string; includeAssigned?: boolean },
+) {
+  return get<{
+    items: Array<{
+      id: string;
+      taskId: string;
+      status: string;
+      annotator: string | null;
+      rawDataPreview: string;
+    }>;
+    total: number;
+  }>(`/tasks/${taskId}/assign/items`, params as Record<string, unknown>);
 }
 
-export function getReviewAssignableItems(taskId: string, params?: { status?: string; includeAssigned?: boolean }) {
-  return get<{ items: Array<{ id: string; taskId: string; status: string; annotator: string | null; reviewer: string | null; submittedAt: string | null; rawDataPreview: string }>; total: number }>(`/tasks/${taskId}/review-assign/items`, params as Record<string, unknown>);
+export function getReviewAssignableItems(
+  taskId: string,
+  params?: { status?: string; includeAssigned?: boolean },
+) {
+  return get<{
+    items: Array<{
+      id: string;
+      taskId: string;
+      status: string;
+      annotator: string | null;
+      reviewer: string | null;
+      submittedAt: string | null;
+      rawDataPreview: string;
+    }>;
+    total: number;
+  }>(`/tasks/${taskId}/review-assign/items`, params as Record<string, unknown>);
 }
 
 /** 执行分配参数 */
@@ -61,6 +87,9 @@ export function clearAssignment(taskId: string, itemIds?: string[]) {
   return post<ClearResult>(`/tasks/${taskId}/assign/clear`, { itemIds: itemIds || [] });
 }
 
-export function executeReviewAssignment(taskId: string, assignments: { itemId: string; reviewer: string }[]) {
+export function executeReviewAssignment(
+  taskId: string,
+  assignments: { itemId: string; reviewer: string }[],
+) {
   return post<AssignResult>(`/tasks/${taskId}/review-assign`, { assignments });
 }

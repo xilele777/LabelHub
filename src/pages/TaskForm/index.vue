@@ -2,30 +2,69 @@
   <section class="task-form-page">
     <a-card class="page-hero" :body-style="{ padding: '18px 20px' }">
       <a-space direction="vertical" :size="4">
-        <a-typography-title :level="4" class="page-title">{{ isEdit ? '编辑任务' : '创建任务' }}</a-typography-title>
-        <a-typography-text type="secondary">配置任务基础信息、模板绑定和处理时效。</a-typography-text>
+        <a-typography-title :level="4" class="page-title">
+          {{ isEdit ? '编辑任务' : '创建任务' }}
+        </a-typography-title>
+        <a-typography-text type="secondary">
+          配置任务基础信息、模板绑定和处理时效。
+        </a-typography-text>
       </a-space>
     </a-card>
 
-    <a-alert v-if="errorText" type="error" :message="errorText" show-icon closable @close="errorText = ''" />
+    <a-alert
+      v-if="errorText"
+      type="error"
+      :message="errorText"
+      show-icon
+      closable
+      @close="errorText = ''"
+    />
 
     <a-spin :spinning="loading">
       <a-card class="form-card">
-        <a-form ref="formRef" :model="formState" :rules="rules" layout="vertical" autocomplete="off" @finish="handleSubmit">
+        <a-form
+          ref="formRef"
+          :model="formState"
+          :rules="rules"
+          layout="vertical"
+          autocomplete="off"
+          @finish="handleSubmit"
+        >
           <a-form-item name="name" label="任务名称">
-            <a-input v-model:value="formState.name" :maxlength="50" show-count placeholder="请输入任务名称" />
+            <a-input
+              v-model:value="formState.name"
+              :maxlength="50"
+              show-count
+              placeholder="请输入任务名称"
+            />
           </a-form-item>
 
           <a-form-item name="description" label="任务描述">
-            <a-textarea v-model:value="formState.description" :maxlength="200" show-count :rows="3" placeholder="请输入任务描述" />
+            <a-textarea
+              v-model:value="formState.description"
+              :maxlength="200"
+              show-count
+              :rows="3"
+              placeholder="请输入任务描述"
+            />
           </a-form-item>
 
           <a-form-item name="type" label="任务类型">
-            <a-select v-model:value="formState.type" :options="taskTypeOptions" placeholder="请选择任务类型" @change="formState.templateId = undefined" />
+            <a-select
+              v-model:value="formState.type"
+              :options="taskTypeOptions"
+              placeholder="请选择任务类型"
+              @change="formState.templateId = undefined"
+            />
           </a-form-item>
 
           <a-form-item name="owner" label="负责人">
-            <a-select v-model:value="formState.owner" :options="ownerOptions" :loading="optionsLoading" placeholder="请选择负责人" />
+            <a-select
+              v-model:value="formState.owner"
+              :options="ownerOptions"
+              :loading="optionsLoading"
+              placeholder="请选择负责人"
+            />
           </a-form-item>
 
           <a-form-item name="templateId" label="绑定模板">
@@ -60,11 +99,21 @@
               </a-col>
               <a-col :xs="24" :md="12">
                 <label class="field-label">标注项时限（小时）</label>
-                <a-input-number v-model:value="formState.annotationTimeoutHours" :min="0" :max="720" class="full-control" />
+                <a-input-number
+                  v-model:value="formState.annotationTimeoutHours"
+                  :min="0"
+                  :max="720"
+                  class="full-control"
+                />
               </a-col>
               <a-col :xs="24" :md="12">
                 <label class="field-label">审核项时限（小时）</label>
-                <a-input-number v-model:value="formState.reviewTimeoutHours" :min="0" :max="720" class="full-control" />
+                <a-input-number
+                  v-model:value="formState.reviewTimeoutHours"
+                  :min="0"
+                  :max="720"
+                  class="full-control"
+                />
               </a-col>
             </a-row>
           </a-card>
@@ -195,12 +244,18 @@ function fillFormFromTask() {
 
 async function handleSubmit() {
   await formRef.value?.validate();
-  if (formState.startsAt && formState.dueAt && new Date(formState.dueAt) <= new Date(formState.startsAt)) {
+  if (
+    formState.startsAt &&
+    formState.dueAt &&
+    new Date(formState.dueAt) <= new Date(formState.startsAt)
+  ) {
     message.warning('任务期限必须晚于任务开始');
     return;
   }
 
-  const selectedTemplate = templateStore.templates.find((template) => template.id === formState.templateId);
+  const selectedTemplate = templateStore.templates.find(
+    (template) => template.id === formState.templateId,
+  );
   const payload: Partial<TaskItem> = {
     name: formState.name,
     description: formState.description,
@@ -284,7 +339,9 @@ function fromLocalInputValue(value: string) {
   border: 1px solid var(--lh-border-strong);
   border-radius: 6px;
   outline: none;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
 .native-input:focus {

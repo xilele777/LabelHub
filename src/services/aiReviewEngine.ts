@@ -183,7 +183,9 @@ const R004_CategoryFieldEmpty: ReviewRule = {
   description: '分类字段未选择将导致标注无法归类',
   check(ctx) {
     const { field, value } = ctx;
-    const isCategoryType = [FieldType.RADIO, FieldType.SELECT, FieldType.CHECKBOX].includes(field.type);
+    const isCategoryType = [FieldType.RADIO, FieldType.SELECT, FieldType.CHECKBOX].includes(
+      field.type,
+    );
     if (!isCategoryType) return undefined;
     // 必填的空值由 R001 处理，这里只检查非必填的空值
     if (!field.required && isEmpty(value)) {
@@ -204,9 +206,7 @@ const R005_OtherCategoryRisk: ReviewRule = {
     const { field, value } = ctx;
     if (field.type !== FieldType.RADIO && field.type !== FieldType.SELECT) return undefined;
     if (!('options' in field)) return undefined;
-    const otherOpt = field.options.find(
-      (o) => o.value === 'other' || o.label === '其他',
-    );
+    const otherOpt = field.options.find((o) => o.value === 'other' || o.label === '其他');
     if (otherOpt && value === otherOpt.value) {
       return `选择了"其他"类别，建议确认是否有更精确选项`;
     }
@@ -215,9 +215,7 @@ const R005_OtherCategoryRisk: ReviewRule = {
   suggest(ctx) {
     const { field } = ctx;
     if (!('options' in field)) return undefined;
-    const nonOther = field.options.filter(
-      (o) => o.value !== 'other' && o.label !== '其他',
-    );
+    const nonOther = field.options.filter((o) => o.value !== 'other' && o.label !== '其他');
     if (nonOther.length > 0) {
       const pick = nonOther[0]!;
       return {
@@ -300,18 +298,12 @@ function severityDeduction(severity: Severity): number {
 
 /** 计算质量评分（基础 100，逐项扣分，最低 0） */
 function calculateScore(hits: { severity: Severity }[]): number {
-  const totalDeduction = hits.reduce(
-    (sum, h) => sum + severityDeduction(h.severity),
-    0,
-  );
+  const totalDeduction = hits.reduce((sum, h) => sum + severityDeduction(h.severity), 0);
   return Math.max(0, 100 - totalDeduction);
 }
 
 /** 根据分数和最高严重程度推导整体预审状态 */
-function deriveStatus(
-  score: number,
-  maxSeverity: Severity | null,
-): ReviewStatus {
+function deriveStatus(score: number, maxSeverity: Severity | null): ReviewStatus {
   if (maxSeverity === 'error') return ReviewStatus.FAIL;
   if (score < 60) return ReviewStatus.FAIL;
   if (maxSeverity === 'warning' || score < 80) return ReviewStatus.RISK;
@@ -319,22 +311,14 @@ function deriveStatus(
 }
 
 /** 生成自然语言摘要 */
-function generateSummary(
-  status: ReviewStatus,
-  score: number,
-  warnings: FieldWarning[],
-): string {
+function generateSummary(status: ReviewStatus, score: number, warnings: FieldWarning[]): string {
   const parts: string[] = [];
   if (status === ReviewStatus.PASS) {
     parts.push(`标注结果经预审评估通过，质量评分 ${score} 分。`);
   } else if (status === ReviewStatus.RISK) {
-    parts.push(
-      `标注结果存在风险项，质量评分 ${score} 分，建议人工复核。`,
-    );
+    parts.push(`标注结果存在风险项，质量评分 ${score} 分，建议人工复核。`);
   } else {
-    parts.push(
-      `标注结果未通过预审，质量评分 ${score} 分，需修正后重新提交。`,
-    );
+    parts.push(`标注结果未通过预审，质量评分 ${score} 分，需修正后重新提交。`);
   }
   const errorCount = warnings.filter((w) => w.severity === 'error').length;
   const warningCount = warnings.filter((w) => w.severity === 'warning').length;
@@ -367,14 +351,7 @@ export interface RunReviewInput {
  * 收集命中项，最后汇总为 AIReviewResult。
  */
 export function runAIReview(input: RunReviewInput): AIReviewResult {
-  const {
-    template,
-    rawData,
-    annotationResult,
-    dataItemId,
-    taskId,
-    extraRules = [],
-  } = input;
+  const { template, rawData, annotationResult, dataItemId, taskId, extraRules = [] } = input;
   const rules = [...builtinRules, ...extraRules];
 
   const matchedRules: MatchedRule[] = [];
@@ -420,12 +397,13 @@ export function runAIReview(input: RunReviewInput): AIReviewResult {
   );
 
   const score = calculateScore(hitSeverities.map((s) => ({ severity: s })));
-  const maxSeverity = hitSeverities.length > 0
-    ? (hitSeverities.sort((a, b) => {
-        const order: Record<Severity, number> = { error: 2, warning: 1, info: 0 };
-        return order[b] - order[a];
-      })[0])
-    : null;
+  const maxSeverity =
+    hitSeverities.length > 0
+      ? hitSeverities.sort((a, b) => {
+          const order: Record<Severity, number> = { error: 2, warning: 1, info: 0 };
+          return order[b] - order[a];
+        })[0]
+      : null;
   const reviewStatus = deriveStatus(score, maxSeverity ?? null);
   const summary = generateSummary(reviewStatus, score, fieldWarnings);
 

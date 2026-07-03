@@ -28,7 +28,8 @@ const tooltipStyle = {
   textStyle: {
     color: textColor,
   },
-  extraCssText: 'box-shadow: 0 2px 6px rgba(60, 64, 67, 0.14), 0 6px 18px rgba(60, 64, 67, 0.08); border-radius: 8px;',
+  extraCssText:
+    'box-shadow: 0 2px 6px rgba(60, 64, 67, 0.14), 0 6px 18px rgba(60, 64, 67, 0.08); border-radius: 8px;',
 } as const;
 
 function buildEmptyOption(title: string, description = '暂无数据'): ChartOption {

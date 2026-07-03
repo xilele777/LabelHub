@@ -6,7 +6,12 @@
         <a-typography-title :level="4" class="page-title">通知管理</a-typography-title>
       </a-space>
       <a-space>
-        <a-input-search v-model:value="keyword" allow-clear placeholder="搜索标题、内容或接收人" class="search-input" />
+        <a-input-search
+          v-model:value="keyword"
+          allow-clear
+          placeholder="搜索标题、内容或接收人"
+          class="search-input"
+        />
         <a-button :loading="loading" @click="fetchList">
           <template #icon><ReloadOutlined /></template>
           刷新
@@ -20,20 +25,34 @@
         :columns="columns"
         :data-source="filteredItems"
         :loading="loading"
-        :pagination="{ pageSize: 10, showSizeChanger: false, showTotal: (total: number) => `共 ${total} 条` }"
+        :pagination="{
+          pageSize: 10,
+          showSizeChanger: false,
+          showTotal: (total: number) => `共 ${total} 条`,
+        }"
       >
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'status'">
-            <a-tag :color="record.revokedAt ? 'default' : 'green'">{{ record.revokedAt ? '已撤回' : '已发布' }}</a-tag>
+            <a-tag :color="record.revokedAt ? 'default' : 'green'">
+              {{ record.revokedAt ? '已撤回' : '已发布' }}
+            </a-tag>
           </template>
           <template v-else-if="column.key === 'priority'">
-            <a-tag :color="getPriorityMeta(record.priority).color">{{ getPriorityMeta(record.priority).label }}</a-tag>
+            <a-tag :color="getPriorityMeta(record.priority).color">
+              {{ getPriorityMeta(record.priority).label }}
+            </a-tag>
           </template>
           <template v-else-if="column.key === 'targets'">
             <a-space :size="4" wrap>
-              <a-tag v-for="target in getTargetLabels(record).slice(0, 4)" :key="target">{{ target }}</a-tag>
-              <a-tag v-if="getTargetLabels(record).length > 4">+{{ getTargetLabels(record).length - 4 }}</a-tag>
-              <a-typography-text v-if="getTargetLabels(record).length === 0" type="secondary">未记录</a-typography-text>
+              <a-tag v-for="target in getTargetLabels(record).slice(0, 4)" :key="target">
+                {{ target }}
+              </a-tag>
+              <a-tag v-if="getTargetLabels(record).length > 4">
+                +{{ getTargetLabels(record).length - 4 }}
+              </a-tag>
+              <a-typography-text v-if="getTargetLabels(record).length === 0" type="secondary">
+                未记录
+              </a-typography-text>
             </a-space>
           </template>
           <template v-else-if="column.key === 'readRate'">
@@ -55,7 +74,11 @@
                 <template #icon><CopyOutlined /></template>
                 复制再发
               </a-button>
-              <a-popconfirm v-if="!record.revokedAt" title="确认撤回该通知？" @confirm="handleRevoke(record.id)">
+              <a-popconfirm
+                v-if="!record.revokedAt"
+                title="确认撤回该通知？"
+                @confirm="handleRevoke(record.id)"
+              >
                 <a-button type="link" size="small" danger :loading="revokingId === record.id">
                   <template #icon><StopOutlined /></template>
                   撤回
@@ -69,20 +92,33 @@
 
     <a-modal v-model:open="detailOpen" title="通知详情" width="860px" :footer="null">
       <a-spin :spinning="detailLoading">
-        <a-space v-if="selected" direction="vertical" size="middle" class="detail-body lh-modal-detail">
+        <a-space
+          v-if="selected"
+          direction="vertical"
+          size="middle"
+          class="detail-body lh-modal-detail"
+        >
           <a-descriptions bordered size="small" :column="{ xs: 1, sm: 1, md: 2 }">
             <a-descriptions-item label="标题" :span="2">{{ selected.title }}</a-descriptions-item>
             <a-descriptions-item label="内容" :span="2">
               <div class="message-content">{{ selected.message }}</div>
             </a-descriptions-item>
             <a-descriptions-item label="状态">
-              <a-tag :color="selected.revokedAt ? 'default' : 'green'">{{ selected.revokedAt ? '已撤回' : '已发布' }}</a-tag>
+              <a-tag :color="selected.revokedAt ? 'default' : 'green'">
+                {{ selected.revokedAt ? '已撤回' : '已发布' }}
+              </a-tag>
             </a-descriptions-item>
             <a-descriptions-item label="优先级">
-              <a-tag :color="getPriorityMeta(selected.priority).color">{{ getPriorityMeta(selected.priority).label }}</a-tag>
+              <a-tag :color="getPriorityMeta(selected.priority).color">
+                {{ getPriorityMeta(selected.priority).label }}
+              </a-tag>
             </a-descriptions-item>
-            <a-descriptions-item label="发布时间">{{ formatDate(selected.timestamp) }}</a-descriptions-item>
-            <a-descriptions-item label="接收人数">{{ selected.totalRecipients }}</a-descriptions-item>
+            <a-descriptions-item label="发布时间">
+              {{ formatDate(selected.timestamp) }}
+            </a-descriptions-item>
+            <a-descriptions-item label="接收人数">
+              {{ selected.totalRecipients }}
+            </a-descriptions-item>
             <a-descriptions-item label="已读">{{ selected.readCount }}</a-descriptions-item>
             <a-descriptions-item label="未读">{{ selected.unreadCount }}</a-descriptions-item>
           </a-descriptions>
@@ -116,7 +152,13 @@
 import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { message, type TableColumnsType } from 'ant-design-vue';
-import { CopyOutlined, EyeOutlined, NotificationOutlined, ReloadOutlined, StopOutlined } from '@ant-design/icons-vue';
+import {
+  CopyOutlined,
+  EyeOutlined,
+  NotificationOutlined,
+  ReloadOutlined,
+  StopOutlined,
+} from '@ant-design/icons-vue';
 import {
   getPublishedNotification,
   getPublishedNotifications,
@@ -225,7 +267,10 @@ function getTargetLabels(record: PublishedNotificationItem) {
     [Role.ANNOTATOR]: '标注员',
     [Role.REVIEWER]: '审核员',
   };
-  return [...record.targetRoles.map((role) => roleLabelMap[role] || role), ...record.targetUsernames];
+  return [
+    ...record.targetRoles.map((role) => roleLabelMap[role] || role),
+    ...record.targetUsernames,
+  ];
 }
 
 function getPriorityMeta(priority: PublishedNotificationItem['priority']) {
@@ -238,7 +283,9 @@ function getPriorityMeta(priority: PublishedNotificationItem['priority']) {
 }
 
 function getReadPercent(record: PublishedNotificationItem) {
-  return record.totalRecipients > 0 ? Math.round((record.readCount / record.totalRecipients) * 100) : 0;
+  return record.totalRecipients > 0
+    ? Math.round((record.readCount / record.totalRecipients) * 100)
+    : 0;
 }
 
 function formatDate(value: string) {

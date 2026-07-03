@@ -3,7 +3,9 @@
     <header class="app-page-header">
       <div class="app-page-title">
         <a-typography-title :level="4" class="page-title">模板列表</a-typography-title>
-        <a-typography-text class="app-page-desc" type="secondary">维护可复用的标注字段和任务 Schema。</a-typography-text>
+        <a-typography-text class="app-page-desc" type="secondary">
+          维护可复用的标注字段和任务 Schema。
+        </a-typography-text>
       </div>
       <div class="app-toolbar">
         <a-input-search
@@ -48,22 +50,36 @@
       >
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'type'">
-            <a-tag :color="getTaskTypeMeta(record.type).color">{{ getTaskTypeMeta(record.type).label }}</a-tag>
+            <a-tag :color="getTaskTypeMeta(record.type).color">
+              {{ getTaskTypeMeta(record.type).label }}
+            </a-tag>
           </template>
           <template v-else-if="column.key === 'createdAt'">
             {{ formatDate(record.createdAt) }}
           </template>
           <template v-else-if="column.key === 'action'">
             <a-space size="small">
-              <a-button type="link" size="small" :loading="previewLoadingId === record.id" @click="openPreview(record)">
+              <a-button
+                type="link"
+                size="small"
+                :loading="previewLoadingId === record.id"
+                @click="openPreview(record)"
+              >
                 <template #icon><EyeOutlined /></template>
                 预览
               </a-button>
-              <a-button type="link" size="small" @click="router.push(`/templates/builder?id=${record.id}`)">
+              <a-button
+                type="link"
+                size="small"
+                @click="router.push(`/templates/builder?id=${record.id}`)"
+              >
                 <template #icon><EditOutlined /></template>
                 编辑
               </a-button>
-              <a-popconfirm title="确认删除该模板？删除后无法恢复。" @confirm="handleDelete(record.id)">
+              <a-popconfirm
+                title="确认删除该模板？删除后无法恢复。"
+                @confirm="handleDelete(record.id)"
+              >
                 <a-button type="link" size="small" danger>
                   <template #icon><DeleteOutlined /></template>
                   删除
@@ -77,25 +93,35 @@
 
     <a-modal v-model:open="previewOpen" title="模板 Schema 预览" width="680px" :footer="null">
       <div class="lh-modal-detail">
-      <a-descriptions v-if="previewData" :column="1" bordered size="small">
-        <a-descriptions-item label="模板ID">{{ previewData.id }}</a-descriptions-item>
-        <a-descriptions-item label="模板名称">{{ previewData.name }}</a-descriptions-item>
-        <a-descriptions-item label="任务类型">
-          <a-tag :color="getTaskTypeMeta(previewData.type).color">{{ getTaskTypeMeta(previewData.type).label }}</a-tag>
-        </a-descriptions-item>
-        <a-descriptions-item label="版本">v{{ previewData.version }}</a-descriptions-item>
-        <a-descriptions-item label="字段数量">{{ previewData.fields.length }}</a-descriptions-item>
-        <a-descriptions-item label="创建时间">{{ formatDate(previewData.createdAt) }}</a-descriptions-item>
-        <a-descriptions-item label="更新时间">{{ formatDate(previewData.updatedAt) }}</a-descriptions-item>
-        <a-descriptions-item label="字段列表">
-          <a-space wrap>
-            <a-tag v-for="field in previewData.fields" :key="field.id">{{ field.label }}（{{ field.type }}）</a-tag>
-          </a-space>
-        </a-descriptions-item>
-        <a-descriptions-item label="完整 Schema">
-          <pre class="schema-preview">{{ JSON.stringify(previewData, null, 2) }}</pre>
-        </a-descriptions-item>
-      </a-descriptions>
+        <a-descriptions v-if="previewData" :column="1" bordered size="small">
+          <a-descriptions-item label="模板ID">{{ previewData.id }}</a-descriptions-item>
+          <a-descriptions-item label="模板名称">{{ previewData.name }}</a-descriptions-item>
+          <a-descriptions-item label="任务类型">
+            <a-tag :color="getTaskTypeMeta(previewData.type).color">
+              {{ getTaskTypeMeta(previewData.type).label }}
+            </a-tag>
+          </a-descriptions-item>
+          <a-descriptions-item label="版本">v{{ previewData.version }}</a-descriptions-item>
+          <a-descriptions-item label="字段数量">
+            {{ previewData.fields.length }}
+          </a-descriptions-item>
+          <a-descriptions-item label="创建时间">
+            {{ formatDate(previewData.createdAt) }}
+          </a-descriptions-item>
+          <a-descriptions-item label="更新时间">
+            {{ formatDate(previewData.updatedAt) }}
+          </a-descriptions-item>
+          <a-descriptions-item label="字段列表">
+            <a-space wrap>
+              <a-tag v-for="field in previewData.fields" :key="field.id">
+                {{ field.label }}（{{ field.type }}）
+              </a-tag>
+            </a-space>
+          </a-descriptions-item>
+          <a-descriptions-item label="完整 Schema">
+            <pre class="schema-preview">{{ JSON.stringify(previewData, null, 2) }}</pre>
+          </a-descriptions-item>
+        </a-descriptions>
       </div>
     </a-modal>
   </section>
@@ -133,7 +159,9 @@ const columns: TableColumnsType<TemplateItem> = [
 
 const filteredTemplates = computed(() => {
   const normalizedKeyword = keyword.value.trim().toLowerCase();
-  return templateStore.templates.filter((template) => !normalizedKeyword || template.name.toLowerCase().includes(normalizedKeyword));
+  return templateStore.templates.filter(
+    (template) => !normalizedKeyword || template.name.toLowerCase().includes(normalizedKeyword),
+  );
 });
 
 const pagination = computed<TablePaginationConfig>(() => ({

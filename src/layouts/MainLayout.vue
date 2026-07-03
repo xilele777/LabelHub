@@ -16,12 +16,7 @@
         </span>
         <span class="labelhub-layout__brand-mark">{{ collapsed ? 'LH' : 'LabelHub' }}</span>
       </div>
-      <a-menu
-        theme="light"
-        mode="inline"
-        :selected-keys="selectedKeys"
-        :items="menuItems"
-      />
+      <a-menu theme="light" mode="inline" :selected-keys="selectedKeys" :items="menuItems" />
     </a-layout-sider>
     <a-layout class="labelhub-layout__main">
       <a-layout-header class="labelhub-layout__header">
@@ -47,7 +42,9 @@
                     </a-tag>
                   </div>
                   <div class="notification-panel__tools">
-                    <a-tooltip :title="notificationStore.connected ? '实时通知已连接' : '实时通知未连接'">
+                    <a-tooltip
+                      :title="notificationStore.connected ? '实时通知已连接' : '实时通知未连接'"
+                    >
                       <WifiOutlined
                         v-if="notificationStore.connected"
                         class="notification-panel__status notification-panel__status--online"
@@ -106,17 +103,26 @@
                     <span class="notification-panel__item-main">
                       <span class="notification-panel__item-title">
                         <span class="notification-panel__item-name">{{ item.title }}</span>
-                        <a-tag :color="getNotificationColor(item.type)" class="notification-panel__item-tag">
+                        <a-tag
+                          :color="getNotificationColor(item.type)"
+                          class="notification-panel__item-tag"
+                        >
                           {{ getNotificationLabel(item.type) }}
                         </a-tag>
-                        <a-tag v-if="item.priority === 'high'" color="red" class="notification-panel__item-tag">
+                        <a-tag
+                          v-if="item.priority === 'high'"
+                          color="red"
+                          class="notification-panel__item-tag"
+                        >
                           重要
                         </a-tag>
                       </span>
                       <span class="notification-panel__item-message">{{ item.message }}</span>
                       <span class="notification-panel__item-meta">
                         {{ formatRelativeTime(item.timestamp) }}
-                        <template v-if="item.sender && item.sender !== 'system' && item.sender !== 'AI系统'">
+                        <template
+                          v-if="item.sender && item.sender !== 'system' && item.sender !== 'AI系统'"
+                        >
                           来自 {{ item.sender }}
                         </template>
                       </span>
@@ -260,18 +266,79 @@ const roleLabelMap: Record<Role, { label: string; color: string }> = {
 };
 
 const navItems: NavItem[] = [
-  { key: 'dashboard', label: '概览', path: '/dashboard', roles: [Role.ADMIN, Role.ANNOTATOR, Role.REVIEWER], icon: DashboardOutlined },
-  { key: 'annotate', label: '标注工作台', path: '/annotate', roles: [Role.ANNOTATOR], icon: EditOutlined },
-  { key: 'review', label: '审核工作台', path: '/review', roles: [Role.REVIEWER], icon: AuditOutlined },
-  { key: 'tasks', label: '任务', path: '/tasks', match: ['/tasks'], roles: [Role.ADMIN], icon: InboxOutlined },
-  { key: 'archive', label: '归档', path: '/archive', roles: [Role.ADMIN, Role.ANNOTATOR, Role.REVIEWER], icon: InboxOutlined },
+  {
+    key: 'dashboard',
+    label: '概览',
+    path: '/dashboard',
+    roles: [Role.ADMIN, Role.ANNOTATOR, Role.REVIEWER],
+    icon: DashboardOutlined,
+  },
+  {
+    key: 'annotate',
+    label: '标注工作台',
+    path: '/annotate',
+    roles: [Role.ANNOTATOR],
+    icon: EditOutlined,
+  },
+  {
+    key: 'review',
+    label: '审核工作台',
+    path: '/review',
+    roles: [Role.REVIEWER],
+    icon: AuditOutlined,
+  },
+  {
+    key: 'tasks',
+    label: '任务',
+    path: '/tasks',
+    match: ['/tasks'],
+    roles: [Role.ADMIN],
+    icon: InboxOutlined,
+  },
+  {
+    key: 'archive',
+    label: '归档',
+    path: '/archive',
+    roles: [Role.ADMIN, Role.ANNOTATOR, Role.REVIEWER],
+    icon: InboxOutlined,
+  },
   { key: 'templates', label: '模板', path: '/templates', roles: [Role.ADMIN], icon: EditOutlined },
-  { key: 'template-builder', label: '搭建', path: '/templates/builder', roles: [Role.ADMIN], icon: SendOutlined },
-  { key: 'statistics', label: '统计', path: '/statistics', roles: [Role.ADMIN, Role.REVIEWER], icon: BarChartOutlined },
-  { key: 'export', label: '导出', path: '/export', roles: [Role.ADMIN, Role.REVIEWER], icon: ExportOutlined },
+  {
+    key: 'template-builder',
+    label: '搭建',
+    path: '/templates/builder',
+    roles: [Role.ADMIN],
+    icon: SendOutlined,
+  },
+  {
+    key: 'statistics',
+    label: '统计',
+    path: '/statistics',
+    roles: [Role.ADMIN, Role.REVIEWER],
+    icon: BarChartOutlined,
+  },
+  {
+    key: 'export',
+    label: '导出',
+    path: '/export',
+    roles: [Role.ADMIN, Role.REVIEWER],
+    icon: ExportOutlined,
+  },
   { key: 'users', label: '用户管理', path: '/users', roles: [Role.ADMIN], icon: TeamOutlined },
-  { key: 'notification-publish', label: '发通知', path: '/notifications/publish', roles: [Role.ADMIN], icon: SendOutlined },
-  { key: 'notification-manage', label: '通知管理', path: '/notifications/manage', roles: [Role.ADMIN], icon: NotificationOutlined },
+  {
+    key: 'notification-publish',
+    label: '发通知',
+    path: '/notifications/publish',
+    roles: [Role.ADMIN],
+    icon: SendOutlined,
+  },
+  {
+    key: 'notification-manage',
+    label: '通知管理',
+    path: '/notifications/manage',
+    roles: [Role.ADMIN],
+    icon: NotificationOutlined,
+  },
 ];
 
 const notificationLabelMap: Record<string, string> = {
@@ -321,7 +388,11 @@ const menuItems = computed<ItemType[]>(() => {
 const selectedKeys = computed(() => {
   const match = navItems
     .filter((item) => hasRouteRole(userStore.user?.role, item.roles))
-    .filter((item) => (item.match ?? [item.path]).some((path) => route.path === path || route.path.startsWith(`${path}/`)))
+    .filter((item) =>
+      (item.match ?? [item.path]).some(
+        (path) => route.path === path || route.path.startsWith(`${path}/`),
+      ),
+    )
     .sort((a, b) => b.path.length - a.path.length)[0];
   return match ? [match.key] : [];
 });

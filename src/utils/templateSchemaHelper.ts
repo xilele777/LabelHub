@@ -14,7 +14,9 @@ const schemaCache = new Map<string, AnnotationTemplate>();
 /**
  * 将服务端模板数据（含 fields 数组）转换为 AnnotationTemplate
  */
-function serverTemplateToSchema(item: TemplateItem & { fields?: TemplateField[] }): AnnotationTemplate {
+function serverTemplateToSchema(
+  item: TemplateItem & { fields?: TemplateField[] },
+): AnnotationTemplate {
   const fields = item.fields || [];
   return {
     id: item.id,
@@ -31,7 +33,9 @@ function serverTemplateToSchema(item: TemplateItem & { fields?: TemplateField[] 
  * 根据模板 ID 异步获取标注模板 Schema
  * 优先从缓存读取，缓存未命中则从 API 获取。
  */
-export async function getTemplateSchemaAsync(templateId: string): Promise<AnnotationTemplate | undefined> {
+export async function getTemplateSchemaAsync(
+  templateId: string,
+): Promise<AnnotationTemplate | undefined> {
   // 1. 缓存命中
   const cached = schemaCache.get(templateId);
   if (cached) return cached;
@@ -66,7 +70,11 @@ export async function preloadTemplateSchemas(): Promise<void> {
     const items = res.data.items || [];
     for (const item of items) {
       const itemWithFields = item as TemplateItem & { fields?: TemplateField[] };
-      if (itemWithFields.fields && Array.isArray(itemWithFields.fields) && itemWithFields.fields.length > 0) {
+      if (
+        itemWithFields.fields &&
+        Array.isArray(itemWithFields.fields) &&
+        itemWithFields.fields.length > 0
+      ) {
         const schema = serverTemplateToSchema(itemWithFields);
         schemaCache.set(schema.id, schema);
       }
