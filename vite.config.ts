@@ -1,6 +1,7 @@
 import { fileURLToPath, URL } from 'node:url';
 import { defineConfig, loadEnv } from 'vite';
 import vue from '@vitejs/plugin-vue';
+import { visualizer } from 'rollup-plugin-visualizer';
 
 function toNumber(value: string | undefined, fallback: number) {
   const parsed = Number(value);
@@ -13,7 +14,15 @@ export default defineConfig(({ mode }) => {
 
   return {
     base: env.VITE_APP_BASE || '/',
-    plugins: [vue()],
+    plugins: [
+      vue(),
+      visualizer({
+        filename: 'dist/stats.html',
+        open: false,
+        gzipSize: true,
+        brotliSize: true,
+      }),
+    ],
     resolve: {
       alias: {
         '@': fileURLToPath(new URL('./src', import.meta.url)),
@@ -27,6 +36,7 @@ export default defineConfig(({ mode }) => {
         '/api': {
           target: apiProxyTarget,
           changeOrigin: true,
+          secure: false,
         },
         '/socket.io': {
           target: apiProxyTarget,

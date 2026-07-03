@@ -2,9 +2,13 @@
 const createCrudRouter = require('./crudFactory');
 const db = require('../store/db');
 const { requireAuth, requireRole } = require('../middleware/auth');
-const { DATA_ITEM_STATUS, DATA_ITEM_TRANSITIONS, validateTransition } = require('../constants/statusMachine');
+const {
+  DATA_ITEM_STATUS,
+  DATA_ITEM_TRANSITIONS,
+  validateTransition,
+} = require('../constants/statusMachine');
 const { runAIReview } = require('../services/aiReviewEngine');
-const { isPlainObject, readArray, readString } = require('../utils/requestValidation');
+const { isPlainObject, readArray, readString, readNumber } = require('../utils/requestValidation');
 const {
   notifyReviewApproved,
   notifyReviewRejected,
@@ -13,6 +17,11 @@ const {
   notifyAIReviewComplete,
 } = require('../services/notificationService');
 const itemTimeliness = require('../utils/itemTimeliness');
+const {
+  annotationSubmitLimiter,
+  reviewActionLimiter,
+  batchImportLimiter,
+} = require('../middleware/apiRateLimit');
 
 const router = express.Router();
 router.use(requireAuth);
@@ -35,8 +44,12 @@ function cleanupExpiredLocks(req, res, next) {
 }
 router.use(cleanupExpiredLocks);
 
-router.post('/batch-import', requireRole('owner'), (req, res) => {
-  const taskIdResult = readString(req.body, 'taskId', { required: true, minLength: 1, maxLength: 80 });
+router.post('/batch-import', requireRole('owner'), batchImportLimiter, (req, res) => {
+  const taskIdResult = readString(req.body, 'taskId', {
+    required: true,
+    minLength: 1,
+    maxLength: 80,
+  });
   if (taskIdResult.error) {
     return res.fail(taskIdResult.error);
   }
@@ -71,28 +84,34 @@ router.post('/batch-import', requireRole('owner'), (req, res) => {
   const created = db.transaction(() => {
     const insertedItems = [];
     for (const item of items) {
-      insertedItems.push(db.insert('annotation-items', {
-        id: `ai${String(Date.now()).slice(-3)}${Math.random().toString(36).slice(2, 8)}`,
-        taskId,
-        rawData: item.rawData || {},
-        status: 'pending',
-        annotator: null,
-        reviewer: null,
-        annotationData: null,
-        submittedAt: null,
-        reviewedAt: null,
-        rejectReason: null,
-        auditHistory: [],
-        createdAt: now,
-        version: 1,
-        lockedBy: null,
-        lockedAt: null,
-      }));
+      insertedItems.push(
+        db.insert('annotation-items', {
+          id: `ai${String(Date.now()).slice(-3)}${Math.random().toString(36).slice(2, 8)}`,
+          taskId,
+          rawData: item.rawData || {},
+          status: 'pending',
+          annotator: null,
+          reviewer: null,
+          annotationData: null,
+          submittedAt: null,
+          reviewedAt: null,
+          rejectReason: null,
+          auditHistory: [],
+          createdAt: now,
+          version: 1,
+          lockedBy: null,
+          lockedAt: null,
+        }),
+      );
     }
     return insertedItems;
   });
 
-  return res.success({ imported: created.length, items: created }, `Imported ${created.length} item(s)`, 201);
+  return res.success(
+    { imported: created.length, items: created },
+    `Imported ${created.length} item(s)`,
+    201,
+  );
 });
 
 // ===== RBAC helpers =====
@@ -202,7 +221,10 @@ const OVERDUE_POOL_ACTIONS = {
 };
 
 function hasAuditAction(item, actionType) {
-  return Array.isArray(item.auditHistory) && item.auditHistory.some((record) => record?.actionType === actionType);
+  return (
+    Array.isArray(item.auditHistory) &&
+    item.auditHistory.some((record) => record?.actionType === actionType)
+  );
 }
 
 function wasReturnedToPoolByOverdue(item, phase) {
@@ -226,42 +248,45 @@ router.get('/available', (req, res) => {
   }
 
   const taskId = req.query.taskId;
-  const statuses = req.query.status ? String(req.query.status).split(',') : ['pending', 'draft', 'rejected'];
+  const statuses = req.query.status
+    ? String(req.query.status).split(',')
+    : ['pending', 'draft', 'rejected'];
 
   let items = db.getAll('annotation-items');
 
   // Only show unassigned, active items in the requested statuses.
-  items = items.filter(item =>
-    item.annotator === null &&
-    !item.archived &&
-    !wasReturnedToPoolByOverdue(item, 'annotation') &&
-    statuses.includes(item.status)
+  items = items.filter(
+    (item) =>
+      item.annotator === null &&
+      !item.archived &&
+      !wasReturnedToPoolByOverdue(item, 'annotation') &&
+      statuses.includes(item.status),
   );
 
   // Only expose items from tasks that are open for work.
-  items = items.filter(item => {
+  items = items.filter((item) => {
     const task = db.getById('tasks', item.taskId);
     return canTaskExposeWorkItems(task);
   });
 
   // Filter by task when requested.
   if (taskId) {
-    items = items.filter(item => item.taskId === taskId);
+    items = items.filter((item) => item.taskId === taskId);
   }
 
   // Return the fields needed by the claim list.
-  items = items.map(item => ({
+  items = items.map((item) => ({
     id: item.id,
     taskId: item.taskId,
     status: item.status,
     annotator: item.annotator,
     rawData: item.rawData,
     rawDataPreview: item.rawData
-      ? (item.rawData.text
+      ? item.rawData.text
         ? String(item.rawData.text).slice(0, 80)
         : item.rawData.imageUrl
           ? String(item.rawData.imageUrl).slice(0, 80)
-          : JSON.stringify(item.rawData).slice(0, 80))
+          : JSON.stringify(item.rawData).slice(0, 80)
       : '',
   }));
 
@@ -278,12 +303,15 @@ router.get('/review-available', (req, res) => {
     ? String(req.query.status).split(',')
     : ['submitted', 'ai_reviewed', 'pending_review'];
 
-  let items = db.getAll('annotation-items').filter((item) =>
-    item.reviewer === null &&
-    !item.archived &&
-    !wasReturnedToPoolByOverdue(item, 'review') &&
-    statuses.includes(item.status)
-  );
+  let items = db
+    .getAll('annotation-items')
+    .filter(
+      (item) =>
+        item.reviewer === null &&
+        !item.archived &&
+        !wasReturnedToPoolByOverdue(item, 'review') &&
+        statuses.includes(item.status),
+    );
 
   items = items.filter((item) => {
     const task = db.getById('tasks', item.taskId);
@@ -303,11 +331,11 @@ router.get('/review-available', (req, res) => {
     submittedAt: item.submittedAt,
     rawData: item.rawData,
     rawDataPreview: item.rawData
-      ? (item.rawData.text
+      ? item.rawData.text
         ? String(item.rawData.text).slice(0, 80)
         : item.rawData.imageUrl
           ? String(item.rawData.imageUrl).slice(0, 80)
-          : JSON.stringify(item.rawData).slice(0, 80))
+          : JSON.stringify(item.rawData).slice(0, 80)
       : '',
   }));
 
@@ -321,7 +349,11 @@ router.put('/batch-claim-assignment', (req, res) => {
   }
 
   const ids = Array.isArray(req.body?.ids)
-    ? [...new Set(req.body.ids.filter((id) => typeof id === 'string' && id.trim()).map((id) => id.trim()))]
+    ? [
+        ...new Set(
+          req.body.ids.filter((id) => typeof id === 'string' && id.trim()).map((id) => id.trim()),
+        ),
+      ]
     : [];
 
   if (ids.length === 0) {
@@ -386,7 +418,9 @@ router.put('/batch-claim-assignment', (req, res) => {
       claimedCount: claimed.length,
       failedCount: failed.length,
     },
-    claimed.length > 0 ? `Claimed ${claimed.length} annotation item(s)` : 'No annotation items were claimed'
+    claimed.length > 0
+      ? `Claimed ${claimed.length} annotation item(s)`
+      : 'No annotation items were claimed',
   );
 });
 
@@ -396,7 +430,11 @@ router.put('/batch-claim-review', (req, res) => {
   }
 
   const ids = Array.isArray(req.body?.ids)
-    ? [...new Set(req.body.ids.filter((id) => typeof id === 'string' && id.trim()).map((id) => id.trim()))]
+    ? [
+        ...new Set(
+          req.body.ids.filter((id) => typeof id === 'string' && id.trim()).map((id) => id.trim()),
+        ),
+      ]
     : [];
 
   if (ids.length === 0) {
@@ -462,7 +500,9 @@ router.put('/batch-claim-review', (req, res) => {
       claimedCount: claimed.length,
       failedCount: failed.length,
     },
-    claimed.length > 0 ? `Claimed ${claimed.length} review item(s)` : 'No review items were claimed'
+    claimed.length > 0
+      ? `Claimed ${claimed.length} review item(s)`
+      : 'No review items were claimed',
   );
 });
 
@@ -474,16 +514,16 @@ const crud = createCrudRouter('annotation-items', {
     const showArchived = req.query.archived === 'true';
     let filtered = items;
     if (!showArchived) {
-      filtered = items.filter(item => !item.archived);
+      filtered = items.filter((item) => !item.archived);
     } else {
       // In archive mode, only show archived items.
-      filtered = items.filter(item => item.archived);
+      filtered = items.filter((item) => item.archived);
     }
 
     // Outside archive mode, only show items from tasks that are open for work.
     // Archive mode keeps historical reviewed data visible.
     if (!showArchived) {
-      filtered = filtered.filter(item => {
+      filtered = filtered.filter((item) => {
         const task = db.getById('tasks', item.taskId);
         return canTaskExposeWorkItems(task);
       });
@@ -499,7 +539,10 @@ const crud = createCrudRouter('annotation-items', {
       // Unassigned items must be claimed through claim-assignment first.
       return filtered.filter((item) => {
         const task = db.getById('tasks', item.taskId);
-        return item.annotator === req.currentUser.username && !itemTimeliness.isItemExpired(task, item, 'annotation');
+        return (
+          item.annotator === req.currentUser.username &&
+          !itemTimeliness.isItemExpired(task, item, 'annotation')
+        );
       });
     }
     if (role === 'reviewer') {
@@ -509,7 +552,10 @@ const crud = createCrudRouter('annotation-items', {
       // Reviewer only sees review items explicitly assigned/claimed by them.
       return filtered.filter((item) => {
         const task = db.getById('tasks', item.taskId);
-        return item.reviewer === req.currentUser.username && !itemTimeliness.isItemExpired(task, item, 'review');
+        return (
+          item.reviewer === req.currentUser.username &&
+          !itemTimeliness.isItemExpired(task, item, 'review')
+        );
       });
     }
     return filtered;
@@ -545,14 +591,22 @@ const crud = createCrudRouter('annotation-items', {
 
     // If the request is trying to change status, validate the transition
     if (updates.status && updates.status !== existing.status) {
-      const { valid, reason } = validateTransition(DATA_ITEM_TRANSITIONS, existing.status, updates.status);
+      const { valid, reason } = validateTransition(
+        DATA_ITEM_TRANSITIONS,
+        existing.status,
+        updates.status,
+      );
       if (!valid) {
         return reason;
       }
     }
 
     // Optimistic lock: check version for annotation-items PUT
-    if (updates.version !== undefined && updates.version !== null && existing.version !== updates.version) {
+    if (
+      updates.version !== undefined &&
+      updates.version !== null &&
+      existing.version !== updates.version
+    ) {
       return `Version conflict: current version is ${existing.version}, submitted version is ${updates.version}`;
     }
 
@@ -574,7 +628,7 @@ router.use(crud);
  * Save draft annotation and set status to 'draft'.
  * RBAC: annotator (own items only, or auto-claim unassigned items) + owner
  */
-router.put('/:id/save-draft', (req, res) => {
+router.put('/:id/save-draft', annotationSubmitLimiter, (req, res) => {
   const item = db.getById('annotation-items', req.params.id);
   if (!item) {
     return res.notFound('Annotation item not found');
@@ -590,7 +644,11 @@ router.put('/:id/save-draft', (req, res) => {
   }
 
   // Validate status transition: current -> draft
-  const { valid, reason } = validateTransition(DATA_ITEM_TRANSITIONS, item.status, DATA_ITEM_STATUS.DRAFT);
+  const { valid, reason } = validateTransition(
+    DATA_ITEM_TRANSITIONS,
+    item.status,
+    DATA_ITEM_STATUS.DRAFT,
+  );
   if (!valid) {
     return res.fail(reason);
   }
@@ -598,8 +656,15 @@ router.put('/:id/save-draft', (req, res) => {
   const task = db.getById('tasks', item.taskId);
   const timeWindowError = validateTaskSubmissionWindow(task, item);
   if (timeWindowError) {
-    const returnedItem = returnAnnotationItemToPool(item, req.currentUser?.username || 'system', timeWindowError);
-    return res.fail(timeWindowError, 403, { returnedToPool: Boolean(item.annotator), item: returnedItem });
+    const returnedItem = returnAnnotationItemToPool(
+      item,
+      req.currentUser?.username || 'system',
+      timeWindowError,
+    );
+    return res.fail(timeWindowError, 403, {
+      returnedToPool: Boolean(item.annotator),
+      item: returnedItem,
+    });
   }
 
   const now = new Date().toISOString();
@@ -619,7 +684,7 @@ router.put('/:id/save-draft', (req, res) => {
     return res.fail(
       `Version conflict: current version is ${item.version}, submitted version is ${clientVersion}`,
       409,
-      { currentVersion: item.version, serverItem: item }
+      { currentVersion: item.version, serverItem: item },
     );
   }
 
@@ -730,10 +795,19 @@ function executeAndPersistAIReview(item) {
  * 3. Persist the review and advance status to pending_review.
  * 4. Return the updated item and AI review result.
  */
-router.put('/:id/submit', (req, res) => {
+router.put('/:id/submit', annotationSubmitLimiter, (req, res) => {
   const item = db.getById('annotation-items', req.params.id);
   if (!item) {
     return res.notFound('Annotation item not found');
+  }
+
+  // Validate input: annotationData
+  if (
+    req.body.annotationData !== undefined &&
+    req.body.annotationData !== null &&
+    !isPlainObject(req.body.annotationData)
+  ) {
+    return res.fail('annotationData must be an object');
   }
 
   // RBAC: only annotator
@@ -746,7 +820,11 @@ router.put('/:id/submit', (req, res) => {
   }
 
   // Validate status transition: current -> submitted
-  const { valid, reason } = validateTransition(DATA_ITEM_TRANSITIONS, item.status, DATA_ITEM_STATUS.SUBMITTED);
+  const { valid, reason } = validateTransition(
+    DATA_ITEM_TRANSITIONS,
+    item.status,
+    DATA_ITEM_STATUS.SUBMITTED,
+  );
   if (!valid) {
     return res.fail(reason);
   }
@@ -754,8 +832,15 @@ router.put('/:id/submit', (req, res) => {
   const task = db.getById('tasks', item.taskId);
   const timeWindowError = validateTaskSubmissionWindow(task, item);
   if (timeWindowError) {
-    const returnedItem = returnAnnotationItemToPool(item, req.currentUser?.username || 'system', timeWindowError);
-    return res.fail(timeWindowError, 403, { returnedToPool: Boolean(item.annotator), item: returnedItem });
+    const returnedItem = returnAnnotationItemToPool(
+      item,
+      req.currentUser?.username || 'system',
+      timeWindowError,
+    );
+    return res.fail(timeWindowError, 403, {
+      returnedToPool: Boolean(item.annotator),
+      item: returnedItem,
+    });
   }
 
   const now = new Date().toISOString();
@@ -776,7 +861,7 @@ router.put('/:id/submit', (req, res) => {
     return res.fail(
       `Version conflict: current version is ${item.version}, submitted version is ${clientVersion}`,
       409,
-      { currentVersion: item.version, serverItem: item }
+      { currentVersion: item.version, serverItem: item },
     );
   }
 
@@ -799,13 +884,19 @@ router.put('/:id/submit', (req, res) => {
     // Notify reviewers that AI review completed.
     notifyAIReviewComplete(aiResult.updatedItem, aiResult.reviewRecord);
 
-    res.success({
-      item: aiResult.updatedItem,
-      review: aiResult.reviewRecord,
-    }, 'Annotation submitted and AI review completed');
+    res.success(
+      {
+        item: aiResult.updatedItem,
+        review: aiResult.reviewRecord,
+      },
+      'Annotation submitted and AI review completed',
+    );
   } else {
     // Keep submitted status when AI review is skipped because the template is missing.
-    res.success(submittedItem, 'Annotation submitted; AI review skipped because template was not found');
+    res.success(
+      submittedItem,
+      'Annotation submitted; AI review skipped because template was not found',
+    );
   }
 });
 
@@ -815,10 +906,18 @@ router.put('/:id/submit', (req, res) => {
  * Approve annotation and set status to 'reviewed'.
  * RBAC: reviewer (not own annotation) + owner
  */
-router.put('/:id/approve', (req, res) => {
+router.put('/:id/approve', reviewActionLimiter, (req, res) => {
   const item = db.getById('annotation-items', req.params.id);
   if (!item) {
     return res.notFound('Annotation item not found');
+  }
+
+  // Validate input: reason (optional)
+  if (req.body.reason !== undefined && req.body.reason !== null) {
+    const reasonResult = readString(req.body, 'reason', { maxLength: 1000 });
+    if (reasonResult.error) {
+      return res.fail(reasonResult.error);
+    }
   }
 
   // RBAC: only reviewer, with avoidance principle
@@ -834,7 +933,11 @@ router.put('/:id/approve', (req, res) => {
   }
 
   // Validate status transition: current -> reviewed
-  const { valid, reason } = validateTransition(DATA_ITEM_TRANSITIONS, item.status, DATA_ITEM_STATUS.REVIEWED);
+  const { valid, reason } = validateTransition(
+    DATA_ITEM_TRANSITIONS,
+    item.status,
+    DATA_ITEM_STATUS.REVIEWED,
+  );
   if (!valid) {
     return res.fail(reason);
   }
@@ -842,8 +945,15 @@ router.put('/:id/approve', (req, res) => {
   const task = db.getById('tasks', item.taskId);
   const timeWindowError = validateReviewWindow(task, item);
   if (timeWindowError) {
-    const returnedItem = returnReviewItemToPool(item, req.currentUser?.username || 'system', timeWindowError);
-    return res.fail(timeWindowError, 403, { returnedToPool: Boolean(item.reviewer), item: returnedItem });
+    const returnedItem = returnReviewItemToPool(
+      item,
+      req.currentUser?.username || 'system',
+      timeWindowError,
+    );
+    return res.fail(timeWindowError, 403, {
+      returnedToPool: Boolean(item.reviewer),
+      item: returnedItem,
+    });
   }
 
   const now = new Date().toISOString();
@@ -889,10 +999,20 @@ router.put('/:id/approve', (req, res) => {
  * Reject annotation and set status to 'rejected'.
  * RBAC: reviewer (not own annotation) + owner
  */
-router.put('/:id/reject', (req, res) => {
+router.put('/:id/reject', reviewActionLimiter, (req, res) => {
   const item = db.getById('annotation-items', req.params.id);
   if (!item) {
     return res.notFound('Annotation item not found');
+  }
+
+  // Validate input: reason (required)
+  const reasonResult = readString(req.body, 'reason', {
+    required: true,
+    minLength: 1,
+    maxLength: 1000,
+  });
+  if (reasonResult.error) {
+    return res.fail(reasonResult.error);
   }
 
   // RBAC: only reviewer, with avoidance principle
@@ -908,20 +1028,29 @@ router.put('/:id/reject', (req, res) => {
   }
 
   // Validate status transition: current -> rejected
-  const { valid, reason } = validateTransition(DATA_ITEM_TRANSITIONS, item.status, DATA_ITEM_STATUS.REJECTED);
+  const { valid, reason } = validateTransition(
+    DATA_ITEM_TRANSITIONS,
+    item.status,
+    DATA_ITEM_STATUS.REJECTED,
+  );
   if (!valid) {
     return res.fail(reason);
   }
 
-  if (!req.body.reason) {
-    return res.fail('Reject reason is required');
-  }
+  const rejectReason = reasonResult.value;
 
   const task = db.getById('tasks', item.taskId);
   const timeWindowError = validateReviewWindow(task, item);
   if (timeWindowError) {
-    const returnedItem = returnReviewItemToPool(item, req.currentUser?.username || 'system', timeWindowError);
-    return res.fail(timeWindowError, 403, { returnedToPool: Boolean(item.reviewer), item: returnedItem });
+    const returnedItem = returnReviewItemToPool(
+      item,
+      req.currentUser?.username || 'system',
+      timeWindowError,
+    );
+    return res.fail(timeWindowError, 403, {
+      returnedToPool: Boolean(item.reviewer),
+      item: returnedItem,
+    });
   }
 
   const now = new Date().toISOString();
@@ -931,7 +1060,7 @@ router.put('/:id/reject', (req, res) => {
     actionType: 'reject',
     fromStatus: item.status,
     toStatus: 'rejected',
-    reason: req.body.reason,
+    reason: rejectReason,
     timestamp: now,
   };
 
@@ -939,7 +1068,7 @@ router.put('/:id/reject', (req, res) => {
     status: 'rejected',
     reviewer: req.currentUser?.username || item.reviewer,
     reviewedAt: now,
-    rejectReason: req.body.reason,
+    rejectReason: rejectReason,
     auditHistory: [...(item.auditHistory || []), historyRecord],
   });
 
@@ -957,10 +1086,19 @@ router.put('/:id/reject', (req, res) => {
  *
  * Same flow as submit: AI review runs automatically on the server.
  */
-router.put('/:id/resubmit', (req, res) => {
+router.put('/:id/resubmit', annotationSubmitLimiter, (req, res) => {
   const item = db.getById('annotation-items', req.params.id);
   if (!item) {
     return res.notFound('Annotation item not found');
+  }
+
+  // Validate input: annotationData
+  if (
+    req.body.annotationData !== undefined &&
+    req.body.annotationData !== null &&
+    !isPlainObject(req.body.annotationData)
+  ) {
+    return res.fail('annotationData must be an object');
   }
 
   // RBAC: only annotator, and must own the item
@@ -972,7 +1110,11 @@ router.put('/:id/resubmit', (req, res) => {
   }
 
   // Validate status transition: current -> submitted (resubmission)
-  const { valid, reason } = validateTransition(DATA_ITEM_TRANSITIONS, item.status, DATA_ITEM_STATUS.SUBMITTED);
+  const { valid, reason } = validateTransition(
+    DATA_ITEM_TRANSITIONS,
+    item.status,
+    DATA_ITEM_STATUS.SUBMITTED,
+  );
   if (!valid) {
     return res.fail(reason);
   }
@@ -980,8 +1122,15 @@ router.put('/:id/resubmit', (req, res) => {
   const task = db.getById('tasks', item.taskId);
   const timeWindowError = validateTaskSubmissionWindow(task, item);
   if (timeWindowError) {
-    const returnedItem = returnAnnotationItemToPool(item, req.currentUser?.username || 'system', timeWindowError);
-    return res.fail(timeWindowError, 403, { returnedToPool: Boolean(item.annotator), item: returnedItem });
+    const returnedItem = returnAnnotationItemToPool(
+      item,
+      req.currentUser?.username || 'system',
+      timeWindowError,
+    );
+    return res.fail(timeWindowError, 403, {
+      returnedToPool: Boolean(item.annotator),
+      item: returnedItem,
+    });
   }
 
   const now = new Date().toISOString();
@@ -1002,7 +1151,7 @@ router.put('/:id/resubmit', (req, res) => {
     return res.fail(
       `Version conflict: current version is ${item.version}, submitted version is ${clientVersion}`,
       409,
-      { currentVersion: item.version, serverItem: item }
+      { currentVersion: item.version, serverItem: item },
     );
   }
 
@@ -1025,12 +1174,18 @@ router.put('/:id/resubmit', (req, res) => {
     // Notify reviewers that AI review completed.
     notifyAIReviewComplete(aiResult.updatedItem, aiResult.reviewRecord);
 
-    res.success({
-      item: aiResult.updatedItem,
-      review: aiResult.reviewRecord,
-    }, 'Annotation resubmitted and AI review completed');
+    res.success(
+      {
+        item: aiResult.updatedItem,
+        review: aiResult.reviewRecord,
+      },
+      'Annotation resubmitted and AI review completed',
+    );
   } else {
-    res.success(submittedItem, 'Annotation resubmitted; AI review skipped because template was not found');
+    res.success(
+      submittedItem,
+      'Annotation resubmitted; AI review skipped because template was not found',
+    );
   }
 });
 
@@ -1179,7 +1334,7 @@ router.put('/:id/claim', (req, res) => {
     res.fail(
       `This item is locked by ${result.lockedBy} since ${result.lockedAt}`,
       423, // HTTP 423 Locked
-      { lockedBy: result.lockedBy, lockedAt: result.lockedAt }
+      { lockedBy: result.lockedBy, lockedAt: result.lockedAt },
     );
   }
 });
@@ -1238,7 +1393,9 @@ router.post('/:id/ai-review', requireRole('owner'), (req, res) => {
 
   // Only submitted items can be AI-reviewed
   if (item.status !== 'submitted') {
-    return res.fail(`Only submitted annotation items can be AI-reviewed; current status: ${item.status}`);
+    return res.fail(
+      `Only submitted annotation items can be AI-reviewed; current status: ${item.status}`,
+    );
   }
 
   const aiResult = executeAndPersistAIReview(item);
@@ -1247,10 +1404,13 @@ router.post('/:id/ai-review', requireRole('owner'), (req, res) => {
     // Notify reviewers that AI review completed.
     notifyAIReviewComplete(aiResult.updatedItem, aiResult.reviewRecord);
 
-    res.success({
-      item: aiResult.updatedItem,
-      review: aiResult.reviewRecord,
-    }, 'AI review completed');
+    res.success(
+      {
+        item: aiResult.updatedItem,
+        review: aiResult.reviewRecord,
+      },
+      'AI review completed',
+    );
   } else {
     res.fail('AI review skipped: related template was not found or has no fields');
   }

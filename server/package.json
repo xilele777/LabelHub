@@ -5,20 +5,54 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "dev": "node --watch index.js",
+    "dev": "tsx watch index.js",
+    "dev:js": "node --watch index.js",
+    "build": "tsc",
     "seed": "node seed.js",
+    "lint": "eslint . --max-warnings 50",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "tsc --noEmit",
     "test:reset": "node test/reset-db.js",
     "test:e2e": "node test/e2e-test.js",
-    "test": "node test/run-e2e-isolated.js"
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:all": "vitest run && node test/run-e2e-isolated.js"
   },
   "dependencies": {
+    "@socket.io/redis-adapter": "^8.3.0",
     "better-sqlite3": "^12.10.0",
+    "compression": "^1.8.1",
+    "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "express": "^4.21.0",
+    "express-rate-limit": "^7.5.0",
+    "ioredis": "^5.6.0",
+    "pg": "^8.13.0",
+    "pino": "^9.6.0",
+    "pino-pretty": "^11.3.0",
+    "prom-client": "^15.1.3",
+    "rate-limit-redis": "^4.2.0",
     "socket.io": "^4.8.3",
+    "swagger-jsdoc": "^6.3.0",
+    "swagger-ui-express": "^5.0.1",
     "uuid": "^9.0.0"
   },
   "devDependencies": {
-    "socket.io-client": "^4.8.3"
+    "@eslint/js": "^9.0.0",
+    "@types/better-sqlite3": "^7.6.12",
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.0.0",
+    "@types/uuid": "^10.0.0",
+    "eslint": "^9.0.0",
+    "pm2": "^5.4.0",
+    "prettier": "^3.3.0",
+    "socket.io-client": "^4.8.3",
+    "tsx": "^4.19.0",
+    "typescript": "~5.8.0",
+    "typescript-eslint": "^8.0.0",
+    "vitest": "^4.1.9"
   }
 }

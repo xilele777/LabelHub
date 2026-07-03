@@ -51,7 +51,7 @@ function runNode(args, env) {
     const child = spawn(process.execPath, args, {
       cwd: serverRoot,
       env,
-      stdio: 'inherit',
+      stdio: ['pipe', 'inherit', 'inherit'],
     });
     child.on('exit', (code) => resolve(code ?? 1));
   });
@@ -86,7 +86,7 @@ async function main() {
   const server = spawn(process.execPath, ['index.js'], {
     cwd: serverRoot,
     env,
-    stdio: 'inherit',
+    stdio: ['pipe', 'inherit', 'inherit'],
   });
 
   try {

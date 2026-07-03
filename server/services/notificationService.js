@@ -22,20 +22,20 @@ let io = null;
  */
 const NOTIFICATION_TYPE = {
   // 审核相关
-  REVIEW_APPROVED: 'review_approved',       // 审核通过
-  REVIEW_REJECTED: 'review_rejected',       // 审核驳回
+  REVIEW_APPROVED: 'review_approved', // 审核通过
+  REVIEW_REJECTED: 'review_rejected', // 审核驳回
   AI_REVIEW_COMPLETE: 'ai_review_complete', // AI 预审完成
 
   // 任务分配相关
-  TASK_ASSIGNED: 'task_assigned',           // 新任务分配
-  TASK_UNASSIGNED: 'task_unassigned',       // 任务分配取消
+  TASK_ASSIGNED: 'task_assigned', // 新任务分配
+  TASK_UNASSIGNED: 'task_unassigned', // 任务分配取消
 
   // 任务进度相关
-  TASK_SUBMITTED: 'task_submitted',         // 标注已提交
-  TASK_RESUBMITTED: 'task_resubmitted',     // 标注已重新提交
+  TASK_SUBMITTED: 'task_submitted', // 标注已提交
+  TASK_RESUBMITTED: 'task_resubmitted', // 标注已重新提交
   TASK_STATUS_CHANGED: 'task_status_changed', // 任务状态变更
   TASK_DUE_SOON: 'task_due_soon',
-  OWNER_MESSAGE: 'owner_message',             // 负责人主动发布
+  OWNER_MESSAGE: 'owner_message', // 负责人主动发布
 };
 
 /**
@@ -112,20 +112,32 @@ function canDeliverNotificationToUser(username, notification) {
   const user = db.findOne('users', { username });
   if (notification.type === NOTIFICATION_TYPE.OWNER_MESSAGE) return true;
   if (user?.role === 'annotator') {
-    return [NOTIFICATION_TYPE.REVIEW_REJECTED, NOTIFICATION_TYPE.TASK_DUE_SOON].includes(notification.type);
+    return [NOTIFICATION_TYPE.REVIEW_REJECTED, NOTIFICATION_TYPE.TASK_DUE_SOON].includes(
+      notification.type,
+    );
   }
   if (user?.role === 'reviewer') {
-    return [NOTIFICATION_TYPE.TASK_RESUBMITTED, NOTIFICATION_TYPE.TASK_DUE_SOON].includes(notification.type);
+    return [NOTIFICATION_TYPE.TASK_RESUBMITTED, NOTIFICATION_TYPE.TASK_DUE_SOON].includes(
+      notification.type,
+    );
   }
   return true;
 }
 
 function getVisibleNotificationTypesForUser(user) {
   if (user?.role === 'annotator') {
-    return [NOTIFICATION_TYPE.REVIEW_REJECTED, NOTIFICATION_TYPE.TASK_DUE_SOON, NOTIFICATION_TYPE.OWNER_MESSAGE];
+    return [
+      NOTIFICATION_TYPE.REVIEW_REJECTED,
+      NOTIFICATION_TYPE.TASK_DUE_SOON,
+      NOTIFICATION_TYPE.OWNER_MESSAGE,
+    ];
   }
   if (user?.role === 'reviewer') {
-    return [NOTIFICATION_TYPE.TASK_RESUBMITTED, NOTIFICATION_TYPE.TASK_DUE_SOON, NOTIFICATION_TYPE.OWNER_MESSAGE];
+    return [
+      NOTIFICATION_TYPE.TASK_RESUBMITTED,
+      NOTIFICATION_TYPE.TASK_DUE_SOON,
+      NOTIFICATION_TYPE.OWNER_MESSAGE,
+    ];
   }
   return null;
 }
@@ -139,7 +151,11 @@ function initNotificationService(server) {
     cors: {
       origin: (origin, callback) => {
         // 开发环境允许所有 localhost 来源，生产环境需要严格配置
-        if (!origin || origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')) {
+        if (
+          !origin ||
+          origin.startsWith('http://localhost:') ||
+          origin.startsWith('http://127.0.0.1:')
+        ) {
           callback(null, true);
         } else {
           callback(new Error('CORS not allowed'), false);
@@ -156,12 +172,31 @@ function initNotificationService(server) {
     pingTimeout: 20000,
   });
 
+  // ─── Redis 多进程适配器 ──────────────────────────────
+  try {
+    const { getRedis } = require('../utils/redis');
+    const redis = getRedis();
+    if (redis) {
+      const { createAdapter } = require('@socket.io/redis-adapter');
+      const pubClient = redis.duplicate();
+      const subClient = redis.duplicate();
+      io.adapter(createAdapter(pubClient, subClient));
+      console.log('[WS] Redis 多进程适配器已启用');
+    }
+  } catch (err) {
+    // @socket.io/redis-adapter 未安装时静默跳过
+    if (err.code !== 'MODULE_NOT_FOUND') {
+      console.warn('[WS] Redis 适配器初始化失败:', err.message);
+    }
+  }
+
   // ─── 认证中间件 ──────────────────────────────────
   io.use((socket, next) => {
     // 从握手请求中获取 token
-    const token = socket.handshake.auth.token ||
-                  socket.handshake.query.token ||
-                  extractTokenFromHeaders(socket.handshake.headers);
+    const token =
+      socket.handshake.auth.token ||
+      socket.handshake.query.token ||
+      extractTokenFromHeaders(socket.handshake.headers);
 
     if (!token) {
       // 允许未认证连接，但限制功能
@@ -227,7 +262,10 @@ function initNotificationService(server) {
     // 标记通知已读
     socket.on('notification:read', (notificationId) => {
       db.markNotificationReadForUser(user.username, notificationId);
-      socket.emit('notification:read_ack', { id: notificationId, readAt: new Date().toISOString() });
+      socket.emit('notification:read_ack', {
+        id: notificationId,
+        readAt: new Date().toISOString(),
+      });
     });
 
     // 标记所有通知已读
@@ -291,10 +329,14 @@ function canAccessTaskRoom(user, taskId) {
   }
 
   if (user.role === 'reviewer') {
-    return db.getAll('annotation-items').some((item) =>
-      item.taskId === taskId &&
-      (item.reviewer === user.username || (item.reviewer === null && item.status === 'pending_review'))
-    );
+    return db
+      .getAll('annotation-items')
+      .some(
+        (item) =>
+          item.taskId === taskId &&
+          (item.reviewer === user.username ||
+            (item.reviewer === null && item.status === 'pending_review')),
+      );
   }
 
   return false;

@@ -3,6 +3,7 @@ const db = require('../store/db');
 const { requireAuth, requireRole } = require('../middleware/auth');
 const { hashPassword, validatePasswordPolicy, verifyPassword } = require('../utils/password');
 const { validateFields } = require('../utils/requestValidation');
+const { userCreateLimiter } = require('../middleware/apiRateLimit');
 
 const router = express.Router();
 const VALID_ROLES = ['owner', 'annotator', 'reviewer'];
@@ -36,7 +37,7 @@ router.get('/:id', (req, res) => {
   res.success(safe);
 });
 
-router.post('/', requireRole('owner'), (req, res) => {
+router.post('/', requireRole('owner'), userCreateLimiter, (req, res) => {
   const { error, values } = validateFields(req.body, [
     { ...USERNAME_FIELD, required: true },
     { name: 'password', required: true, minLength: 1, maxLength: 128, trim: false },
@@ -138,7 +139,10 @@ router.put('/:id/password', (req, res) => {
     return res.fail(passwordError);
   }
 
-  db.updateById('users', req.params.id, { password: hashPassword(newPassword) });
+  db.updateById('users', req.params.id, {
+    password: hashPassword(newPassword),
+    passwordChangedAt: new Date().toISOString(),
+  });
   res.success(null, 'Password updated');
 });
 

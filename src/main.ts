@@ -42,4 +42,31 @@ app.use(createPinia());
 app.use(router);
 app.use(Antd);
 
+// ─── Global Vue error boundary ─────────────────────────────
+app.config.errorHandler = (err, _instance, info) => {
+  console.error('[Vue Error]', err, 'Info:', info);
+
+  // Report to backend error-tracking endpoint in production
+  if (import.meta.env.PROD) {
+    try {
+      const payload = JSON.stringify({
+        message: err instanceof Error ? err.message : String(err),
+        stack: err instanceof Error ? err.stack : undefined,
+        info,
+        url: window.location.href,
+        timestamp: new Date().toISOString(),
+      });
+      navigator.sendBeacon('/api/error-report', payload);
+    } catch {
+      // Silently fail — error reporting itself should not cause errors.
+    }
+  }
+};
+
+app.config.warnHandler = (msg, _instance, trace) => {
+  if (import.meta.env.DEV) {
+    console.warn(`[Vue Warning] ${msg}`, trace);
+  }
+};
+
 app.mount('#root');

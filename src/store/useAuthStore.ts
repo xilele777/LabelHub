@@ -10,15 +10,10 @@ export interface AuthState {
   error: string | null;
 }
 
-const TOKEN_KEY = 'token';
 const USER_KEY = 'user';
 
 function getStorage() {
   return typeof window === 'undefined' ? null : window.localStorage;
-}
-
-function loadPersistedToken(): string | null {
-  return getStorage()?.getItem(TOKEN_KEY) ?? null;
 }
 
 function loadPersistedUser(): UserInfo | null {
@@ -26,12 +21,6 @@ function loadPersistedUser(): UserInfo | null {
   if (!storage) return null;
 
   try {
-    const token = storage.getItem(TOKEN_KEY);
-    if (!token) {
-      storage.removeItem(USER_KEY);
-      return null;
-    }
-
     const saved = storage.getItem(USER_KEY);
     if (!saved) return null;
 
@@ -43,7 +32,6 @@ function loadPersistedUser(): UserInfo | null {
 
     return user as UserInfo;
   } catch {
-    storage.removeItem(TOKEN_KEY);
     storage.removeItem(USER_KEY);
     return null;
   }
@@ -51,7 +39,7 @@ function loadPersistedUser(): UserInfo | null {
 
 const useAuthPiniaStore = defineStore('auth', () => {
   const user = ref<UserInfo | null>(loadPersistedUser());
-  const token = ref<string | null>(loadPersistedToken());
+  const token = ref<string | null>(null);
   const loading = ref(false);
   const error = ref<string | null>(null);
 
@@ -65,7 +53,6 @@ const useAuthPiniaStore = defineStore('auth', () => {
     resetUnauthorizedRedirect();
 
     const storage = getStorage();
-    storage?.setItem(TOKEN_KEY, payload.token);
     storage?.setItem(USER_KEY, JSON.stringify(payload.user));
   }
 
@@ -76,7 +63,6 @@ const useAuthPiniaStore = defineStore('auth', () => {
     error.value = message ?? null;
 
     const storage = getStorage();
-    storage?.removeItem(TOKEN_KEY);
     storage?.removeItem(USER_KEY);
   }
 

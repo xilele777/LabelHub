@@ -23,6 +23,10 @@ export interface ApiError<T = unknown> extends Error {
 
 export interface RequestConfig<D = unknown> extends AxiosRequestConfig<D> {
   skipAuth?: boolean;
+  /** Max retry attempts for transient failures (default: 0) */
+  retry?: number;
+  /** Base delay in ms between retries (default: 1000, doubles each attempt) */
+  retryDelay?: number;
 }
 
 type UnauthorizedHandler = () => void;
@@ -109,6 +113,26 @@ instance.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   return config;
 });
 
+// ─── Retry helper ──────────────────────────────────────────
+function isRetryableError(error: AxiosError): boolean {
+  // Network errors (no response)
+  if (!error.response) return true;
+  const status = error.response.status;
+  // Retry on server errors and rate limiting
+  return status >= 500 || status === 429;
+}
+
+function getRetryConfig(config: RequestConfig): { maxRetries: number; baseDelay: number } {
+  return {
+    maxRetries: config.retry ?? 0,
+    baseDelay: config.retryDelay ?? 1000,
+  };
+}
+
+async function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 instance.interceptors.response.use(
   (response: AxiosResponse<ApiResponse>) => {
     const body = response.data;
@@ -132,7 +156,23 @@ instance.interceptors.response.use(
       }),
     );
   },
-  (error: AxiosError<ApiResponse>) => {
+  async (error: AxiosError<ApiResponse>) => {
+    const config = error.config as RequestConfig | undefined;
+    const { maxRetries, baseDelay } = getRetryConfig(config ?? {});
+
+    // Track retry count on the config object
+    const retryCount =
+      (config as Record<string, unknown> & { __retryCount?: number }).__retryCount ?? 0;
+
+    if (retryCount < maxRetries && isRetryableError(error)) {
+      (config as Record<string, unknown> & { __retryCount: number }).__retryCount = retryCount + 1;
+      // Exponential backoff with jitter: baseDelay * 2^attempt * (0.5-1.0 random)
+      const jitter = 0.5 + Math.random() * 0.5;
+      const waitMs = baseDelay * Math.pow(2, retryCount) * jitter;
+      await delay(waitMs);
+      return instance.request(config!);
+    }
+
     const status = error.response?.status;
     const body = error.response?.data;
 

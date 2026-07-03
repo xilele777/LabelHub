@@ -1,0 +1,50 @@
+# Dependencies
+node_modules/
+server/node_modules/
+
+# Build output
+dist/
+build/
+
+# Database files
+server/data/*.db
+server/data/*.db-wal
+server/data/*.db-shm
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Environment
+.env
+.env.local
+server/.env
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Docs (not needed at runtime)
+*.md
+!README.md
+
+# Tests
+server/test/
+**/*.test.*
+**/*.spec.*
+
+# TypeScript source (only compiled JS needed)
+*.ts
+!server/**/*.d.ts
+tsconfig*.json

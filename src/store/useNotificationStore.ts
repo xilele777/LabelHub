@@ -23,6 +23,8 @@ export interface NotificationState {
   panelOpen: boolean;
   connected: boolean;
   currentUserId: string | null;
+  loading: boolean;
+  error: string | null;
 }
 
 const MAX_NOTIFICATIONS = 100;
@@ -83,6 +85,8 @@ const useNotificationPiniaStore = defineStore('notification', () => {
   const panelOpen = ref(false);
   const connected = ref(false);
   const currentUserId = ref<string | null>(null);
+  const loading = ref(false);
+  const error = ref<string | null>(null);
 
   const hasUnread = computed(() => unreadCount.value > 0);
   const latestNotification = computed(() => notifications.value[0]);
@@ -101,13 +105,21 @@ const useNotificationPiniaStore = defineStore('notification', () => {
   async function fetchNotifications(): Promise<void> {
     if (!currentUserId.value) return;
 
+    loading.value = true;
+    error.value = null;
+
     try {
       const res = await notificationApi.getNotificationList({ limit: MAX_NOTIFICATIONS });
       notifications.value = res.data.items || [];
-      unreadCount.value = res.data.unreadCount ?? notifications.value.filter((item) => !item.read).length;
+      unreadCount.value =
+        res.data.unreadCount ?? notifications.value.filter((item) => !item.read).length;
       saveToLocalStorage(currentUserId.value, notifications.value);
-    } catch (err) {
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to fetch notifications';
+      error.value = message;
       console.warn('[NotificationStore] Failed to fetch notifications:', err);
+    } finally {
+      loading.value = false;
     }
   }
 
@@ -181,6 +193,8 @@ const useNotificationPiniaStore = defineStore('notification', () => {
     panelOpen,
     connected,
     currentUserId,
+    loading,
+    error,
     hasUnread,
     latestNotification,
     addNotification,

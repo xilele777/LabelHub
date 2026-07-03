@@ -1,0 +1,16 @@
+node_modules/
+dist/
+build/
+server/node_modules/
+server/data/
+*.db
+*.db-wal
+*.db-shm
+logs/
+*.log
+package-lock.json
+server/package-lock.json
+pnpm-lock.yaml
+yarn.lock
+.git/
+coverage/

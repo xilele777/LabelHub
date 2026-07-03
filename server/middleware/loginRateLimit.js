@@ -1,10 +1,12 @@
 const WINDOW_MS = Number(process.env.LOGIN_RATE_LIMIT_WINDOW_MS || 15 * 60 * 1000);
 const MAX_FAILED_ATTEMPTS = Number(process.env.LOGIN_RATE_LIMIT_MAX || 5);
 
+// ─── In-memory store (default) ────────────────────────────
 const attempts = new Map();
 
 function getAttemptKey(req) {
-  const username = typeof req.body?.username === 'string' ? req.body.username.trim().toLowerCase() : '';
+  const username =
+    typeof req.body?.username === 'string' ? req.body.username.trim().toLowerCase() : '';
   return `${req.ip || 'unknown'}:${username || 'anonymous'}`;
 }
 
@@ -16,7 +18,90 @@ function getRecord(key, now) {
   return record;
 }
 
+// ─── Redis store (optional) ───────────────────────────────
+
+let redisStore = null;
+
+function getRedisStore() {
+  if (redisStore !== undefined) return redisStore;
+
+  try {
+    const { getRedis } = require('../utils/redis');
+    const redis = getRedis();
+    if (!redis) {
+      redisStore = null;
+      return null;
+    }
+
+    redisStore = {
+      async getCount(key) {
+        const count = await redis.get(`ratelimit:login:${key}`);
+        return count ? Number(count) : 0;
+      },
+
+      async increment(key) {
+        const redisKey = `ratelimit:login:${key}`;
+        const ttlSeconds = Math.ceil(WINDOW_MS / 1000);
+        // Use multi for atomic INCR + EXPIRE
+        const count = await redis.multi().incr(redisKey).expire(redisKey, ttlSeconds).exec();
+        return count ? Number(count[0][1]) : 1;
+      },
+
+      async reset(key) {
+        await redis.del(`ratelimit:login:${key}`);
+      },
+
+      async getRetryAfter(key) {
+        const ttl = await redis.ttl(`ratelimit:login:${key}`);
+        return ttl > 0 ? ttl : 0;
+      },
+    };
+    return redisStore;
+  } catch {
+    redisStore = null;
+    return null;
+  }
+}
+
+// ─── Middleware ────────────────────────────────────────────
+
 function loginRateLimit(req, res, next) {
+  const store = getRedisStore();
+
+  if (store) {
+    // ── Redis mode ──────────────────────────────────────
+    return redisLimit(store, req, res, next);
+  }
+
+  // ── In-memory mode (fallback) ────────────────────────
+  return memoryLimit(req, res, next);
+}
+
+async function redisLimit(store, req, res, next) {
+  const key = getAttemptKey(req);
+  const count = await store.getCount(key);
+
+  if (count >= MAX_FAILED_ATTEMPTS) {
+    const retryAfter = await store.getRetryAfter(key);
+    res.set('Retry-After', String(retryAfter));
+    return res.fail('Too many login attempts. Please try again later.', 429, {
+      retryAfterSeconds: retryAfter,
+    });
+  }
+
+  req.loginRateLimit = {
+    markSuccess() {
+      store.reset(key).catch(() => {});
+    },
+    markFailure() {
+      store.increment(key).catch(() => {});
+    },
+  };
+
+  next();
+}
+
+function memoryLimit(req, res, next) {
   const key = getAttemptKey(req);
   const now = Date.now();
   const record = getRecord(key, now);

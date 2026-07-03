@@ -1,5 +1,45 @@
 const crypto = require('crypto');
 const db = require('../store/db');
+const { cacheGet, cacheSet, cacheDel, cacheDelPattern } = require('../utils/cache');
+const { logger } = require('../utils/logger');
+
+// ─── Cache TTL per collection (seconds) ──────────────────
+const CACHE_TTL = {
+  templates: 300,
+  users: 600,
+  tasks: 120,
+  // annotation-items and reviews are write-heavy, skip caching
+  'annotation-items': 0,
+  reviews: 0,
+};
+
+function cacheTTL(collection) {
+  return CACHE_TTL[collection] || 0;
+}
+
+function cacheKey(collection, id) {
+  return id ? `${collection}:${id}` : `${collection}:list`;
+}
+
+async function readThroughCache(collection, id, fetchFn) {
+  const ttl = cacheTTL(collection);
+  if (ttl <= 0) return fetchFn();
+
+  const key = cacheKey(collection, id);
+  const cached = await cacheGet(key);
+  if (cached !== null) return cached;
+
+  const result = fetchFn();
+  if (result !== null && result !== undefined) {
+    await cacheSet(key, result, ttl);
+  }
+  return result;
+}
+
+async function invalidateItemCache(collection, id) {
+  await cacheDel(cacheKey(collection, id));
+  await cacheDel(cacheKey(collection, null));
+}
 
 const MAX_PAGE_LIMIT = Number(process.env.MAX_PAGE_LIMIT || 200);
 const CONTROL_QUERY_KEYS = new Set(['_page', '_limit', '_sort', '_order']);
@@ -51,6 +91,10 @@ function createCrudRouter(collection, opts = {}) {
     let items;
     let total;
     if (opts.filterList) {
+      // filterList handles all filtering logic (RBAC, archived, task status, etc.)
+      // We load all items and let filterList do its job.
+      // For large datasets, filterList should be optimized to use SQL-level
+      // pre-filtering for query params that map cleanly to DB columns.
       items = db.getAll(collection);
       items = opts.filterList(items, req);
 
@@ -95,8 +139,10 @@ function createCrudRouter(collection, opts = {}) {
     res.success({ items, total, page, limit: limit || total });
   });
 
-  router.get('/:id', (req, res) => {
-    const item = db.getById(collection, req.params.id);
+  router.get('/:id', async (req, res) => {
+    const item = await readThroughCache(collection, req.params.id, () =>
+      db.getById(collection, req.params.id),
+    );
     if (!item) {
       return res.notFound(`${collection} not found`);
     }
@@ -104,7 +150,7 @@ function createCrudRouter(collection, opts = {}) {
     res.success(result);
   });
 
-  router.post('/', (req, res) => {
+  router.post('/', async (req, res) => {
     let item = { ...req.body };
 
     if (!item.id) {
@@ -128,17 +174,21 @@ function createCrudRouter(collection, opts = {}) {
     try {
       var created = db.insert(collection, item);
     } catch (err) {
+      logger.error({ err, collection }, 'Create failed');
       if (err.code === 'SQLITE_CONSTRAINT_PRIMARYKEY') {
         return res.fail('Create failed: id conflict, please retry');
       }
       return res.fail(`Create failed: ${err.message || 'database error'}`);
     }
 
+    // Invalidate cache
+    invalidateItemCache(collection, item.id).catch(() => {});
+
     const result = opts.afterRead ? opts.afterRead(created, req) : created;
     res.success(result, 'Created', 201);
   });
 
-  router.put('/:id', (req, res) => {
+  router.put('/:id', async (req, res) => {
     const existing = db.getById(collection, req.params.id);
     if (!existing) {
       return res.notFound(`${collection} not found`);
@@ -159,10 +209,14 @@ function createCrudRouter(collection, opts = {}) {
 
     const updated = db.updateById(collection, req.params.id, updates);
     const result = opts.afterRead ? opts.afterRead(updated, req) : updated;
+
+    // Invalidate cache
+    invalidateItemCache(collection, req.params.id).catch(() => {});
+
     res.success(result, 'Updated');
   });
 
-  router.delete('/:id', (req, res) => {
+  router.delete('/:id', async (req, res) => {
     const existing = db.getById(collection, req.params.id);
     if (!existing) {
       return res.notFound(`${collection} not found`);
@@ -176,6 +230,10 @@ function createCrudRouter(collection, opts = {}) {
     }
 
     db.deleteById(collection, req.params.id);
+
+    // Invalidate cache
+    invalidateItemCache(collection, req.params.id).catch(() => {});
+
     res.success(null, 'Deleted');
   });
 

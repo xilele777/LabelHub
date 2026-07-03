@@ -4,10 +4,29 @@ const { encodeToken } = require('../middleware/auth');
 const { loginRateLimit } = require('../middleware/loginRateLimit');
 const { hashPassword, shouldUpgradePasswordHash, verifyPassword } = require('../utils/password');
 const { validateFields } = require('../utils/requestValidation');
+const { cacheGet, cacheSet, cacheDel } = require('../utils/cache');
+const { logger } = require('../utils/logger');
 
 const router = express.Router();
 
-router.post('/login', loginRateLimit, (req, res) => {
+/**
+ * 缓存用户查找结果（TTL 60s）
+ * 后续 /me 和路由守卫都会频繁查用户表，登录时缓存可加速首次鉴权。
+ */
+async function cacheUserLookup(username) {
+  const cacheKey = `user:login:${username}`;
+  const cached = await cacheGet(cacheKey);
+  if (cached) return cached;
+
+  const user = db.findOne('users', { username });
+  if (user) {
+    // 缓存 60 秒，足够登录后立即鉴权
+    await cacheSet(cacheKey, user, 60);
+  }
+  return user;
+}
+
+router.post('/login', loginRateLimit, async (req, res) => {
   const { error, values } = validateFields(req.body, [
     {
       name: 'username',
@@ -22,18 +41,21 @@ router.post('/login', loginRateLimit, (req, res) => {
 
   if (error) {
     req.loginRateLimit.markFailure();
+    logger.warn({ username: req.body?.username, reason: 'validation' }, 'Login validation failed');
     return res.fail(error);
   }
 
   const { username, password } = values;
-  const user = db.findOne('users', { username });
+  const user = await cacheUserLookup(username);
   if (!user || !verifyPassword(password, user.password)) {
     req.loginRateLimit.markFailure();
+    logger.warn({ username, reason: 'invalid_credentials' }, 'Login failed');
     return res.fail('Invalid username or password', 401);
   }
 
   if (shouldUpgradePasswordHash(user.password)) {
     db.updateById('users', user.id, { password: hashPassword(password) });
+    await cacheDel(`user:login:${username}`);
   }
 
   req.loginRateLimit.markSuccess();
@@ -41,6 +63,17 @@ router.post('/login', loginRateLimit, (req, res) => {
   const token = encodeToken(user.id);
   const { password: _pw, ...userInfo } = user;
 
+  // Set httpOnly cookie for XSS-safe token storage
+  const isProduction = process.env.NODE_ENV === 'production';
+  res.cookie('token', token, {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: 'lax', // Balanced: CSRF-safe for state-changing requests, allows top-level navigation
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    path: '/',
+  });
+
+  logger.info({ username, userId: user.id }, 'User logged in');
   res.success({ token, user: userInfo }, 'Login successful');
 });
 
@@ -52,6 +85,7 @@ router.get('/me', (req, res) => {
 });
 
 router.post('/logout', (req, res) => {
+  res.clearCookie('token', { path: '/' });
   res.success(null, 'Logged out');
 });
 

@@ -29,6 +29,7 @@ Thumbs.db
 # Logs
 *.log
 npm-debug.log*
+logs/
 
 # Interview/Product docs (not for publication)
 LabelHub-面试复盘文档.md

@@ -66,18 +66,28 @@ function decodeToken(token) {
 
 /**
  * Auth middleware – attaches req.currentUser if valid token present.
+ * Checks httpOnly cookie first, then Authorization header.
  * Does NOT block unauthenticated requests (sets currentUser to null).
  */
 function authMiddleware(req, res, next) {
-  const authHeader = req.headers.authorization || '';
-  const match = authHeader.match(/^Bearer\s+(.+)$/);
+  // Primary: httpOnly cookie (XSS-safe)
+  let token = req.cookies?.token || null;
 
-  if (!match) {
+  // Fallback: Authorization header (for API clients)
+  if (!token) {
+    const authHeader = req.headers.authorization || '';
+    const match = authHeader.match(/^Bearer\s+(.+)$/);
+    if (match) {
+      token = match[1];
+    }
+  }
+
+  if (!token) {
     req.currentUser = null;
     return next();
   }
 
-  const decoded = decodeToken(match[1]);
+  const decoded = decodeToken(token);
   if (!decoded) {
     req.currentUser = null;
     return next();
@@ -87,6 +97,15 @@ function authMiddleware(req, res, next) {
   if (!user) {
     req.currentUser = null;
     return next();
+  }
+
+  // If password was changed after token was issued, invalidate the token
+  if (user.passwordChangedAt) {
+    const changedAt = new Date(user.passwordChangedAt).getTime();
+    if (decoded.timestamp < changedAt) {
+      req.currentUser = null;
+      return next();
+    }
   }
 
   // Attach user info (without password) to request

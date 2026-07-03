@@ -24,7 +24,7 @@ try {
       ...process.env,
       LABELHUB_DB_PATH: dbPath,
     },
-    stdio: 'inherit',
+    stdio: ['pipe', 'inherit', 'inherit'],
   });
 
   process.exitCode = result.status ?? 1;
