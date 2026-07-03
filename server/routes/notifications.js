@@ -11,8 +11,16 @@ const router = express.Router();
 router.use(requireAuth);
 
 const ROLE_VISIBLE_TYPES = {
-  annotator: [NOTIFICATION_TYPE.REVIEW_REJECTED, NOTIFICATION_TYPE.TASK_DUE_SOON, NOTIFICATION_TYPE.OWNER_MESSAGE],
-  reviewer: [NOTIFICATION_TYPE.TASK_RESUBMITTED, NOTIFICATION_TYPE.TASK_DUE_SOON, NOTIFICATION_TYPE.OWNER_MESSAGE],
+  annotator: [
+    NOTIFICATION_TYPE.REVIEW_REJECTED,
+    NOTIFICATION_TYPE.TASK_DUE_SOON,
+    NOTIFICATION_TYPE.OWNER_MESSAGE,
+  ],
+  reviewer: [
+    NOTIFICATION_TYPE.TASK_RESUBMITTED,
+    NOTIFICATION_TYPE.TASK_DUE_SOON,
+    NOTIFICATION_TYPE.OWNER_MESSAGE,
+  ],
 };
 
 const VALID_TARGET_ROLES = ['owner', 'annotator', 'reviewer'];
@@ -141,7 +149,9 @@ router.post('/publish', (req, res) => {
   const message = String(req.body.message || '').trim();
   const targetRoles = Array.isArray(req.body.targetRoles) ? req.body.targetRoles : [];
   const targetUsernames = Array.isArray(req.body.targetUsernames) ? req.body.targetUsernames : [];
-  const priority = ['high', 'medium', 'low'].includes(req.body.priority) ? req.body.priority : 'medium';
+  const priority = ['high', 'medium', 'low'].includes(req.body.priority)
+    ? req.body.priority
+    : 'medium';
 
   if (!title) return res.fail('通知标题不能为空');
   if (!message) return res.fail('通知内容不能为空');

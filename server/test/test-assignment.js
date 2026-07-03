@@ -2,14 +2,14 @@
 try {
   require('../services/assignmentEngine');
   console.log('assignmentEngine: OK');
-} catch(e) {
+} catch (e) {
   console.error('assignmentEngine ERROR:', e.message);
 }
 
 try {
   require('../routes/assignments');
   console.log('assignments route: OK');
-} catch(e) {
+} catch (e) {
   console.error('assignments route ERROR:', e.message);
 }
 
@@ -20,11 +20,18 @@ try {
   console.log('assignmentEngine exports:', exportedFuncs.join(', '));
 
   // Verify all expected exports exist
-  const expected = ['ASSIGNMENT_STRATEGY', 'getAssignableItems', 'getAnnotators',
-    'evenSplitAssign', 'manualAssign',
-    'clearAssignment', 'getAssignmentStats', 'executeAssignment'];
+  const expected = [
+    'ASSIGNMENT_STRATEGY',
+    'getAssignableItems',
+    'getAnnotators',
+    'evenSplitAssign',
+    'manualAssign',
+    'clearAssignment',
+    'getAssignmentStats',
+    'executeAssignment',
+  ];
 
-  const missing = expected.filter(name => !exportedFuncs.includes(name));
+  const missing = expected.filter((name) => !exportedFuncs.includes(name));
   if (missing.length > 0) {
     console.error('Missing exports:', missing.join(', '));
   } else {
@@ -36,6 +43,6 @@ try {
   console.log('Strategies:', JSON.stringify(ASSIGNMENT_STRATEGY));
 
   console.log('\nAssignment engine structure tests passed!');
-} catch(e) {
+} catch (e) {
   console.error('Assignment engine test ERROR:', e.message, e.stack);
 }

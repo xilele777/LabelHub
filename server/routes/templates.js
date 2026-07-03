@@ -6,8 +6,22 @@ const { readArray, readEnum, readNumber, readString } = require('../utils/reques
 const router = express.Router();
 router.use(requireAuth);
 
-const TASK_TYPES = ['image_classification', 'object_detection', 'semantic_segmentation', 'text_ner'];
-const FIELD_TYPES = ['input', 'textarea', 'radio', 'checkbox', 'select', 'rating', 'switch', 'title'];
+const TASK_TYPES = [
+  'image_classification',
+  'object_detection',
+  'semantic_segmentation',
+  'text_ner',
+];
+const FIELD_TYPES = [
+  'input',
+  'textarea',
+  'radio',
+  'checkbox',
+  'select',
+  'rating',
+  'switch',
+  'title',
+];
 const OPTION_FIELD_TYPES = new Set(['radio', 'checkbox', 'select']);
 
 function validateOption(option, fieldIndex, optionIndex) {
@@ -80,7 +94,11 @@ function validateTemplatePayload(item, { partial = false } = {}) {
   const normalized = { ...item };
 
   if (!partial || Object.prototype.hasOwnProperty.call(normalized, 'name')) {
-    const result = readString(normalized, 'name', { required: !partial, minLength: 1, maxLength: 100 });
+    const result = readString(normalized, 'name', {
+      required: !partial,
+      minLength: 1,
+      maxLength: 100,
+    });
     if (result.error) return result.error;
     if (result.value !== undefined) normalized.name = result.value;
   }

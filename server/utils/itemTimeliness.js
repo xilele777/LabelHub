@@ -27,7 +27,10 @@ function hasFutureDueAt(task, now = Date.now()) {
 function canTaskExposeWorkItems(task, now = Date.now()) {
   const isWorkStatus =
     task?.status === 'in_progress' ||
-    (task?.status === 'ended' && !task?.archived && !task?.taskEndedNotifiedAt && hasFutureDueAt(task, now));
+    (task?.status === 'ended' &&
+      !task?.archived &&
+      !task?.taskEndedNotifiedAt &&
+      hasFutureDueAt(task, now));
   return Boolean(task && isWorkStatus && isTaskStarted(task, now) && !isTaskExpired(task, now));
 }
 
@@ -53,9 +56,10 @@ function getItemStartTimestamp(item, phase) {
 
 function getItemTimeoutHours(task, phase) {
   if (!task) return 0;
-  const value = phase === 'review'
-    ? task.reviewTimeoutHours ?? task.reviewReminderHours
-    : task.annotationTimeoutHours ?? task.reminderHours;
+  const value =
+    phase === 'review'
+      ? (task.reviewTimeoutHours ?? task.reviewReminderHours)
+      : (task.annotationTimeoutHours ?? task.reminderHours);
   return Math.max(0, Number(value ?? 0));
 }
 

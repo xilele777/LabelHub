@@ -1,8 +1,5 @@
 const assert = require('assert');
-const {
-  getItemStartTimestamp,
-  isItemExpired,
-} = require('../utils/itemTimeliness');
+const { getItemStartTimestamp, isItemExpired } = require('../utils/itemTimeliness');
 
 const now = Date.now();
 const twoDaysAgo = new Date(now - 48 * 60 * 60 * 1000).toISOString();

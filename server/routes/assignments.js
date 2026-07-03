@@ -94,7 +94,9 @@ router.get('/tasks/:taskId/review-assign/items', requireRole('owner'), (req, res
     return res.notFound('任务不存在');
   }
 
-  const statuses = status ? String(status).split(',') : ['submitted', 'ai_reviewed', 'pending_review'];
+  const statuses = status
+    ? String(status).split(',')
+    : ['submitted', 'ai_reviewed', 'pending_review'];
   const allItems = db.find('annotation-items', { taskId });
   const items = allItems.filter((item) => {
     if (item.archived) return false;

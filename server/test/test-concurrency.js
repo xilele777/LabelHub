@@ -102,7 +102,11 @@ withTempData(() => {
 
   db.claimItem('concurrency_item_1', 'annotator1', 30 * 60 * 1000);
   db.claimItem('concurrency_item_2', 'annotator1', 30 * 60 * 1000);
-  assert.strictEqual(db.releaseAllByUser('annotator1'), 2, 'releaseAllByUser should clear all user locks');
+  assert.strictEqual(
+    db.releaseAllByUser('annotator1'),
+    2,
+    'releaseAllByUser should clear all user locks',
+  );
   assert.strictEqual(db.getById('annotation-items', 'concurrency_item_1').lockedBy, null);
   assert.strictEqual(db.getById('annotation-items', 'concurrency_item_2').lockedBy, null);
 

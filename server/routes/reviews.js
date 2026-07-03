@@ -32,7 +32,9 @@ function latestReviewsByItem(reviews) {
 // Custom routes must be registered before CRUD, otherwise GET /:id intercepts them.
 
 router.get('/by-item/:dataItemId', (req, res) => {
-  const review = sortReviewsNewestFirst(db.find('reviews', { dataItemId: req.params.dataItemId }))[0];
+  const review = sortReviewsNewestFirst(
+    db.find('reviews', { dataItemId: req.params.dataItemId }),
+  )[0];
   if (!review) {
     return res.notFound('Review result not found');
   }

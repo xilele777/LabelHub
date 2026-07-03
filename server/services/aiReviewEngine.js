@@ -64,19 +64,20 @@ function isEmpty(value) {
 /** 严重程度对应扣分 */
 function severityDeduction(severity) {
   switch (severity) {
-    case SEVERITY.ERROR: return 30;
-    case SEVERITY.WARNING: return 15;
-    case SEVERITY.INFO: return 5;
-    default: return 5;
+    case SEVERITY.ERROR:
+      return 30;
+    case SEVERITY.WARNING:
+      return 15;
+    case SEVERITY.INFO:
+      return 5;
+    default:
+      return 5;
   }
 }
 
 /** 计算质量评分（基础 100，逐项扣分，最低 0） */
 function calculateScore(hits) {
-  const totalDeduction = hits.reduce(
-    (sum, h) => sum + severityDeduction(h.severity),
-    0,
-  );
+  const totalDeduction = hits.reduce((sum, h) => sum + severityDeduction(h.severity), 0);
   return Math.max(0, 100 - totalDeduction);
 }
 
@@ -239,7 +240,9 @@ const R004 = {
   description: '分类字段未选择将导致标注无法归类',
   check(ctx) {
     const { field, value } = ctx;
-    const isCategoryType = [FIELD_TYPE.RADIO, FIELD_TYPE.SELECT, FIELD_TYPE.CHECKBOX].includes(field.type);
+    const isCategoryType = [FIELD_TYPE.RADIO, FIELD_TYPE.SELECT, FIELD_TYPE.CHECKBOX].includes(
+      field.type,
+    );
     if (!isCategoryType) return undefined;
     if (!field.required && isEmpty(value)) {
       return `分类字段"${field.label}"未选择，可能影响数据归类`;
@@ -258,9 +261,7 @@ const R005 = {
     const { field, value } = ctx;
     if (field.type !== FIELD_TYPE.RADIO && field.type !== FIELD_TYPE.SELECT) return undefined;
     if (!field.options) return undefined;
-    const otherOpt = field.options.find(
-      (o) => o.value === 'other' || o.label === '其他',
-    );
+    const otherOpt = field.options.find((o) => o.value === 'other' || o.label === '其他');
     if (otherOpt && value === otherOpt.value) {
       return `选择了"其他"类别，建议确认是否有更精确选项`;
     }
@@ -269,9 +270,7 @@ const R005 = {
   suggest(ctx) {
     const { field } = ctx;
     if (!field.options) return undefined;
-    const nonOther = field.options.filter(
-      (o) => o.value !== 'other' && o.label !== '其他',
-    );
+    const nonOther = field.options.filter((o) => o.value !== 'other' && o.label !== '其他');
     if (nonOther.length > 0) {
       const pick = nonOther[0];
       return {
@@ -334,14 +333,7 @@ const builtinRules = [R001, R002, R003, R004, R005, R006];
  * @returns {Object} AIReviewResult
  */
 function runAIReview(input) {
-  const {
-    template,
-    rawData,
-    annotationResult,
-    dataItemId,
-    taskId,
-    templateId,
-  } = input;
+  const { template, rawData, annotationResult, dataItemId, taskId, templateId } = input;
 
   const fields = template.fields || [];
   const matchedRules = [];
@@ -387,12 +379,13 @@ function runAIReview(input) {
   );
 
   const score = calculateScore(hitSeverities.map((s) => ({ severity: s })));
-  const maxSeverity = hitSeverities.length > 0
-    ? hitSeverities.sort((a, b) => {
-        const order = { error: 2, warning: 1, info: 0 };
-        return order[b] - order[a];
-      })[0]
-    : null;
+  const maxSeverity =
+    hitSeverities.length > 0
+      ? hitSeverities.sort((a, b) => {
+          const order = { error: 2, warning: 1, info: 0 };
+          return order[b] - order[a];
+        })[0]
+      : null;
   const reviewStatus = deriveStatus(score, maxSeverity);
   const summary = generateSummary(reviewStatus, score, fieldWarnings);
 

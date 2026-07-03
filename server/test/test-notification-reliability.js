@@ -45,9 +45,27 @@ function runTests() {
   console.log('\n===== Notification reliability tests =====\n');
 
   db.seed('users', [
-    { id: 'u_owner', username: 'owner', password: hashPassword('owner123'), avatar: null, role: 'owner' },
-    { id: 'u_annotator', username: 'annotator', password: hashPassword('annotator123'), avatar: null, role: 'annotator' },
-    { id: 'u_reviewer', username: 'reviewer', password: hashPassword('reviewer123'), avatar: null, role: 'reviewer' },
+    {
+      id: 'u_owner',
+      username: 'owner',
+      password: hashPassword('owner123'),
+      avatar: null,
+      role: 'owner',
+    },
+    {
+      id: 'u_annotator',
+      username: 'annotator',
+      password: hashPassword('annotator123'),
+      avatar: null,
+      role: 'annotator',
+    },
+    {
+      id: 'u_reviewer',
+      username: 'reviewer',
+      password: hashPassword('reviewer123'),
+      avatar: null,
+      role: 'reviewer',
+    },
   ]);
 
   db.seed('tasks', [
@@ -82,10 +100,16 @@ function runTests() {
     },
   ]);
 
-  const roleDelivered = notificationService.notifyRole('annotator', ownerMessage('role_fanout', 'Role fan-out'));
+  const roleDelivered = notificationService.notifyRole(
+    'annotator',
+    ownerMessage('role_fanout', 'Role fan-out'),
+  );
   assert(roleDelivered.length === 1, 'notifyRole returns persisted recipient rows');
   assert(hasNotification('annotator', 'role_fanout'), 'notifyRole persists for role recipient');
-  assert(!hasNotification('reviewer', 'role_fanout'), 'notifyRole does not persist outside the role');
+  assert(
+    !hasNotification('reviewer', 'role_fanout'),
+    'notifyRole does not persist outside the role',
+  );
 
   const taskDelivered = notificationService.notifyTask(
     'task_reliability',
@@ -96,11 +120,19 @@ function runTests() {
   assert(hasNotification('annotator', 'task_fanout'), 'notifyTask persists for assigned annotator');
   assert(hasNotification('reviewer', 'task_fanout'), 'notifyTask persists for assigned reviewer');
 
-  const broadcastDelivered = notificationService.broadcastNotification(ownerMessage('broadcast_fanout', 'Broadcast'));
+  const broadcastDelivered = notificationService.broadcastNotification(
+    ownerMessage('broadcast_fanout', 'Broadcast'),
+  );
   assert(broadcastDelivered.length === 3, 'broadcastNotification returns persisted user rows');
   assert(hasNotification('owner', 'broadcast_fanout'), 'broadcastNotification persists for owner');
-  assert(hasNotification('annotator', 'broadcast_fanout'), 'broadcastNotification persists for annotator');
-  assert(hasNotification('reviewer', 'broadcast_fanout'), 'broadcastNotification persists for reviewer');
+  assert(
+    hasNotification('annotator', 'broadcast_fanout'),
+    'broadcastNotification persists for annotator',
+  );
+  assert(
+    hasNotification('reviewer', 'broadcast_fanout'),
+    'broadcastNotification persists for reviewer',
+  );
 
   console.log('\n========================================');
   console.log(`Result: ${passed} passed, ${failed} failed`);

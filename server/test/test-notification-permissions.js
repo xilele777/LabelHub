@@ -59,9 +59,27 @@ async function runTests() {
   console.log('\n===== Notification permission isolation tests =====\n');
 
   db.seed('users', [
-    { id: 'u001', username: 'owner', password: hashPassword('owner123'), avatar: null, role: 'owner' },
-    { id: 'u002', username: 'annotator', password: hashPassword('annotator123'), avatar: null, role: 'annotator' },
-    { id: 'u003', username: 'reviewer', password: hashPassword('reviewer123'), avatar: null, role: 'reviewer' },
+    {
+      id: 'u001',
+      username: 'owner',
+      password: hashPassword('owner123'),
+      avatar: null,
+      role: 'owner',
+    },
+    {
+      id: 'u002',
+      username: 'annotator',
+      password: hashPassword('annotator123'),
+      avatar: null,
+      role: 'annotator',
+    },
+    {
+      id: 'u003',
+      username: 'reviewer',
+      password: hashPassword('reviewer123'),
+      avatar: null,
+      role: 'reviewer',
+    },
   ]);
 
   const server = http.createServer();
@@ -91,15 +109,21 @@ async function runTests() {
   await wait(150);
 
   assert(
-    annotator.notifications.some((n) => n.type === 'review_rejected' && n.data?.dataItemId === 'notif_perm_reject_item'),
+    annotator.notifications.some(
+      (n) => n.type === 'review_rejected' && n.data?.dataItemId === 'notif_perm_reject_item',
+    ),
     'annotator receives own review_rejected notification',
   );
   assert(
-    !reviewer.notifications.some((n) => n.type === 'review_rejected' && n.data?.dataItemId === 'notif_perm_reject_item'),
+    !reviewer.notifications.some(
+      (n) => n.type === 'review_rejected' && n.data?.dataItemId === 'notif_perm_reject_item',
+    ),
     'reviewer does not receive annotator rejection notification',
   );
   assert(
-    !owner.notifications.some((n) => n.type === 'review_rejected' && n.data?.dataItemId === 'notif_perm_reject_item'),
+    !owner.notifications.some(
+      (n) => n.type === 'review_rejected' && n.data?.dataItemId === 'notif_perm_reject_item',
+    ),
     'owner does not receive personal rejection notification via task rooms',
   );
   assert(
@@ -124,15 +148,21 @@ async function runTests() {
   await wait(150);
 
   assert(
-    !reviewer.notifications.some((n) => n.type === 'task_submitted' && n.data?.dataItemId === 'notif_perm_submit_item'),
+    !reviewer.notifications.some(
+      (n) => n.type === 'task_submitted' && n.data?.dataItemId === 'notif_perm_submit_item',
+    ),
     'reviewer does not receive task_submitted notification',
   );
   assert(
-    !annotator.notifications.some((n) => n.type === 'task_submitted' && n.data?.dataItemId === 'notif_perm_submit_item'),
+    !annotator.notifications.some(
+      (n) => n.type === 'task_submitted' && n.data?.dataItemId === 'notif_perm_submit_item',
+    ),
     'annotator does not receive reviewer-facing task_submitted notification',
   );
   assert(
-    !owner.notifications.some((n) => n.type === 'task_submitted' && n.data?.dataItemId === 'notif_perm_submit_item'),
+    !owner.notifications.some(
+      (n) => n.type === 'task_submitted' && n.data?.dataItemId === 'notif_perm_submit_item',
+    ),
     'owner does not receive reviewer-facing task_submitted notification',
   );
 
@@ -151,20 +181,28 @@ async function runTests() {
   await wait(150);
 
   assert(
-    reviewer.notifications.some((n) => n.type === 'task_resubmitted' && n.data?.dataItemId === 'notif_perm_resubmit_item'),
+    reviewer.notifications.some(
+      (n) => n.type === 'task_resubmitted' && n.data?.dataItemId === 'notif_perm_resubmit_item',
+    ),
     'reviewer receives task_resubmitted notification for item they rejected',
   );
   assert(
-    !annotator.notifications.some((n) => n.type === 'task_resubmitted' && n.data?.dataItemId === 'notif_perm_resubmit_item'),
+    !annotator.notifications.some(
+      (n) => n.type === 'task_resubmitted' && n.data?.dataItemId === 'notif_perm_resubmit_item',
+    ),
     'annotator does not receive reviewer-facing task_resubmitted notification',
   );
   assert(
-    !owner.notifications.some((n) => n.type === 'task_resubmitted' && n.data?.dataItemId === 'notif_perm_resubmit_item'),
+    !owner.notifications.some(
+      (n) => n.type === 'task_resubmitted' && n.data?.dataItemId === 'notif_perm_resubmit_item',
+    ),
     'owner does not receive personal task_resubmitted notification via task rooms',
   );
   assert(
     reviewer.notifications
-      .find((n) => n.type === 'task_resubmitted' && n.data?.dataItemId === 'notif_perm_resubmit_item')
+      .find(
+        (n) => n.type === 'task_resubmitted' && n.data?.dataItemId === 'notif_perm_resubmit_item',
+      )
       ?.targetUsers?.includes('reviewer'),
     'task_resubmitted notification carries targetUsers=reviewer',
   );
@@ -195,7 +233,9 @@ async function runTests() {
 
   if (bugs.length > 0) {
     console.log('\nBugs found:');
-    bugs.forEach((b, i) => console.log(`  ${i + 1}. ${b.test}${b.details ? ` - ${b.details}` : ''}`));
+    bugs.forEach((b, i) =>
+      console.log(`  ${i + 1}. ${b.test}${b.details ? ` - ${b.details}` : ''}`),
+    );
   } else {
     console.log('\nNotification permission isolation passed.');
   }

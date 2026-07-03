@@ -1,6 +1,6 @@
 /**
  * 端到端测试：验证 WebSocket 通知是否能正确送达
- * 
+ *
  * 流程：
  * 1. 登录获取 token
  * 2. 用 Socket.IO 连接后端
@@ -29,7 +29,7 @@ async function login(username, password) {
 // ─── Step 2: 获取标注项 ──────────────────────────────────
 async function getAnnotationItems(token) {
   const res = await fetch(`${API_URL}/annotation-items`, {
-    headers: { 'Authorization': `Bearer ${token}` },
+    headers: { Authorization: `Bearer ${token}` },
   });
   const json = await res.json();
   return json.data?.items || [];
@@ -41,7 +41,7 @@ async function submitAnnotation(token, itemId, version) {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
+      Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify({
       annotationData: { test: 'e2e notification test' },
@@ -59,11 +59,11 @@ async function main() {
   console.log('[Step 0] 查看可用用户...');
   const db = require('./store/db');
   const users = db.getAll('users');
-  console.log('可用用户:', users.map(u => `${u.username} (${u.role})`).join(', '));
+  console.log('可用用户:', users.map((u) => `${u.username} (${u.role})`).join(', '));
 
   // 2. 分别以标注员和审核员登录
-  const annotator = users.find(u => u.role === 'annotator');
-  const reviewer = users.find(u => u.role === 'reviewer');
+  const annotator = users.find((u) => u.role === 'annotator');
+  const reviewer = users.find((u) => u.role === 'reviewer');
 
   if (!annotator) {
     console.error('没有找到标注员用户，无法测试');
@@ -155,7 +155,7 @@ async function main() {
   });
 
   // 等待一秒让连接稳定
-  await new Promise(r => setTimeout(r, 1000));
+  await new Promise((r) => setTimeout(r, 1000));
 
   // 6. 获取标注员可操作的标注项
   console.log('\n[Step 4] 获取标注项列表...');
@@ -163,25 +163,26 @@ async function main() {
   console.log(`  找到 ${items.length} 个标注项`);
 
   // 找一个可以提交的项（draft 或 pending 状态）
-  const submittableItem = items.find(item => 
-    item.annotator === annotator.username && 
-    (item.status === 'draft' || item.status === 'pending' || item.status === 'rejected')
+  const submittableItem = items.find(
+    (item) =>
+      item.annotator === annotator.username &&
+      (item.status === 'draft' || item.status === 'pending' || item.status === 'rejected'),
   );
 
   if (!submittableItem) {
     console.log('  没有可提交的标注项，尝试创建一个测试场景...');
     // 找任何属于该标注员的项
-    const myItem = items.find(item => item.annotator === annotator.username);
+    const myItem = items.find((item) => item.annotator === annotator.username);
     if (myItem) {
       console.log(`  找到标注项 ${myItem.id}，当前状态: ${myItem.status}`);
       console.log('  该状态无法提交，跳过提交测试');
     } else {
       console.log('  该标注员没有分配任何标注项');
     }
-    
+
     // 尝试用 approve/reject 触发通知
     console.log('\n[备用测试] 直接用 Socket.IO 发送测试通知...');
-    
+
     // 检查服务端通知服务是否正常运行
     const ns = require('./services/notificationService');
     const ioInstance = ns.getIO();
@@ -195,17 +196,20 @@ async function main() {
 
       // 直接发送测试通知
       console.log('\n  发送测试通知给审核员...');
-      ns.notifyUserByUsername(reviewer?.username || annotator.username, ns.createNotification({
-        type: 'task_status_changed',
-        title: '测试通知',
-        message: '这是一条端到端测试通知',
-        data: {},
-        sender: 'test-script',
-        targetUsers: [reviewer?.username || annotator.username],
-      }));
+      ns.notifyUserByUsername(
+        reviewer?.username || annotator.username,
+        ns.createNotification({
+          type: 'task_status_changed',
+          title: '测试通知',
+          message: '这是一条端到端测试通知',
+          data: {},
+          sender: 'test-script',
+          targetUsers: [reviewer?.username || annotator.username],
+        }),
+      );
 
       // 等待通知到达
-      await new Promise(r => setTimeout(r, 2000));
+      await new Promise((r) => setTimeout(r, 2000));
 
       if (reviewerReceivedNotification || annotatorReceivedNotification) {
         console.log('\n✅ 测试通知送达成功！');
@@ -219,15 +223,18 @@ async function main() {
     } else {
       console.log('  ❌ Socket.IO 实例不存在！');
     }
-
   } else {
     // 7. 提交标注
     console.log(`\n[Step 5] 提交标注项 ${submittableItem.id} (状态: ${submittableItem.status})...`);
-    const result = await submitAnnotation(annotatorAuth.token, submittableItem.id, submittableItem.version);
+    const result = await submitAnnotation(
+      annotatorAuth.token,
+      submittableItem.id,
+      submittableItem.version,
+    );
     console.log(`  提交结果: code=${result.code}, message=${result.message}`);
 
     // 等待通知到达
-    await new Promise(r => setTimeout(r, 3000));
+    await new Promise((r) => setTimeout(r, 3000));
 
     if (reviewerReceivedNotification) {
       console.log('\n✅ 审核员成功收到通知！');
@@ -249,7 +256,7 @@ async function main() {
   process.exit(0);
 }
 
-main().catch(err => {
+main().catch((err) => {
   console.error('测试出错:', err);
   process.exit(1);
 });

@@ -128,7 +128,12 @@ withTempData(() => {
   };
 
   assert.strictEqual(
-    itemTimeliness.isItemExpired({ ...reopenedTask, annotationTimeoutHours: 72 }, returnedItem, 'annotation', now),
+    itemTimeliness.isItemExpired(
+      { ...reopenedTask, annotationTimeoutHours: 72 },
+      returnedItem,
+      'annotation',
+      now,
+    ),
     false,
     'returned annotation items should become claimable again when the item timeout is extended enough',
   );

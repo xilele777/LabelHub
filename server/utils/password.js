@@ -14,7 +14,12 @@ function normalizePassword(password) {
 
 function hashPassword(password) {
   const salt = crypto.randomBytes(16);
-  const derivedKey = crypto.scryptSync(normalizePassword(password), salt, KEY_LENGTH, SCRYPT_OPTIONS);
+  const derivedKey = crypto.scryptSync(
+    normalizePassword(password),
+    salt,
+    KEY_LENGTH,
+    SCRYPT_OPTIONS,
+  );
 
   return [
     HASH_ALGORITHM,
@@ -39,11 +44,16 @@ function verifyHashedPassword(password, storedPassword) {
 
   const [, n, r, p, keyLength, saltHex, hashHex] = parts;
   const expected = Buffer.from(hashHex, 'hex');
-  const actual = crypto.scryptSync(normalizePassword(password), Buffer.from(saltHex, 'hex'), Number(keyLength), {
-    N: Number(n),
-    r: Number(r),
-    p: Number(p),
-  });
+  const actual = crypto.scryptSync(
+    normalizePassword(password),
+    Buffer.from(saltHex, 'hex'),
+    Number(keyLength),
+    {
+      N: Number(n),
+      r: Number(r),
+      p: Number(p),
+    },
+  );
 
   return expected.length === actual.length && crypto.timingSafeEqual(expected, actual);
 }

@@ -9,7 +9,12 @@ const { readEnum, readNumber, readString } = require('../utils/requestValidation
 const router = express.Router();
 router.use(requireAuth);
 
-const TASK_TYPES = ['image_classification', 'object_detection', 'semantic_segmentation', 'text_ner'];
+const TASK_TYPES = [
+  'image_classification',
+  'object_detection',
+  'semantic_segmentation',
+  'text_ner',
+];
 const TASK_STATUSES = ['draft', 'pending', 'in_progress', 'completed', 'ended'];
 const MAX_TIMEOUT_HOURS = 24 * 365;
 
@@ -41,7 +46,11 @@ function validateTaskPayload(input, { partial = false } = {}) {
   const normalized = { ...input };
 
   if (!partial || Object.prototype.hasOwnProperty.call(normalized, 'name')) {
-    const result = readString(normalized, 'name', { required: !partial, minLength: 1, maxLength: 100 });
+    const result = readString(normalized, 'name', {
+      required: !partial,
+      minLength: 1,
+      maxLength: 100,
+    });
     if (result.error) return result.error;
     if (result.value !== undefined) normalized.name = result.value;
   }
@@ -61,13 +70,21 @@ function validateTaskPayload(input, { partial = false } = {}) {
   }
 
   if (!partial || Object.prototype.hasOwnProperty.call(normalized, 'owner')) {
-    const result = readString(normalized, 'owner', { required: !partial, minLength: 1, maxLength: 64 });
+    const result = readString(normalized, 'owner', {
+      required: !partial,
+      minLength: 1,
+      maxLength: 64,
+    });
     if (result.error) return result.error;
     if (result.value !== undefined) normalized.owner = result.value;
   }
 
   if (!partial || Object.prototype.hasOwnProperty.call(normalized, 'templateId')) {
-    const result = readString(normalized, 'templateId', { required: !partial, minLength: 1, maxLength: 80 });
+    const result = readString(normalized, 'templateId', {
+      required: !partial,
+      minLength: 1,
+      maxLength: 80,
+    });
     if (result.error) return result.error;
     if (result.value !== undefined) normalized.templateId = result.value;
   }
@@ -98,7 +115,12 @@ function validateTaskPayload(input, { partial = false } = {}) {
     if (result.hasValue) normalized[field] = result.value;
   }
 
-  for (const field of ['annotationTimeoutHours', 'reminderHours', 'reviewTimeoutHours', 'reviewReminderHours']) {
+  for (const field of [
+    'annotationTimeoutHours',
+    'reminderHours',
+    'reviewTimeoutHours',
+    'reviewReminderHours',
+  ]) {
     if (Object.prototype.hasOwnProperty.call(normalized, field)) {
       const result = readNumber(normalized, field, { min: 0, max: MAX_TIMEOUT_HOURS });
       if (result.error) return result.error;
@@ -185,7 +207,12 @@ function validateEndedTaskReopen(existing, nextTask, updates) {
 }
 
 function repairEndedTaskAfterDeadlineExtension(item) {
-  if (item.archived || item.status !== 'ended' || item.taskEndedNotifiedAt || !hasFutureDueAt(item)) {
+  if (
+    item.archived ||
+    item.status !== 'ended' ||
+    item.taskEndedNotifiedAt ||
+    !hasFutureDueAt(item)
+  ) {
     return item;
   }
 
@@ -303,7 +330,11 @@ const crud = createCrudRouter('tasks', {
     const shouldReopen = shouldReopenEndedTask(nextTask, updates);
 
     if (updates.status && updates.status !== existing.status && !shouldReopen) {
-      const { valid, reason } = validateTransition(TASK_TRANSITIONS, existing.status, updates.status);
+      const { valid, reason } = validateTransition(
+        TASK_TRANSITIONS,
+        existing.status,
+        updates.status,
+      );
       if (!valid) {
         return reason;
       }
@@ -315,14 +346,21 @@ const crud = createCrudRouter('tasks', {
       normalizedTimeliness.taskEndedNotifiedAt = null;
     }
 
-    if (updates.status === 'ended' && existing.status !== 'ended' && !normalizedTimeliness.taskEndedNotifiedAt) {
+    if (
+      updates.status === 'ended' &&
+      existing.status !== 'ended' &&
+      !normalizedTimeliness.taskEndedNotifiedAt
+    ) {
       normalizedTimeliness.taskEndedNotifiedAt = new Date().toISOString();
     }
 
     const timelinessError = validateTimeliness(nextTask);
     if (timelinessError) return timelinessError;
 
-    if (normalizedTimeliness.annotationDueSoonNotifiedAt === null && nextTask.dueAt === existing.dueAt) {
+    if (
+      normalizedTimeliness.annotationDueSoonNotifiedAt === null &&
+      nextTask.dueAt === existing.dueAt
+    ) {
       delete normalizedTimeliness.annotationDueSoonNotifiedAt;
       delete normalizedTimeliness.reviewDueSoonNotifiedAt;
       delete normalizedTimeliness.taskEndedNotifiedAt;
@@ -350,8 +388,10 @@ const crud = createCrudRouter('tasks', {
     if (item.reviewDueAt === undefined) item.reviewDueAt = null;
     if (item.reviewReminderHours === undefined) item.reviewReminderHours = 24;
     if (item.reviewOverdueStrategy === undefined) item.reviewOverdueStrategy = 'block_submit';
-    if (item.annotationTimeoutHours === undefined) item.annotationTimeoutHours = item.reminderHours ?? 24;
-    if (item.reviewTimeoutHours === undefined) item.reviewTimeoutHours = item.reviewReminderHours ?? 24;
+    if (item.annotationTimeoutHours === undefined)
+      item.annotationTimeoutHours = item.reminderHours ?? 24;
+    if (item.reviewTimeoutHours === undefined)
+      item.reviewTimeoutHours = item.reviewReminderHours ?? 24;
     if (item.taskEndedNotifiedAt === undefined) item.taskEndedNotifiedAt = null;
     return item;
   },

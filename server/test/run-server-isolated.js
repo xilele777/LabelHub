@@ -94,7 +94,7 @@ function stopProcess(child) {
 }
 
 async function main() {
-  const PORT = Number(process.env.TEST_PORT || await getFreePort());
+  const PORT = Number(process.env.TEST_PORT || (await getFreePort()));
   const BASE_URL = `http://127.0.0.1:${PORT}`;
   const env = {
     ...process.env,

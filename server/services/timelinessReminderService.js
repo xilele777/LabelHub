@@ -129,7 +129,9 @@ function endExpiredTask(task, items, now) {
 
 function scanTimelinessReminders() {
   const now = Date.now();
-  const tasks = db.getAll('tasks').filter((task) => task.status === 'in_progress' && !task.archived);
+  const tasks = db
+    .getAll('tasks')
+    .filter((task) => task.status === 'in_progress' && !task.archived);
   let affected = 0;
 
   for (const task of tasks) {

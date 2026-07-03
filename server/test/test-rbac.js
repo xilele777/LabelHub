@@ -50,7 +50,9 @@ function assert(condition, name, result) {
     return;
   }
 
-  const detail = result ? ` status=${result.status}, code=${result.body?.code}, msg=${result.body?.message}` : '';
+  const detail = result
+    ? ` status=${result.status}, code=${result.body?.code}, msg=${result.body?.message}`
+    : '';
   console.log(`  FAIL ${name}${detail}`);
   failed += 1;
 }
@@ -168,8 +170,14 @@ async function main() {
   });
   assert(forbidden(result), 'reviewer cannot create task', result);
 
-  assert(ok(await fetchJSON('/tasks', { headers: auth(annotatorToken) })), 'annotator can list tasks');
-  assert(ok(await fetchJSON('/tasks', { headers: auth(reviewerToken) })), 'reviewer can list tasks');
+  assert(
+    ok(await fetchJSON('/tasks', { headers: auth(annotatorToken) })),
+    'annotator can list tasks',
+  );
+  assert(
+    ok(await fetchJSON('/tasks', { headers: auth(reviewerToken) })),
+    'reviewer can list tasks',
+  );
 
   result = await fetchJSON('/templates', {
     method: 'POST',
@@ -177,7 +185,10 @@ async function main() {
     body: JSON.stringify({ name: 'Bad Template', type: 'text_ner', fields: [] }),
   });
   assert(forbidden(result), 'annotator cannot create template', result);
-  assert(ok(await fetchJSON('/templates', { headers: auth(annotatorToken) })), 'annotator can list templates');
+  assert(
+    ok(await fetchJSON('/templates', { headers: auth(annotatorToken) })),
+    'annotator can list templates',
+  );
 
   console.log('\nAnnotation and review operations');
   result = await fetchJSON(`/annotation-items/${pendingItemId}/save-draft`, {
@@ -251,7 +262,10 @@ async function main() {
   });
   assert(forbidden(result), 'annotator cannot create review record', result);
 
-  assert(ok(await fetchJSON('/reviews', { headers: auth(annotatorToken) })), 'annotator can list review records');
+  assert(
+    ok(await fetchJSON('/reviews', { headers: auth(annotatorToken) })),
+    'annotator can list review records',
+  );
 
   result = await fetchJSON('/reviews', {
     method: 'POST',
@@ -266,7 +280,10 @@ async function main() {
   });
   assert(ok(result), 'owner can create review record', result);
 
-  assert(forbidden(await fetchJSON('/users', { headers: auth(annotatorToken) })), 'annotator cannot list users');
+  assert(
+    forbidden(await fetchJSON('/users', { headers: auth(annotatorToken) })),
+    'annotator cannot list users',
+  );
   result = await fetchJSON('/users', {
     method: 'POST',
     headers: auth(annotatorToken),

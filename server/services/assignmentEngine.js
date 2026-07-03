@@ -15,8 +15,8 @@ const { canTaskExposeWorkItems } = require('../utils/itemTimeliness');
  * 分配策略枚举
  */
 const ASSIGNMENT_STRATEGY = {
-  EVEN_SPLIT: 'even_split',     // 按量均分
-  MANUAL: 'manual',             // 手动指定
+  EVEN_SPLIT: 'even_split', // 按量均分
+  MANUAL: 'manual', // 手动指定
 };
 
 /**
@@ -73,9 +73,10 @@ function evenSplitAssign(taskId, annotatorUsernames, options = {}) {
   }
 
   // 计算每人分配数量
-  const itemsPerPerson = perPerson > 0
-    ? Math.min(perPerson, Math.ceil(assignableItems.length / annotatorUsernames.length))
-    : Math.ceil(assignableItems.length / annotatorUsernames.length);
+  const itemsPerPerson =
+    perPerson > 0
+      ? Math.min(perPerson, Math.ceil(assignableItems.length / annotatorUsernames.length))
+      : Math.ceil(assignableItems.length / annotatorUsernames.length);
 
   const details = [];
   let itemIndex = 0;
@@ -180,9 +181,8 @@ function manualAssign(taskId, assignments) {
 function clearAssignment(taskId, options = {}) {
   const { itemIds = [] } = options;
   const allItems = db.find('annotation-items', { taskId });
-  const itemsToClear = itemIds.length > 0
-    ? allItems.filter((item) => itemIds.includes(item.id))
-    : allItems;
+  const itemsToClear =
+    itemIds.length > 0 ? allItems.filter((item) => itemIds.includes(item.id)) : allItems;
 
   const now = new Date().toISOString();
   let cleared = 0;
