@@ -1,4 +1,4 @@
-import { getCurrentScope, onScopeDispose, watch, type WatchStopHandle } from 'vue';
+import { getCurrentScope, onScopeDispose, watch } from 'vue';
 
 export interface DraftRecord<T> {
   /** 保存草稿时对应的服务端数据版本（乐观锁 version），恢复前校验 */
