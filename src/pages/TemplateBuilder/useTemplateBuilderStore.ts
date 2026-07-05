@@ -1,5 +1,6 @@
 import { computed, ref, shallowReactive, shallowRef } from 'vue';
 import { defineStore } from 'pinia';
+import { logger } from '../../utils/logger';
 import {
   FieldType,
   TaskType,
@@ -261,7 +262,7 @@ const useTemplateBuilderPiniaStore = defineStore('templateBuilder', () => {
       replaceFields(data.fields || []);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : '加载模板失败';
-      console.error('[TemplateBuilder] Failed to load template:', message);
+      logger.error('[TemplateBuilder] Failed to load template:', message);
     } finally {
       loading.value = false;
     }
@@ -306,7 +307,7 @@ const useTemplateBuilderPiniaStore = defineStore('templateBuilder', () => {
       return templateId.value;
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : '保存模板失败';
-      console.error('[TemplateBuilder] Failed to save template:', message);
+      logger.error('[TemplateBuilder] Failed to save template:', message);
       throw err;
     } finally {
       saving.value = false;

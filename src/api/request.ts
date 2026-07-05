@@ -23,10 +23,12 @@ export interface ApiError<T = unknown> extends Error {
 
 export interface RequestConfig<D = unknown> extends AxiosRequestConfig<D> {
   skipAuth?: boolean;
-  /** Max retry attempts for transient failures (default: 0) */
+  /** Max retry attempts for transient failures (default: 2 for idempotent GET, 0 otherwise) */
   retry?: number;
   /** Base delay in ms between retries (default: 1000, doubles each attempt) */
   retryDelay?: number;
+  /** Set false to opt out of in-flight GET deduplication (default: true) */
+  dedupe?: boolean;
 }
 
 type UnauthorizedHandler = () => void;
@@ -115,6 +117,8 @@ instance.interceptors.request.use((config: InternalAxiosRequestConfig) => {
 
 // ─── Retry helper ──────────────────────────────────────────
 function isRetryableError(error: AxiosError): boolean {
+  // Cancelled requests must never be retried
+  if (axios.isCancel(error)) return false;
   // Network errors (no response)
   if (!error.response) return true;
   const status = error.response.status;
@@ -123,8 +127,10 @@ function isRetryableError(error: AxiosError): boolean {
 }
 
 function getRetryConfig(config: RequestConfig): { maxRetries: number; baseDelay: number } {
+  // GET 天然幂等可安全重试；写操作不具备幂等保证，除非调用方显式声明否则不重试
+  const isIdempotentRead = (config.method ?? '').toLowerCase() === 'get';
   return {
-    maxRetries: config.retry ?? 0,
+    maxRetries: config.retry ?? (isIdempotentRead ? 2 : 0),
     baseDelay: config.retryDelay ?? 1000,
   };
 }
@@ -191,12 +197,45 @@ instance.interceptors.response.use(
   },
 );
 
+// ─── In-flight GET deduplication ───────────────────────────
+const pendingGets = new Map<string, Promise<ApiResponse<unknown>>>();
+
+/** Build a stable request key from url + params (insensitive to key order). */
+export function buildRequestKey(url: string, params?: Record<string, unknown>): string {
+  if (!params) return url;
+  const normalized = Object.keys(params)
+    .filter((key) => params[key] !== undefined)
+    .sort()
+    .map((key) => `${key}=${JSON.stringify(params[key])}`)
+    .join('&');
+  return normalized ? `${url}?${normalized}` : url;
+}
+
 export async function get<T = unknown>(
   url: string,
   params?: Record<string, unknown>,
   config?: RequestConfig,
 ): Promise<ApiResponse<T>> {
-  return instance.get<ApiResponse<T>, ApiResponse<T>>(url, { params, ...config });
+  // 相同 url+params 的在途 GET 共享同一个 Promise，避免重复请求打到后端；
+  // 调用方传入自定义 signal 时跳过去重（取消语义只应作用于发起方自己）
+  const shouldDedupe = (config?.dedupe ?? true) && !config?.signal;
+  if (!shouldDedupe) {
+    return instance.get<ApiResponse<T>, ApiResponse<T>>(url, { params, ...config });
+  }
+
+  const key = buildRequestKey(url, params);
+  const pending = pendingGets.get(key);
+  if (pending) {
+    return pending as Promise<ApiResponse<T>>;
+  }
+
+  const request = instance
+    .get<ApiResponse<T>, ApiResponse<T>>(url, { params, ...config })
+    .finally(() => {
+      pendingGets.delete(key);
+    });
+  pendingGets.set(key, request as Promise<ApiResponse<unknown>>);
+  return request;
 }
 
 export async function post<T = unknown>(

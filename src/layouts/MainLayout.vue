@@ -1,4 +1,6 @@
 <template>
+  <!-- 无障碍：跳过导航直达内容的隐藏链接（Tab 聚焦时可见） -->
+  <a href="#main-content" class="skip-to-content">跳至内容</a>
   <a-layout class="labelhub-layout" :class="{ 'labelhub-layout--collapsed': collapsed }">
     <a-layout-sider
       v-model:collapsed="collapsed"
@@ -19,6 +21,7 @@
       <a-menu theme="light" mode="inline" :selected-keys="selectedKeys" :items="menuItems" />
     </a-layout-sider>
     <a-layout class="labelhub-layout__main">
+      <NetworkStatusBar />
       <a-layout-header class="labelhub-layout__header">
         <div class="labelhub-layout__title">
           <a-typography-text strong class="labelhub-layout__route-title">
@@ -186,12 +189,17 @@
           </a-dropdown>
         </div>
       </a-layout-header>
-      <a-layout-content class="labelhub-layout__content">
-        <router-view v-slot="{ Component, route }">
-          <transition name="page-fade" mode="out-in" appear>
-            <component :is="Component" :key="route.path" />
-          </transition>
-        </router-view>
+      <a-layout-content id="main-content" class="labelhub-layout__content">
+        <ErrorBoundary>
+          <router-view v-slot="{ Component, route: routeData }">
+            <transition name="page-fade" mode="out-in" appear>
+              <!-- 列表页按组件名白名单缓存，返回时保留筛选与滚动状态 -->
+              <keep-alive include="TaskListPage,TemplateManagePage">
+                <component :is="Component" :key="routeData.path" />
+              </keep-alive>
+            </transition>
+          </router-view>
+        </ErrorBoundary>
       </a-layout-content>
     </a-layout>
   </a-layout>
@@ -214,6 +222,7 @@ import {
   EditOutlined,
   ExportOutlined,
   FieldTimeOutlined,
+  LineChartOutlined,
   InboxOutlined,
   LogoutOutlined,
   NotificationOutlined,
@@ -228,23 +237,26 @@ import {
   WifiOutlined,
 } from '@ant-design/icons-vue';
 import { Role } from '../types';
-import { useUserStore } from '../store/useUserStore';
+import { useAuthStore } from '../store/useAuthStore';
 import {
   NOTIFICATION_COLOR_MAP,
   type NotificationItem,
   useNotificationStore,
 } from '../store/useNotificationStore';
 import { hasRouteRole } from '../utils/roleHelper';
+import { useAnnotationStore } from '../store/useAnnotationStore';
 import {
   connectNotificationWS,
   disconnectNotificationWS,
   markAllNotificationsRead,
   markNotificationRead,
 } from '../services/notificationWebSocket';
+import ErrorBoundary from '../components/ErrorBoundary.vue';
+import NetworkStatusBar from '../components/NetworkStatusBar.vue';
 
 const route = useRoute();
 const router = useRouter();
-const userStore = useUserStore();
+const userStore = useAuthStore();
 const notificationStore = useNotificationStore();
 const collapsed = ref(false);
 const simpleEmptyImage = undefined;
@@ -316,6 +328,13 @@ const navItems: NavItem[] = [
     path: '/statistics',
     roles: [Role.ADMIN, Role.REVIEWER],
     icon: BarChartOutlined,
+  },
+  {
+    key: 'monitoring',
+    label: '监控',
+    path: '/monitoring',
+    roles: [Role.ADMIN],
+    icon: LineChartOutlined,
   },
   {
     key: 'export',
@@ -427,6 +446,8 @@ onBeforeUnmount(() => {
 });
 
 async function handleLogout() {
+  // 登出前释放当前用户持有的所有标注编辑锁（需在清除会话前调用，携带有效 token）
+  await useAnnotationStore.getState().releaseAllMyItems();
   disconnectNotificationWS();
   notificationStore.setConnected(false);
   notificationStore.setCurrentUser(null);
@@ -961,5 +982,24 @@ async function handleNotificationClick(notification: NotificationItem) {
   .labelhub-layout__content {
     padding: 12px;
   }
+}
+
+/* ── 无障碍：跳至内容链接（Tab 聚焦时可见） ── */
+.skip-to-content {
+  position: fixed;
+  top: -100%;
+  left: 12px;
+  z-index: 999;
+  padding: 8px 16px;
+  color: #fff;
+  font-weight: 600;
+  background: var(--lh-primary);
+  border-radius: 6px;
+  text-decoration: none;
+  transition: top var(--lh-motion-base) var(--lh-ease-standard);
+}
+
+.skip-to-content:focus {
+  top: 8px;
 }
 </style>

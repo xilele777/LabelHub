@@ -156,9 +156,9 @@
                       :direction="getDirection(field) === 'horizontal' ? 'horizontal' : 'vertical'"
                       wrap
                     >
-                      <a-tag v-for="option in field.options" :key="option.id">{{
-                        option.label
-                      }}</a-tag>
+                      <a-tag v-for="option in field.options" :key="option.id">
+                        {{ option.label }}
+                      </a-tag>
                     </a-space>
                   </template>
                   <template v-else-if="field.type === FieldType.RATING">
@@ -185,129 +185,21 @@
           </VueDraggable>
         </a-card>
 
-        <a-card size="small" class="inspector-card" :body-style="{ padding: '0' }">
-          <a-tabs v-model:active-key="rightTab" class="inspector-tabs">
-            <a-tab-pane key="config" tab="属性">
-              <div class="inspector-pane">
-                <template v-if="selectedField">
-                  <div class="inspector-header">
-                    <a-typography-title :level="5" class="inspector-title">
-                      {{ fieldTypeLabelMap[selectedField.type] }}配置
-                    </a-typography-title>
-                    <a-button size="small" danger @click="removeSelectedField">
-                      <template #icon><DeleteOutlined /></template>
-                      删除
-                    </a-button>
-                  </div>
-
-                  <a-divider class="compact-divider" />
-
-                  <div v-for="item in currentConfigItems" :key="item.key" class="config-item">
-                    <template v-if="item.type === 'switch'">
-                      <div class="config-switch-row">
-                        <a-typography-text type="secondary">{{ item.label }}</a-typography-text>
-                        <a-switch
-                          size="small"
-                          :checked="Boolean(getSelectedValue(item.key))"
-                          @update:checked="(value: boolean) => updateSelectedField(item.key, value)"
-                        />
-                      </div>
-                    </template>
-
-                    <template v-else-if="item.type === 'options'">
-                      <a-divider class="compact-divider" />
-                      <a-typography-text type="secondary">{{ item.label }}</a-typography-text>
-                      <div class="options-editor">
-                        <div
-                          v-for="(option, index) in selectedOptions"
-                          :key="option.id"
-                          class="option-row"
-                        >
-                          <a-input
-                            size="small"
-                            :value="option.label"
-                            placeholder="标签"
-                            @update:value="(value: string) => updateOption(index, 'label', value)"
-                          />
-                          <a-input
-                            size="small"
-                            :value="option.value"
-                            placeholder="值"
-                            @update:value="(value: string) => updateOption(index, 'value', value)"
-                          />
-                          <a-button type="text" size="small" danger @click="removeOption(index)">
-                            <template #icon><DeleteOutlined /></template>
-                          </a-button>
-                        </div>
-                        <a-button block size="small" type="dashed" @click="addOption">
-                          <template #icon><PlusOutlined /></template>
-                          添加选项
-                        </a-button>
-                      </div>
-                    </template>
-
-                    <template v-else>
-                      <a-typography-text type="secondary">{{ item.label }}</a-typography-text>
-                      <a-input
-                        v-if="item.type === 'text'"
-                        size="small"
-                        :value="asString(getSelectedValue(item.key))"
-                        :placeholder="item.placeholder"
-                        @update:value="(value: string) => updateSelectedField(item.key, value)"
-                      />
-                      <a-textarea
-                        v-else-if="item.type === 'textarea'"
-                        size="small"
-                        :value="asString(getSelectedValue(item.key))"
-                        :placeholder="item.placeholder"
-                        :auto-size="{ minRows: 1, maxRows: 3 }"
-                        @update:value="(value: string) => updateSelectedField(item.key, value)"
-                      />
-                      <a-input-number
-                        v-else-if="item.type === 'number'"
-                        size="small"
-                        class="number-input"
-                        :value="asNumber(getSelectedValue(item.key))"
-                        :min="item.min"
-                        :max="item.max"
-                        :placeholder="item.placeholder"
-                        @update:value="
-                          (value: number | null) =>
-                            updateSelectedField(item.key, value ?? undefined)
-                        "
-                      />
-                      <a-select
-                        v-else-if="item.type === 'select'"
-                        size="small"
-                        class="select-input"
-                        :value="getSelectedValue(item.key)"
-                        :options="item.options"
-                        @update:value="
-                          (value: string | number) => updateSelectedField(item.key, value)
-                        "
-                      />
-                    </template>
-                  </div>
-                </template>
-
-                <div v-else class="inspector-empty">
-                  <a-empty description="选择画布中的字段以配置属性" />
-                </div>
-              </div>
-            </a-tab-pane>
-
-            <a-tab-pane key="schema" tab="Schema">
-              <div class="schema-pane">
-                <div class="schema-summary">
-                  <a-tag color="blue">共 {{ store.fields.length }} 个字段</a-tag>
-                  <a-tag color="red">必填 {{ requiredCount }} 个</a-tag>
-                  <a-tag color="orange">说明 {{ titleCount }} 个</a-tag>
-                </div>
-                <pre class="schema-preview">{{ schemaJson }}</pre>
-              </div>
-            </a-tab-pane>
-          </a-tabs>
-        </a-card>
+        <PropertyPanel
+          :field="selectedField"
+          :field-count="store.fields.length"
+          :required-count="requiredCount"
+          :title-count="titleCount"
+          :schema-json="schemaJson"
+          :type-label="selectedField ? fieldTypeLabelMap[selectedField.type] : ''"
+          :config-items="currentConfigItems"
+          :field-options="selectedOptions"
+          @update:field="updateSelectedField"
+          @update:option="updateOption"
+          @add:option="addOption"
+          @remove:option="removeOption"
+          @delete="removeSelectedField"
+        />
       </div>
     </section>
 
@@ -365,7 +257,6 @@ import {
   FormOutlined,
   HolderOutlined,
   ImportOutlined,
-  PlusOutlined,
   ReadOutlined,
   SaveOutlined,
   StarOutlined,
@@ -386,6 +277,7 @@ import {
 import { useAuthStore } from '../../store/useAuthStore';
 import { createDefaultField, useTemplateBuilderStore } from './useTemplateBuilderStore';
 import { validateImportSchema } from './utils/validateSchema';
+import PropertyPanel from './components/PropertyPanel.vue';
 
 type ConfigItemType = 'text' | 'textarea' | 'switch' | 'number' | 'select' | 'options';
 
@@ -640,18 +532,12 @@ function removeSelectedField() {
   store.removeField(selectedField.value.id);
 }
 
-function getSelectedValue(key: string): unknown {
-  return selectedField.value
-    ? (selectedField.value as unknown as Record<string, unknown>)[key]
-    : undefined;
-}
-
 function updateSelectedField(key: string, value: unknown) {
   if (!selectedField.value) return;
   store.updateField(selectedField.value.id, { [key]: value } as Partial<TemplateField>);
 }
 
-function updateOption(index: number, key: 'label' | 'value', value: string) {
+function updateOption(index: number, key: string, value: string) {
   if (!selectedField.value || !hasOptions(selectedField.value)) return;
   const options = selectedField.value.options.map((option, currentIndex) =>
     currentIndex === index ? { ...option, [key]: value } : option,
@@ -676,14 +562,6 @@ function removeOption(index: number) {
   if (!selectedField.value || !hasOptions(selectedField.value)) return;
   const options = selectedField.value.options.filter((_, currentIndex) => currentIndex !== index);
   store.updateField(selectedField.value.id, { options } as Partial<TemplateField>);
-}
-
-function asString(value: unknown): string {
-  return typeof value === 'string' ? value : '';
-}
-
-function asNumber(value: unknown): number | undefined {
-  return typeof value === 'number' ? value : undefined;
 }
 
 function getDirection(field: TemplateField): 'horizontal' | 'vertical' {

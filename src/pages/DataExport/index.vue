@@ -72,6 +72,7 @@
           <a-button
             type="primary"
             block
+            :loading="exporting"
             :disabled="exportRecords.length === 0"
             @click="handleExport"
           >
@@ -145,9 +146,9 @@ import {
   ExportRange,
   buildExportRecords,
   filterByRange,
-  performExport,
   type ExportRecord,
 } from '../../utils/exportUtils';
+import { performExportInWorker } from '../../utils/exportWorkerClient';
 
 const taskStore = useTaskStore();
 const annotationStore = useAnnotationStore();
@@ -219,7 +220,9 @@ onMounted(() => {
   void annotationStore.fetchAIReviews();
 });
 
-function handleExport() {
+const exporting = ref(false);
+
+async function handleExport() {
   if (exportRecords.value.length === 0) {
     message.warning('没有可导出的数据');
     return;
@@ -227,8 +230,16 @@ function handleExport() {
 
   const task = taskStore.tasks.find((item) => item.id === selectedTaskId.value);
   const baseFilename = task ? `LabelHub_${task.name}` : 'LabelHub_全部任务';
-  performExport(exportRecords.value, exportFormat.value, baseFilename);
-  message.success(`已导出 ${exportRecords.value.length} 条数据`);
+  exporting.value = true;
+  try {
+    // 序列化在 Web Worker 中执行，大数据量导出不阻塞主线程
+    await performExportInWorker(exportRecords.value, exportFormat.value, baseFilename);
+    message.success(`已导出 ${exportRecords.value.length} 条数据`);
+  } catch (error) {
+    message.error(error instanceof Error ? error.message : '导出失败');
+  } finally {
+    exporting.value = false;
+  }
 }
 
 function stringify(value: unknown) {

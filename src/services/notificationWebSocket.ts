@@ -9,6 +9,7 @@
  */
 import { io, Socket } from 'socket.io-client';
 import { useNotificationStore } from '../store/useNotificationStore';
+import { logger } from '../utils/logger';
 
 // 默认开发环境直连后端，避免经 Vite 代理转发 WebSocket 产生噪音；生产环境可通过 VITE_WS_URL 覆盖。
 const WS_URL =
@@ -59,7 +60,7 @@ export interface Notification {
   title: string;
   message: string;
   priority: NotificationPriority;
-  data: Record<string, any>;
+  data: Record<string, unknown>;
   sender: string | null;
   targetUsers: string[];
   timestamp: string;
@@ -72,7 +73,7 @@ export interface Notification {
  */
 export function connectNotificationWS(token: string): void {
   if (socket?.connected && activeToken === token) {
-    console.log('[WS] 已连接，跳过重复连接');
+    logger.log('[WS] 已连接，跳过重复连接');
     return;
   }
 
@@ -97,7 +98,7 @@ export function connectNotificationWS(token: string): void {
   // ─── 连接事件 ──────────────────────────────────
 
   socket.on('connect', () => {
-    console.log('[WS] 连接成功:', socket?.id);
+    logger.log('[WS] 连接成功:', socket?.id);
     reconnectAttempts = 0;
     const store = useNotificationStore.getState();
     store.setConnected(true);
@@ -105,13 +106,13 @@ export function connectNotificationWS(token: string): void {
   });
 
   socket.on('disconnect', (reason) => {
-    console.log('[WS] 连接断开:', reason);
+    logger.log('[WS] 连接断开:', reason);
     useNotificationStore.getState().setConnected(false);
 
     // 断开后刷新 token，为重连准备最新凭证
     const freshToken = localStorage.getItem('token');
     if (freshToken && freshToken !== activeToken) {
-      console.log('[WS] 检测到 token 变化，更新重连凭证');
+      logger.log('[WS] 检测到 token 变化，更新重连凭证');
       activeToken = freshToken;
       if (socket) {
         socket.auth = { token: freshToken };
@@ -120,14 +121,14 @@ export function connectNotificationWS(token: string): void {
   });
 
   socket.on('connect_error', (error) => {
-    console.error('[WS] 连接错误:', error.message);
+    logger.error('[WS] 连接错误:', error.message);
     reconnectAttempts++;
     useNotificationStore.getState().setConnected(false);
 
     // 重连时刷新 token：用户可能已重新登录或 token 已更新
     const freshToken = localStorage.getItem('token');
     if (freshToken && freshToken !== activeToken) {
-      console.log('[WS] 检测到新 token，更新连接凭证');
+      logger.log('[WS] 检测到新 token，更新连接凭证');
       activeToken = freshToken;
       if (socket) {
         socket.auth = { token: freshToken };
@@ -136,13 +137,13 @@ export function connectNotificationWS(token: string): void {
 
     // token 已不存在（用户已登出），停止重连
     if (!freshToken) {
-      console.log('[WS] 无 token，停止重连');
+      logger.log('[WS] 无 token，停止重连');
       socket?.disconnect();
       return;
     }
 
     if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
-      console.error('[WS] 达到最大重连次数，停止重连');
+      logger.error('[WS] 达到最大重连次数，停止重连');
       socket?.disconnect();
     }
   });
@@ -151,11 +152,11 @@ export function connectNotificationWS(token: string): void {
 
   socket.on('notification', (notification: Notification) => {
     if (!isNotificationForCurrentUser(notification)) {
-      console.warn('[WS] 已丢弃非当前用户通知:', notification.type, notification.title);
+      logger.warn('[WS] 已丢弃非当前用户通知:', notification.type, notification.title);
       return;
     }
 
-    console.log('[WS] 收到通知:', notification.type, notification.title);
+    logger.log('[WS] 收到通知:', notification.type, notification.title);
 
     // 将通知推送到 store
     const store = useNotificationStore.getState();
@@ -170,11 +171,11 @@ export function connectNotificationWS(token: string): void {
   // ─── 其他事件 ──────────────────────────────────
 
   socket.on('notification:read_ack', (data) => {
-    console.log('[WS] 通知已读确认:', data);
+    logger.log('[WS] 通知已读确认:', data);
   });
 
   socket.on('notification:read_all_ack', () => {
-    console.log('[WS] 全部已读确认');
+    logger.log('[WS] 全部已读确认');
   });
 }
 
@@ -188,7 +189,7 @@ export function disconnectNotificationWS(): void {
     socket = null;
     activeToken = null;
     reconnectAttempts = 0;
-    console.log('[WS] 已断开连接');
+    logger.log('[WS] 已断开连接');
   }
 }
 
@@ -199,7 +200,7 @@ export function disconnectNotificationWS(): void {
 export function joinTaskRoom(taskId: string): void {
   if (socket?.connected) {
     socket.emit('join:task', taskId);
-    console.log('[WS] 加入任务房间:', taskId);
+    logger.log('[WS] 加入任务房间:', taskId);
   }
 }
 

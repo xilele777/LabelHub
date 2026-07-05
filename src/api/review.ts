@@ -2,6 +2,7 @@
  * 审核 / AI预审相关 API
  */
 import { get, post, put, del } from './request';
+import type { RequestConfig } from './request';
 import type { AIReviewResult } from '../types/aiReview';
 
 export interface ReviewListResult {
@@ -10,8 +11,8 @@ export interface ReviewListResult {
 }
 
 /** 获取审核结果列表 */
-export function getReviewList(params?: Record<string, unknown>) {
-  return get<ReviewListResult>('/reviews', params);
+export function getReviewList(params?: Record<string, unknown>, config?: RequestConfig) {
+  return get<ReviewListResult>('/reviews', params, config);
 }
 
 /** 获取单条审核结果 */
@@ -25,8 +26,8 @@ export function getReviewByItemId(dataItemId: string) {
 }
 
 /** 按任务 ID 获取审核结果列表 */
-export function getReviewsByTaskId(taskId: string) {
-  return get<ReviewListResult>(`/reviews/by-task/${taskId}`);
+export function getReviewsByTaskId(taskId: string, config?: RequestConfig) {
+  return get<ReviewListResult>(`/reviews/by-task/${taskId}`, undefined, config);
 }
 
 /** 创建审核结果（AI 预审结果持久化） */

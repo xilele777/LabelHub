@@ -2,6 +2,8 @@ const express = require('express');
 const db = require('../store/db');
 const { encodeToken } = require('../middleware/auth');
 const { loginRateLimit } = require('../middleware/loginRateLimit');
+const { body } = require('../middleware/validate');
+const { loginSchema, createUserSchema } = require('../utils/validationSchemas');
 const { hashPassword, shouldUpgradePasswordHash, verifyPassword } = require('../utils/password');
 const { validateFields } = require('../utils/requestValidation');
 const { cacheGet, cacheSet, cacheDel } = require('../utils/cache');
@@ -26,7 +28,7 @@ async function cacheUserLookup(username) {
   return user;
 }
 
-router.post('/login', loginRateLimit, async (req, res) => {
+router.post('/login', loginRateLimit, body(loginSchema), async (req, res) => {
   const { error, values } = validateFields(req.body, [
     {
       name: 'username',

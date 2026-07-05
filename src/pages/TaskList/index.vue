@@ -13,8 +13,6 @@
           allow-clear
           placeholder="搜索任务名称"
           class="search-input"
-          @search="current = 1"
-          @change="current = 1"
         />
         <a-select
           v-model:value="statusFilter"
@@ -22,7 +20,6 @@
           placeholder="按状态筛选"
           class="status-select"
           :options="statusOptions"
-          @change="current = 1"
         />
         <a-button v-if="canCreateTask" type="primary" @click="router.push('/tasks/create')">
           <template #icon><PlusOutlined /></template>
@@ -32,27 +29,27 @@
     </header>
 
     <a-alert
-      v-if="taskStore.error"
+      v-if="error"
       type="error"
-      :message="taskStore.error"
+      :message="error"
       show-icon
       closable
       class="page-alert"
-      @close="taskStore.$patch({ error: null })"
+      @close="error = null"
     />
 
     <a-card class="app-table-card" :body-style="{ padding: 0 }">
       <template #title>
         <a-space>
           <span>任务数据</span>
-          <a-tag color="blue">共 {{ filteredTasks.length }} 条</a-tag>
+          <a-tag color="blue">共 {{ total }} 条</a-tag>
         </a-space>
       </template>
       <a-table
         row-key="id"
         :columns="columns"
-        :data-source="filteredTasks"
-        :loading="taskStore.loading"
+        :data-source="tasks"
+        :loading="loading"
         :pagination="pagination"
         @change="handleTableChange"
       >
@@ -150,7 +147,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onActivated, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { message, type TableColumnsType, type TablePaginationConfig } from 'ant-design-vue';
 import {
@@ -164,7 +161,12 @@ import {
 import { Role, TaskStatus, TaskType, type TaskItem } from '../../types';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useTaskStore } from '../../store/useTaskStore';
+import { getTaskList } from '../../api/task';
 import { getReviewTimeliness, getTaskTimeliness } from '../../utils/taskTimeliness';
+import { useDebounced } from '../../composables/useDebounced';
+
+// keep-alive 白名单按组件名匹配（script setup 从文件名推断为 index，需显式声明）
+defineOptions({ name: 'TaskListPage' });
 
 const PAGE_SIZE = 5;
 
@@ -173,8 +175,49 @@ const authStore = useAuthStore();
 const taskStore = useTaskStore();
 
 const keyword = ref('');
+const debouncedKeyword = useDebounced(keyword);
 const statusFilter = ref<TaskStatus | undefined>();
 const current = ref(1);
+
+// 服务端分页：列表数据与总数来自后端，筛选/翻页都发起请求
+const tasks = ref<TaskItem[]>([]);
+const total = ref(0);
+const loading = ref(false);
+const error = ref<string | null>(null);
+
+async function fetchPage() {
+  loading.value = true;
+  error.value = null;
+  try {
+    const res = await getTaskList({
+      _page: current.value,
+      _limit: PAGE_SIZE,
+      _sort: 'createdAt',
+      _order: 'desc',
+      keyword: debouncedKeyword.value.trim() || undefined,
+      status: statusFilter.value || undefined,
+    });
+    tasks.value = res.data.items;
+    total.value = res.data.total;
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : '加载任务列表失败';
+  } finally {
+    loading.value = false;
+  }
+}
+
+// 筛选条件变化回到第一页；已在第一页时直接请求（避免和下方 current watch 重复请求）
+watch([debouncedKeyword, statusFilter], () => {
+  if (current.value !== 1) {
+    current.value = 1;
+  } else {
+    void fetchPage();
+  }
+});
+
+watch(current, () => {
+  void fetchPage();
+});
 
 const canCreateTask = computed(
   () => authStore.user?.role === Role.ADMIN || authStore.user?.role === Role.OWNER,
@@ -203,26 +246,17 @@ const columns: TableColumnsType<TaskItem> = [
   { title: '操作', key: 'action', width: 172 },
 ];
 
-const filteredTasks = computed(() => {
-  const normalizedKeyword = keyword.value.trim().toLowerCase();
-  return taskStore.tasks.filter((task) => {
-    const matchesKeyword =
-      !normalizedKeyword || task.name.toLowerCase().includes(normalizedKeyword);
-    const matchesStatus = !statusFilter.value || task.status === statusFilter.value;
-    return matchesKeyword && matchesStatus;
-  });
-});
-
 const pagination = computed<TablePaginationConfig>(() => ({
   current: current.value,
   pageSize: PAGE_SIZE,
-  total: filteredTasks.value.length,
+  total: total.value,
   showSizeChanger: false,
-  showTotal: (total) => `共 ${total} 条`,
+  showTotal: (count) => `共 ${count} 条`,
 }));
 
-onMounted(() => {
-  void taskStore.fetchTasks();
+// keep-alive 缓存下 onMounted 仅首次触发，改用 onActivated 保证每次回到页面都刷新数据
+onActivated(() => {
+  void fetchPage();
 });
 
 function handleTableChange(nextPagination: TablePaginationConfig) {
@@ -233,6 +267,7 @@ async function handlePublish(id: string) {
   try {
     await taskStore.publishTask(id);
     message.success('任务已发布');
+    void fetchPage();
   } catch (error) {
     message.error(error instanceof Error ? error.message : '发布任务失败');
   }
@@ -242,6 +277,7 @@ async function handleEnd(id: string) {
   try {
     await taskStore.endTask(id);
     message.success('任务已结束');
+    void fetchPage();
   } catch (error) {
     message.error(error instanceof Error ? error.message : '结束任务失败');
   }
@@ -251,6 +287,7 @@ async function handleArchive(id: string) {
   try {
     await taskStore.archiveTask(id);
     message.success('任务已归档');
+    void fetchPage();
   } catch (error) {
     message.error(error instanceof Error ? error.message : '归档任务失败');
   }

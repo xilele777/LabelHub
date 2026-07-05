@@ -1,5 +1,6 @@
 import { computed, ref } from 'vue';
 import { defineStore } from 'pinia';
+import { logger } from '../utils/logger';
 import {
   DataItemStatus,
   STATUS_TRANSITIONS,
@@ -115,15 +116,26 @@ const useAnnotationPiniaStore = defineStore('annotation', () => {
     ];
   }
 
+  // 竞态保护：新请求到达时取消前序在途请求，防止旧数据覆盖新结果
+  let dataFetchController: AbortController | null = null;
+  let reviewFetchController: AbortController | null = null;
+
   async function fetchDataItems(taskId?: string): Promise<void> {
+    // 取消前序在途请求
+    dataFetchController?.abort();
+    dataFetchController = new AbortController();
+
     loading.value = true;
     error.value = null;
     try {
       const params: Record<string, unknown> = {};
       if (taskId) params.taskId = taskId;
-      const res = await annotationApi.getAnnotationItemList(params);
+      const res = await annotationApi.getAnnotationItemList(params, {
+        signal: dataFetchController.signal,
+      });
       dataItems.value = res.data.items;
     } catch (err: unknown) {
+      if (err instanceof DOMException && err.name === 'AbortError') return;
       error.value = getErrorMessage(err, '获取标注数据失败');
     } finally {
       loading.value = false;
@@ -131,13 +143,17 @@ const useAnnotationPiniaStore = defineStore('annotation', () => {
   }
 
   async function fetchAIReviews(taskId?: string): Promise<void> {
+    reviewFetchController?.abort();
+    reviewFetchController = new AbortController();
+
     error.value = null;
     try {
       const res = taskId
-        ? await reviewApi.getReviewsByTaskId(taskId)
-        : await reviewApi.getReviewList();
+        ? await reviewApi.getReviewsByTaskId(taskId, { signal: reviewFetchController.signal })
+        : await reviewApi.getReviewList({ signal: reviewFetchController.signal });
       aiReviewResults.value = res.data.items;
     } catch (err: unknown) {
+      if (err instanceof DOMException && err.name === 'AbortError') return;
       error.value = getErrorMessage(err, '获取审核数据失败');
     }
   }
@@ -276,7 +292,7 @@ const useAnnotationPiniaStore = defineStore('annotation', () => {
       const res = await annotationApi.releaseItem(id);
       replaceDataItem(res.data, 'releaseItem');
     } catch (err: unknown) {
-      console.warn('释放锁失败', getErrorMessage(err, 'unknown error'));
+      logger.warn('释放锁失败', getErrorMessage(err, 'unknown error'));
     }
   }
 
@@ -284,7 +300,7 @@ const useAnnotationPiniaStore = defineStore('annotation', () => {
     try {
       await annotationApi.releaseAllItems();
     } catch (err: unknown) {
-      console.warn('释放所有锁失败:', getErrorMessage(err, 'unknown error'));
+      logger.warn('释放所有锁失败:', getErrorMessage(err, 'unknown error'));
     }
   }
 

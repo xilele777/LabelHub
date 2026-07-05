@@ -2,6 +2,13 @@
 const createCrudRouter = require('./crudFactory');
 const db = require('../store/db');
 const { requireAuth, requireRole } = require('../middleware/auth');
+const { body } = require('../middleware/validate');
+const {
+  submitAnnotationSchema,
+  saveDraftSchema,
+  approveSchema,
+  rejectSchema,
+} = require('../utils/validationSchemas');
 const {
   DATA_ITEM_STATUS,
   DATA_ITEM_TRANSITIONS,
@@ -628,7 +635,7 @@ router.use(crud);
  * Save draft annotation and set status to 'draft'.
  * RBAC: annotator (own items only, or auto-claim unassigned items) + owner
  */
-router.put('/:id/save-draft', annotationSubmitLimiter, (req, res) => {
+router.put('/:id/save-draft', body(saveDraftSchema), annotationSubmitLimiter, (req, res) => {
   const item = db.getById('annotation-items', req.params.id);
   if (!item) {
     return res.notFound('Annotation item not found');
@@ -795,7 +802,7 @@ function executeAndPersistAIReview(item) {
  * 3. Persist the review and advance status to pending_review.
  * 4. Return the updated item and AI review result.
  */
-router.put('/:id/submit', annotationSubmitLimiter, (req, res) => {
+router.put('/:id/submit', body(submitAnnotationSchema), annotationSubmitLimiter, (req, res) => {
   const item = db.getById('annotation-items', req.params.id);
   if (!item) {
     return res.notFound('Annotation item not found');
@@ -906,7 +913,7 @@ router.put('/:id/submit', annotationSubmitLimiter, (req, res) => {
  * Approve annotation and set status to 'reviewed'.
  * RBAC: reviewer (not own annotation) + owner
  */
-router.put('/:id/approve', reviewActionLimiter, (req, res) => {
+router.put('/:id/approve', body(approveSchema), reviewActionLimiter, (req, res) => {
   const item = db.getById('annotation-items', req.params.id);
   if (!item) {
     return res.notFound('Annotation item not found');
@@ -999,7 +1006,7 @@ router.put('/:id/approve', reviewActionLimiter, (req, res) => {
  * Reject annotation and set status to 'rejected'.
  * RBAC: reviewer (not own annotation) + owner
  */
-router.put('/:id/reject', reviewActionLimiter, (req, res) => {
+router.put('/:id/reject', body(rejectSchema), reviewActionLimiter, (req, res) => {
   const item = db.getById('annotation-items', req.params.id);
   if (!item) {
     return res.notFound('Annotation item not found');

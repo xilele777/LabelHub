@@ -67,6 +67,29 @@
           </template>
         </a-alert>
 
+        <a-alert
+          v-if="annotationStore.lockInfo"
+          type="warning"
+          show-icon
+          class="page-alert"
+          message="该数据正在被其他人编辑（悲观锁生效）"
+          :description="`持锁人：${annotationStore.lockInfo.lockedBy || '未知'}；加锁时间：${formatLockTime(annotationStore.lockInfo.lockedAt)}。锁超时 30 分钟后自动释放。`"
+        >
+          <template #action>
+            <a-space>
+              <a-button
+                size="small"
+                type="primary"
+                :loading="lockAcquiring"
+                @click="retryAcquireLock"
+              >
+                重试加锁
+              </a-button>
+              <a-button size="small" @click="annotationStore.clearConflict()">稍后处理</a-button>
+            </a-space>
+          </template>
+        </a-alert>
+
         <div class="workbench-main">
           <a-card title="原始数据" size="small" class="panel-card raw-panel">
             <pre class="raw-json">{{ prettyRawData }}</pre>
@@ -110,10 +133,12 @@
                 <a-form-item
                   v-else
                   :name="field.fieldKey"
+                  :label="field.label"
                   :rules="buildFieldRules(field)"
                   :validate-status="fieldValidateStatus(field.fieldKey)"
                   :help="fieldHelp(field.fieldKey)"
                   :data-field-key="field.fieldKey"
+                  :aria-label="field.label"
                 >
                   <template #label>
                     <span class="field-label">
@@ -327,23 +352,30 @@ import { QuestionCircleOutlined } from '@ant-design/icons-vue';
 import {
   DataItemStatus,
   FieldType,
+  Role,
   TaskStatus,
   type AnnotationTemplate,
   type DataItem,
-  type FieldOption,
   type TaskItem,
-  type TemplateField,
 } from '../../types';
-import {
-  ReviewStatus,
-  type AIReviewResult,
-  type FieldWarning,
-  type Severity,
-} from '../../types/aiReview';
+import { ReviewStatus, type Severity } from '../../types/aiReview';
 import { useAnnotationStore, type AvailableItem } from '../../store/useAnnotationStore';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useTaskStore } from '../../store/useTaskStore';
 import { getTemplateSchemaAsync } from '../../utils/templateSchemaHelper';
+import { useDraftPersistence } from '../../composables/useDraftPersistence';
+import { useEditLock } from './composables/useEditLock';
+import { useLivePreReview } from './composables/useLivePreReview';
+import { useCrossTabLock } from '../../composables/useCrossTabLock';
+import {
+  buildFieldRules,
+  getBooleanField,
+  getDirection,
+  getNumberField,
+  getOptions,
+  getStringField,
+  getTitleLevel,
+} from './fieldHelpers';
 import {
   connectNotificationWS,
   getSocket,
@@ -378,7 +410,6 @@ const queryDataItemId = computed(() =>
 const currentItem = computed<DataItem | undefined>(
   () => annotationStore.dataItems[annotationStore.currentIndex],
 );
-const liveReviewResult = ref<AIReviewResult>(createEmptyReview());
 const currentTask = computed<TaskItem | undefined>(() =>
   currentItem.value
     ? taskStore.tasks.find((task) => task.id === currentItem.value?.taskId)
@@ -406,10 +437,43 @@ const isReadOnly = computed(() => {
     status === DataItemStatus.REVIEWED
   );
 });
-const isEditable = computed(() => !isReadOnly.value && !annotationStore.conflictInfo);
+const isEditable = computed(
+  () => !isReadOnly.value && !annotationStore.conflictInfo && !annotationStore.lockInfo,
+);
 const canSaveDraft = computed(
   () => !isReadOnly.value && currentItem.value?.status !== DataItemStatus.REJECTED,
 );
+
+// ── 实时预审引擎（composable）──────────────────────────
+const { liveReviewResult, riskStats, sortedWarnings, fieldValidateStatus, fieldHelp } =
+  useLivePreReview({ templateSchema, currentItem, formState });
+
+// ── 跨标签页锁检测（BroadcastChannel）─────────────────────
+const crossTab = useCrossTabLock(authStore.user?.id ?? '');
+const isCrossTabLocked = computed(
+  () => crossTab.lockedByOtherTab.value && crossTab.otherTabUserId.value !== authStore.user?.id,
+);
+
+// ── 悲观编辑锁：进入可编辑条目自动加锁，切换/提交/离开自动释放 ──
+const { acquiring: lockAcquiring, retry: retryAcquireLock } = useEditLock({
+  itemId: () => currentItem.value?.id ?? null,
+  enabled: () =>
+    Boolean(currentItem.value) &&
+    !isReadOnly.value &&
+    authStore.user?.role === Role.ANNOTATOR &&
+    !isCrossTabLocked.value,
+  claim: async (id) => {
+    const result = await annotationStore.claimItem(id);
+    if (result && authStore.user?.id) {
+      crossTab.broadcastLock(id, authStore.user.id);
+    }
+    return result;
+  },
+  release: async (id) => {
+    crossTab.broadcastRelease(id);
+    await annotationStore.releaseItem(id);
+  },
+});
 
 const statusMeta = computed(() => {
   const status = currentItem.value?.status ?? DataItemStatus.PENDING;
@@ -440,19 +504,6 @@ const progressItems = computed(() => [
 ]);
 const prettyRawData = computed(() => JSON.stringify(currentItem.value?.rawData ?? {}, null, 2));
 
-const riskStats = computed(() => {
-  const init = { error: 0, warning: 0, info: 0 };
-  return liveReviewResult.value.fieldWarnings.reduce((stats, warning) => {
-    stats[warning.severity] += 1;
-    return stats;
-  }, init);
-});
-const sortedWarnings = computed(() => {
-  const order: Record<Severity, number> = { error: 0, warning: 1, info: 2 };
-  return [...liveReviewResult.value.fieldWarnings].sort(
-    (a, b) => order[a.severity] - order[b.severity],
-  );
-});
 const liveReviewMeta = computed(() => reviewStatusMeta[liveReviewResult.value.reviewStatus]);
 const reviewDescription = computed(() => {
   if (liveReviewResult.value.fieldWarnings.length === 0)
@@ -590,13 +641,15 @@ watch(
   { immediate: true },
 );
 
-watch(
-  [formState, templateSchema, currentItem],
-  () => {
-    liveReviewResult.value = runReactivePreReview();
-  },
-  { immediate: true, deep: true },
-);
+// ── 本地草稿自动保存：防抖持久化 + 版本校验恢复 ──
+// 必须注册在上方「切换条目重置表单」的 watch 之后，保证先重置再尝试恢复草稿
+const draft = useDraftPersistence({
+  key: () => currentItem.value?.id ?? null,
+  version: () => currentItem.value?.version ?? 1,
+  snapshot: () => ({ ...formState }),
+  restore: (data) => resetFormState(data),
+  onRestored: () => message.info('已恢复本地未提交的草稿修改'),
+});
 
 async function refreshWorkbenchData() {
   await Promise.all([
@@ -649,204 +702,16 @@ function resetFormState(values: Record<string, unknown>) {
   });
 }
 
-function createEmptyReview(): AIReviewResult {
-  return {
-    id: 'local_empty',
-    dataItemId: currentItem.value?.id ?? '',
-    taskId: currentItem.value?.taskId ?? '',
-    templateId: templateSchema.value?.id ?? '',
-    reviewStatus: ReviewStatus.PASS,
-    score: 100,
-    summary: '实时预审通过，当前未发现风险。',
-    matchedRules: [],
-    fieldWarnings: [],
-    suggestions: [],
-    reviewedAt: new Date().toISOString(),
-    modelVersion: 'labelhub-local-watch-v1',
-  };
-}
-
-function runReactivePreReview(): AIReviewResult {
-  if (!templateSchema.value || !currentItem.value) return createEmptyReview();
-
-  const warnings: FieldWarning[] = [];
-  for (const field of templateSchema.value.fields) {
-    if (field.type === FieldType.TITLE) continue;
-    const value = formState[field.fieldKey];
-
-    if (field.required && isEmpty(value)) {
-      warnings.push({
-        fieldKey: field.fieldKey,
-        fieldLabel: field.label,
-        message: `"${field.label}" 为必填字段`,
-        value,
-        severity: 'error',
-      });
-      continue;
-    }
-
-    if (field.type === FieldType.RATING && !isEmpty(value)) {
-      const maxScore = getNumberField(field, 'maxScore', 5);
-      const score = Number(value);
-      if (!Number.isFinite(score) || score < 0 || score > maxScore) {
-        warnings.push({
-          fieldKey: field.fieldKey,
-          fieldLabel: field.label,
-          message: `"${field.label}" 评分超出允许范围 0-${maxScore}`,
-          value,
-          severity: 'error',
-        });
-      } else if (score > 0 && score < 2) {
-        warnings.push({
-          fieldKey: field.fieldKey,
-          fieldLabel: field.label,
-          message: `"${field.label}" 评分偏低，建议复核标注判断`,
-          value,
-          severity: 'warning',
-        });
-      }
-    }
-
-    if ((field.type === FieldType.INPUT || field.type === FieldType.TEXTAREA) && !isEmpty(value)) {
-      const text = String(value);
-      const minLength = getNumberField(field, 'minLength', 2);
-      if (text.length < minLength) {
-        warnings.push({
-          fieldKey: field.fieldKey,
-          fieldLabel: field.label,
-          message: `"${field.label}" 文本过短，当前 ${text.length} 字符，建议至少 ${minLength} 字符`,
-          value,
-          severity: 'warning',
-        });
-      }
-    }
-
-    if (
-      [FieldType.RADIO, FieldType.CHECKBOX, FieldType.SELECT].includes(field.type) &&
-      !field.required &&
-      isEmpty(value)
-    ) {
-      warnings.push({
-        fieldKey: field.fieldKey,
-        fieldLabel: field.label,
-        message: `"${field.label}" 未选择，可能影响分类完整性`,
-        value,
-        severity: 'info',
-      });
-    }
-  }
-
-  const score = calculateScore(warnings);
-  const reviewStatus = deriveReviewStatus(score, warnings);
-  return {
-    id: `local_${currentItem.value.id}`,
-    dataItemId: currentItem.value.id,
-    taskId: currentItem.value.taskId,
-    templateId: templateSchema.value.id,
-    reviewStatus,
-    score,
-    summary: buildReviewSummary(reviewStatus, score, warnings),
-    matchedRules: [],
-    fieldWarnings: warnings,
-    suggestions: [],
-    reviewedAt: new Date().toISOString(),
-    modelVersion: 'labelhub-local-watch-v1',
-  };
-}
-
-function calculateScore(warnings: FieldWarning[]) {
-  const deduction = warnings.reduce((sum, warning) => {
-    if (warning.severity === 'error') return sum + 30;
-    if (warning.severity === 'warning') return sum + 15;
-    return sum + 5;
-  }, 0);
-  return Math.max(0, 100 - deduction);
-}
-
-function deriveReviewStatus(score: number, warnings: FieldWarning[]) {
-  if (warnings.some((warning) => warning.severity === 'error') || score < 60)
-    return ReviewStatus.FAIL;
-  if (warnings.some((warning) => warning.severity === 'warning') || score < 80)
-    return ReviewStatus.RISK;
-  return ReviewStatus.PASS;
-}
-
-function buildReviewSummary(status: ReviewStatus, score: number, warnings: FieldWarning[]) {
-  if (status === ReviewStatus.PASS) return `实时预审通过，质量评分 ${score} 分。`;
-  if (status === ReviewStatus.RISK)
-    return `实时预审发现风险项，质量评分 ${score} 分，建议提交前复核。`;
-  return `实时预审未通过，质量评分 ${score} 分，请修正严重问题后提交。`;
-}
-
-function isEmpty(value: unknown) {
-  return (
-    value === undefined ||
-    value === null ||
-    value === '' ||
-    (Array.isArray(value) && value.length === 0)
-  );
-}
-
-function getOptions(field: TemplateField) {
-  if (!('options' in field)) return [];
-  return (field.options as FieldOption[]).map((option) => ({
-    label: option.label,
-    value: option.value,
-  }));
-}
-
-function getDirection(field: TemplateField) {
-  return 'direction' in field && field.direction ? field.direction : 'vertical';
-}
-
-function getTitleLevel(field: TemplateField) {
-  const level = getNumberField(field, 'level', 4);
-  return Math.min(Math.max(level, 1), 5);
-}
-
-function getStringField(field: TemplateField, key: string, fallback = '') {
-  const value = (field as unknown as Record<string, unknown>)[key];
-  return typeof value === 'string' ? value : fallback;
-}
-
-function getNumberField(field: TemplateField, key: string, fallback?: number) {
-  const value = (field as unknown as Record<string, unknown>)[key];
-  return typeof value === 'number' ? value : fallback;
-}
-
-function getBooleanField(field: TemplateField, key: string) {
-  return Boolean((field as unknown as Record<string, unknown>)[key]);
-}
-
-function buildFieldRules(field: TemplateField) {
-  return field.required ? [{ required: true, message: `请填写${field.label}` }] : [];
-}
-
-function fieldWarnings(fieldKey: string) {
-  return liveReviewResult.value.fieldWarnings.filter((warning) => warning.fieldKey === fieldKey);
-}
-
-function fieldValidateStatus(fieldKey: string) {
-  const warnings = fieldWarnings(fieldKey);
-  if (warnings.some((warning) => warning.severity === 'error')) return 'error';
-  if (warnings.some((warning) => warning.severity === 'warning')) return 'warning';
-  return undefined;
-}
-
-function fieldHelp(fieldKey: string) {
-  return (
-    fieldWarnings(fieldKey)
-      .map((warning) => warning.message)
-      .join('；') || undefined
-  );
-}
-
 function severityColor(severity: Severity) {
   return severity === 'error' ? 'red' : severity === 'warning' ? 'orange' : 'blue';
 }
 
 function severityLabel(severity: Severity) {
   return severity === 'error' ? '严重' : severity === 'warning' ? '警告' : '提示';
+}
+
+function formatLockTime(value: string | null | undefined) {
+  return value ? new Date(value).toLocaleString('zh-CN', { hour12: false }) : '未知';
 }
 
 function scrollToField(fieldKey: string) {
@@ -872,6 +737,7 @@ async function saveDraft() {
       authStore.user.username,
     );
     message.success('草稿已保存');
+    draft.clear();
   } catch (error) {
     if (!isConflictError(error)) message.error('保存草稿失败');
   }
@@ -896,6 +762,7 @@ async function submitCurrent() {
       );
       message.success('标注已提交，AI 预审已完成');
     }
+    draft.clear();
   } catch (error) {
     if (!isConflictError(error)) {
       Modal.warning({

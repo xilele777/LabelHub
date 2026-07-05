@@ -107,6 +107,9 @@ jobs:
       - name: Build frontend
         run: npm run build
 
+      - name: Check bundle size budget
+        run: node scripts/check-bundle-size.js
+
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:

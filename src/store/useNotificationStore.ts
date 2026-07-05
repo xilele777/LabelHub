@@ -1,5 +1,6 @@
 import { computed, ref } from 'vue';
 import { defineStore } from 'pinia';
+import { logger } from '../utils/logger';
 import * as notificationApi from '../api/notification';
 
 export type NotificationPriority = 'high' | 'medium' | 'low';
@@ -117,7 +118,7 @@ const useNotificationPiniaStore = defineStore('notification', () => {
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Failed to fetch notifications';
       error.value = message;
-      console.warn('[NotificationStore] Failed to fetch notifications:', err);
+      logger.warn('[NotificationStore] Failed to fetch notifications:', err);
     } finally {
       loading.value = false;
     }

@@ -128,13 +128,17 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onActivated, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { message, type TableColumnsType, type TablePaginationConfig } from 'ant-design-vue';
 import { DeleteOutlined, EditOutlined, EyeOutlined, PlusOutlined } from '@ant-design/icons-vue';
 import { TaskType, type AnnotationTemplate, type TemplateItem } from '../../types';
 import { useTemplateStore } from '../../store/useTemplateStore';
 import { getTemplateSchemaAsync } from '../../utils/templateSchemaHelper';
+import { useDebounced } from '../../composables/useDebounced';
+
+// keep-alive 白名单按组件名匹配（script setup 从文件名推断为 index，需显式声明）
+defineOptions({ name: 'TemplateManagePage' });
 
 const PAGE_SIZE = 5;
 
@@ -142,7 +146,13 @@ const router = useRouter();
 const templateStore = useTemplateStore();
 
 const keyword = ref('');
+const debouncedKeyword = useDebounced(keyword);
 const current = ref(1);
+
+// 防抖关键词生效时回到第一页，避免筛选结果变化后页码越界
+watch(debouncedKeyword, () => {
+  current.value = 1;
+});
 const previewOpen = ref(false);
 const previewData = ref<AnnotationTemplate | null>(null);
 const previewLoadingId = ref<string | null>(null);
@@ -158,7 +168,7 @@ const columns: TableColumnsType<TemplateItem> = [
 ];
 
 const filteredTemplates = computed(() => {
-  const normalizedKeyword = keyword.value.trim().toLowerCase();
+  const normalizedKeyword = debouncedKeyword.value.trim().toLowerCase();
   return templateStore.templates.filter(
     (template) => !normalizedKeyword || template.name.toLowerCase().includes(normalizedKeyword),
   );
@@ -172,7 +182,8 @@ const pagination = computed<TablePaginationConfig>(() => ({
   showTotal: (total) => `共 ${total} 条`,
 }));
 
-onMounted(() => {
+// keep-alive 缓存下 onMounted 仅首次触发，改用 onActivated 保证每次回到页面都刷新数据
+onActivated(() => {
   void templateStore.fetchTemplates();
 });
 

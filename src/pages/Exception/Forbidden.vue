@@ -8,11 +8,11 @@
 
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
-import { useUserStore } from '../../store/useUserStore';
+import { useAuthStore } from '../../store/useAuthStore';
 import { getDefaultPath } from '../../utils/roleHelper';
 
 const router = useRouter();
-const userStore = useUserStore();
+const userStore = useAuthStore();
 
 function goHome() {
   const role = userStore.user?.role;

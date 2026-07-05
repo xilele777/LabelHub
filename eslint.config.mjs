@@ -16,6 +16,7 @@ export default tseslint.config(
       'logs/**',
       'coverage/**',
       '*.md',
+      'src/components.d.ts',
     ],
   },
 
@@ -44,8 +45,8 @@ export default tseslint.config(
       'vue/html-indent': 'off',
       'vue/html-self-closing': 'off',
       '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
-      '@typescript-eslint/no-explicit-any': 'warn',
-      'no-console': 'warn',
+      '@typescript-eslint/no-explicit-any': 'error',
+      'no-console': 'error',
     },
   },
 

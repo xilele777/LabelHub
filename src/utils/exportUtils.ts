@@ -193,10 +193,12 @@ export function downloadAsJson(records: ExportRecord[], filename: string): void 
   downloadFile(jsonStr, filename, 'application/json;charset=utf-8');
 }
 
+/** UTF-8 BOM \u524D\u7F00\uFF1AExcel \u6B63\u786E\u8BC6\u522B\u4E2D\u6587 CSV \u7F16\u7801\u7528 */
+export const CSV_BOM = '\uFEFF';
+
 export function downloadAsCsv(records: ExportRecord[], filename: string): void {
   const csvStr = exportRecordsToCsv(records);
-  const bomPrefix = '\uFEFF';
-  downloadFile(bomPrefix + csvStr, filename, 'text/csv;charset=utf-8');
+  downloadFile(CSV_BOM + csvStr, filename, 'text/csv;charset=utf-8');
 }
 
 export function performExport(

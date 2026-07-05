@@ -188,6 +188,19 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_notifications_timestamp ON notifications(timestamp);
   CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
   CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status);
+
+  -- 前端 Core Web Vitals 上报（监控可视化用）
+  CREATE TABLE IF NOT EXISTS web_vitals (
+    id             TEXT PRIMARY KEY,
+    name           TEXT NOT NULL,
+    value          REAL NOT NULL DEFAULT 0,
+    rating         TEXT,
+    page           TEXT,
+    navigationType TEXT,
+    timestamp      TEXT NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_web_vitals_timestamp ON web_vitals(timestamp);
+  CREATE INDEX IF NOT EXISTS idx_web_vitals_name ON web_vitals(name);
 `);
 
 // ─── Prepared statements (for performance) ─────────────────
@@ -312,6 +325,18 @@ const stmts = {
     ),
     count: db.prepare('SELECT COUNT(*) AS total FROM notifications'),
   },
+  web_vitals: {
+    getAll: db.prepare('SELECT * FROM web_vitals'),
+    getById: db.prepare('SELECT * FROM web_vitals WHERE id = ?'),
+    insert: db.prepare(
+      `INSERT INTO web_vitals (id, name, value, rating, page, navigationType, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    ),
+    update: db.prepare(
+      `UPDATE web_vitals SET name = @name, value = @value, rating = @rating, page = @page, navigationType = @navigationType, timestamp = @timestamp WHERE id = @id`,
+    ),
+    delete: db.prepare('DELETE FROM web_vitals WHERE id = ?'),
+    count: db.prepare('SELECT COUNT(*) AS total FROM web_vitals'),
+  },
 };
 
 // ─── JSON parse helper ──────────────────────────────────────
@@ -336,6 +361,19 @@ function transformUser(row) {
     role: row.role,
     createdAt: row.createdAt,
     passwordChangedAt: row.passwordChangedAt || null,
+  };
+}
+
+function transformWebVital(row) {
+  if (!row) return null;
+  return {
+    id: row.id,
+    name: row.name,
+    value: Number(row.value ?? 0),
+    rating: row.rating || null,
+    page: row.page || null,
+    navigationType: row.navigationType || null,
+    timestamp: row.timestamp,
   };
 }
 
@@ -623,6 +661,28 @@ const COLLECTIONS = {
       suggestions: JSON.stringify(item.suggestions || []),
       reviewedAt: item.reviewedAt,
       modelVersion: item.modelVersion,
+    }),
+  },
+  web_vitals: {
+    stmts: stmts.web_vitals,
+    transform: transformWebVital,
+    insertFields: (item) => [
+      item.id,
+      item.name,
+      Number(item.value ?? 0),
+      item.rating || null,
+      item.page || null,
+      item.navigationType || null,
+      item.timestamp || new Date().toISOString(),
+    ],
+    updateFields: (item) => ({
+      id: item.id,
+      name: item.name,
+      value: Number(item.value ?? 0),
+      rating: item.rating || null,
+      page: item.page || null,
+      navigationType: item.navigationType || null,
+      timestamp: item.timestamp,
     }),
   },
 };

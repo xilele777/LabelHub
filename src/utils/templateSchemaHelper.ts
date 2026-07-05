@@ -5,6 +5,7 @@
  * 数据来源：API GET /api/templates/:id（服务端返回的 fields 字段）
  * 本地维护一份内存缓存，避免重复请求。
  */
+import { logger } from './logger';
 import { type AnnotationTemplate, type TemplateField, type TemplateItem } from '../types';
 import * as templateApi from '../api/template';
 
@@ -46,8 +47,9 @@ export async function getTemplateSchemaAsync(
     const schema = serverTemplateToSchema(res.data as TemplateItem & { fields?: TemplateField[] });
     schemaCache.set(templateId, schema);
     return schema;
-  } catch (err: any) {
-    console.warn(`[templateSchemaHelper] Failed to fetch template "${templateId}":`, err?.message);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    logger.warn(`[templateSchemaHelper] Failed to fetch template "${templateId}":`, message);
     return undefined;
   }
 }
@@ -79,9 +81,10 @@ export async function preloadTemplateSchemas(): Promise<void> {
         schemaCache.set(schema.id, schema);
       }
     }
-    console.log(`[templateSchemaHelper] Preloaded ${schemaCache.size} template schemas`);
-  } catch (err: any) {
-    console.warn('[templateSchemaHelper] Preload failed:', err?.message);
+    logger.log(`[templateSchemaHelper] Preloaded ${schemaCache.size} template schemas`);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    logger.warn('[templateSchemaHelper] Preload failed:', message);
   }
 }
 

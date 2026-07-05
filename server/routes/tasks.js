@@ -398,10 +398,32 @@ const crud = createCrudRouter('tasks', {
 
   filterList(items, req) {
     const archivedParam = req.query.archived;
+    let result;
     if (archivedParam === 'true' || archivedParam === '1') {
-      return items.filter((item) => item.archived === true);
+      result = items.filter((item) => item.archived === true);
+    } else {
+      result = items.filter((item) => !item.archived);
     }
-    return items.filter((item) => !item.archived);
+
+    // 服务端筛选（配合 _page/_limit 支撑列表页服务端分页）
+    const status = Array.isArray(req.query.status) ? req.query.status[0] : req.query.status;
+    if (status) {
+      result = result.filter((item) => item.status === status);
+    }
+
+    const keywordParam = Array.isArray(req.query.keyword)
+      ? req.query.keyword[0]
+      : req.query.keyword;
+    const keyword = typeof keywordParam === 'string' ? keywordParam.trim().toLowerCase() : '';
+    if (keyword) {
+      result = result.filter((item) =>
+        String(item.name || '')
+          .toLowerCase()
+          .includes(keyword),
+      );
+    }
+
+    return result;
   },
 });
 

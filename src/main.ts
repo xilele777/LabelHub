@@ -1,10 +1,12 @@
 import { createApp, h } from 'vue';
 import { createPinia } from 'pinia';
 import { RouterView } from 'vue-router';
-import Antd, { ConfigProvider } from 'ant-design-vue';
+import { ConfigProvider } from 'ant-design-vue';
 import 'ant-design-vue/dist/reset.css';
 import router from './router';
 import { setUnauthorizedHandler } from './api/request';
+import { initWebVitals } from './services/webVitals';
+import { logger } from './utils/logger';
 import './assets/global.css';
 
 const googleTheme = {
@@ -40,11 +42,10 @@ setUnauthorizedHandler(() => {
 
 app.use(createPinia());
 app.use(router);
-app.use(Antd);
 
 // ─── Global Vue error boundary ─────────────────────────────
 app.config.errorHandler = (err, _instance, info) => {
-  console.error('[Vue Error]', err, 'Info:', info);
+  logger.error('[Vue Error]', err, 'Info:', info);
 
   // Report to backend error-tracking endpoint in production
   if (import.meta.env.PROD) {
@@ -65,8 +66,11 @@ app.config.errorHandler = (err, _instance, info) => {
 
 app.config.warnHandler = (msg, _instance, trace) => {
   if (import.meta.env.DEV) {
-    console.warn(`[Vue Warning] ${msg}`, trace);
+    logger.warn(`[Vue Warning] ${msg}`, trace);
   }
 };
 
 app.mount('#root');
+
+// Core Web Vitals 采集（仅生产环境上报）
+initWebVitals();

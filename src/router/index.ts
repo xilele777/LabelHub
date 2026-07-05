@@ -6,7 +6,7 @@ import {
   type RouteRecordRaw,
 } from 'vue-router';
 import { Role } from '../types';
-import { useUserStore } from '../store/useUserStore';
+import { useAuthStore } from '../store/useAuthStore';
 import { getDefaultPath, hasRouteRole } from '../utils/roleHelper';
 import { preloadTemplateSchemas } from '../utils/templateSchemaHelper';
 
@@ -139,6 +139,15 @@ export const asyncRoutes: RouteRecordRaw[] = [
     },
   },
   {
+    path: 'monitoring',
+    name: 'MonitoringBoard',
+    component: lazy(() => import('../pages/MonitoringBoard/index.vue')),
+    meta: {
+      title: '性能监控',
+      roles: [Role.ADMIN],
+    },
+  },
+  {
     path: 'users',
     name: 'UserManage',
     component: lazy(() => import('../pages/UserManage/index.vue')),
@@ -227,7 +236,7 @@ function getRequiredRoles(to: RouteLocationNormalized): Role[] {
 }
 
 router.beforeEach((to) => {
-  const userStore = useUserStore();
+  const userStore = useAuthStore();
   const isLoggedIn = Boolean(userStore.token && userStore.user);
 
   if (to.path === '/login' && isLoggedIn && userStore.user) {

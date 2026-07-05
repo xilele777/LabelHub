@@ -26,6 +26,7 @@ const annotationItemRoutes = require('./routes/annotationItems');
 const reviewRoutes = require('./routes/reviews');
 const assignmentRoutes = require('./routes/assignments');
 const notificationRoutes = require('./routes/notifications');
+const monitoringRoutes = require('./routes/monitoring');
 
 // Notification Service (WebSocket)
 const { initNotificationService } = require('./services/notificationService');
@@ -100,6 +101,7 @@ app.use('/api/templates', templateRoutes);
 app.use('/api/annotation-items', annotationItemRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api', monitoringRoutes);
 app.use('/api', assignmentRoutes);
 
 // ─── Swagger API docs ────────────────────────────────────

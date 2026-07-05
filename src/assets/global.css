@@ -1,4 +1,6 @@
-﻿*, *::before, *::after {
+﻿*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
@@ -21,7 +23,7 @@
   --lh-info: #129eaf;
   --lh-shadow-sm: none;
   --lh-shadow-md: 0 8px 20px rgba(15, 23, 42, 0.07);
-  --lh-shadow-lg: 0 8px 24px rgba(60, 64, 67, 0.16), 0 16px 40px rgba(60, 64, 67, 0.10);
+  --lh-shadow-lg: 0 8px 24px rgba(60, 64, 67, 0.16), 0 16px 40px rgba(60, 64, 67, 0.1);
   --lh-radius: 8px;
   --lh-ease-standard: cubic-bezier(0.2, 0, 0, 1);
   --lh-ease-emphasized: cubic-bezier(0.2, 0, 0, 1);
@@ -30,7 +32,9 @@
   --lh-motion-slow: 260ms;
 }
 
-html, body, #root {
+html,
+body,
+#root {
   height: 100%;
   margin: 0;
   padding: 0;

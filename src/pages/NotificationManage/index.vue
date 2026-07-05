@@ -167,11 +167,13 @@ import {
   type PublishedNotificationRecipient,
 } from '../../api/notification';
 import { Role } from '../../types';
+import { useDebounced } from '../../composables/useDebounced';
 
 const router = useRouter();
 const items = ref<PublishedNotificationItem[]>([]);
 const loading = ref(false);
 const keyword = ref('');
+const debouncedKeyword = useDebounced(keyword);
 const selected = ref<PublishedNotificationItem | null>(null);
 const detailOpen = ref(false);
 const detailLoading = ref(false);
@@ -194,7 +196,7 @@ const recipientColumns: TableColumnsType<PublishedNotificationRecipient> = [
 ];
 
 const filteredItems = computed(() => {
-  const value = keyword.value.trim().toLowerCase();
+  const value = debouncedKeyword.value.trim().toLowerCase();
   if (!value) return items.value;
   return items.value.filter(
     (item) =>

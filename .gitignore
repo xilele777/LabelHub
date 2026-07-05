@@ -33,6 +33,10 @@ logs/
 
 # Interview/Product docs (not for publication)
 LabelHub-面试复盘文档.md
+LabelHub-优化清单.md
+
+# Generated
+src/components.d.ts
 
 # Misc
 *.tsbuildinfo

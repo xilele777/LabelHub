@@ -1,6 +1,8 @@
 import { fileURLToPath, URL } from 'node:url';
 import { defineConfig, loadEnv } from 'vite';
 import vue from '@vitejs/plugin-vue';
+import Components from 'unplugin-vue-components/vite';
+import { AntDesignVueResolver } from 'unplugin-vue-components/resolvers';
 import { visualizer } from 'rollup-plugin-visualizer';
 
 function toNumber(value: string | undefined, fallback: number) {
@@ -16,6 +18,11 @@ export default defineConfig(({ mode }) => {
     base: env.VITE_APP_BASE || '/',
     plugins: [
       vue(),
+      // antd v4 使用 CSS-in-JS，无需样式按需引入，importStyle 关闭
+      Components({
+        resolvers: [AntDesignVueResolver({ importStyle: false })],
+        dts: 'src/components.d.ts',
+      }),
       visualizer({
         filename: 'dist/stats.html',
         open: false,
@@ -56,10 +63,10 @@ export default defineConfig(({ mode }) => {
       chunkSizeWarningLimit: 1200,
       rollupOptions: {
         output: {
+          // antd/icons 不再强制单 chunk：按需引入后交由 rollup 按页面依赖自然拆分，
+          // 登录等轻页面无需加载完整组件库
           manualChunks: {
             vue: ['vue', 'vue-router', 'pinia'],
-            antd: ['ant-design-vue'],
-            icons: ['@ant-design/icons-vue'],
             request: ['axios'],
             realtime: ['socket.io-client'],
           },

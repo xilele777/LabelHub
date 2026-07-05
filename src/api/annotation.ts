@@ -2,6 +2,7 @@
  * 标注项相关 API
  */
 import { get, put, post, del } from './request';
+import type { RequestConfig } from './request';
 import type { DataItem, ConflictData, LockData } from '../types';
 
 export interface AnnotationItemListResult {
@@ -10,8 +11,8 @@ export interface AnnotationItemListResult {
 }
 
 /** 获取标注项列表 */
-export function getAnnotationItemList(params?: Record<string, unknown>) {
-  return get<AnnotationItemListResult>('/annotation-items', params);
+export function getAnnotationItemList(params?: Record<string, unknown>, config?: RequestConfig) {
+  return get<AnnotationItemListResult>('/annotation-items', params, config);
 }
 
 /** 获取单个标注项 */
