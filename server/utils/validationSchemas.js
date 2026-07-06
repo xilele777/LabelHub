@@ -34,6 +34,7 @@ const saveDraftSchema = z.object({
 
 /** 审核通过 */
 const approveSchema = z.object({
+  reason: z.string().max(1000).optional(),
   version: z.number({ required_error: '版本号缺失' }).int().min(1),
 });
 

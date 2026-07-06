@@ -510,12 +510,13 @@ async function step5_annotationWorkflow() {
   // ── 5A: 完整正向流程 (草稿 → 提交 → AI预审 → 人工审核通过) ──
   console.log('\n  ▸ 5A: 正向流程 - 审核通过');
 
-  // 保存草稿
+  // 保存草稿（初始版本号为 1）
   const draft1 = await request(
     'PUT',
     `/api/annotation-items/${id1}/save-draft`,
     {
       annotationData: { category: 'cat', quality: 'hd', difficulty: 2, note: '清晰橘猫' },
+      version: 1,
     },
     ctx.annotatorToken,
   );
@@ -523,6 +524,7 @@ async function step5_annotationWorkflow() {
   assertEq(draft1.body.data.status, 'draft', '状态变为 draft');
   assertEq(draft1.body.data.annotator, 'annotator', '标注员为 annotator');
   assertGte(draft1.body.data.auditHistory.length, 1, '审计历史记录 >= 1');
+  const itemV1 = draft1.body.data.version; // 保存草稿后版本号自动递增
 
   // 提交标注（自动触发 AI 预审，状态直接推进到 pending_review）
   const submit1 = await request(
@@ -530,6 +532,7 @@ async function step5_annotationWorkflow() {
     `/api/annotation-items/${id1}/submit`,
     {
       annotationData: { category: 'cat', quality: 'hd', difficulty: 2, note: '清晰橘猫' },
+      version: itemV1,
     },
     ctx.annotatorToken,
   );
@@ -542,6 +545,7 @@ async function step5_annotationWorkflow() {
   assertTruthy(submit1.body.data.item.submittedAt, '有提交时间');
   assertTruthy(submit1.body.data.review, '返回 AI 预审结果');
   ctx.reviewId = submit1.body.data.review.id;
+  const itemV2 = submit1.body.data.item.version; // 提交+AI预审后版本号
 
   // 人工审核通过
   const approve1 = await request(
@@ -549,6 +553,7 @@ async function step5_annotationWorkflow() {
     `/api/annotation-items/${id1}/approve`,
     {
       reason: '标注准确，审核通过',
+      version: itemV2,
     },
     ctx.reviewerToken,
   );
@@ -570,12 +575,13 @@ async function step5_annotationWorkflow() {
   // ── 5B: 驳回流程 (提交 → AI预审自动完成 → 人工驳回 → 重新提交) ──
   console.log('\n  ▸ 5B: 驳回流程 - 驳回后重新提交');
 
-  // 直接提交（跳过草稿），AI预审自动完成
+  // 直接提交（跳过草稿），AI预审自动完成（id2 初始版本号为 1）
   const submit2 = await request(
     'PUT',
     `/api/annotation-items/${id2}/submit`,
     {
       annotationData: { category: 'cat', quality: 'hd', difficulty: 1, note: '' },
+      version: 1,
     },
     ctx.annotatorToken,
   );
@@ -587,6 +593,7 @@ async function step5_annotationWorkflow() {
     '提交后状态为 pending_review（AI预审自动完成）',
   );
   assertTruthy(submit2.body.data.review, '返回 AI 预审结果');
+  const id2SubmitVer = submit2.body.data.item.version; // 提交+AI预审后版本号
 
   // 人工驳回
   const reject2 = await request(
@@ -594,6 +601,7 @@ async function step5_annotationWorkflow() {
     `/api/annotation-items/${id2}/reject`,
     {
       reason: '类别标注错误：图像描述为金毛犬，请修正为"狗"',
+      version: id2SubmitVer,
     },
     ctx.reviewerToken,
   );
@@ -604,6 +612,7 @@ async function step5_annotationWorkflow() {
     '类别标注错误：图像描述为金毛犬，请修正为"狗"',
     '驳回原因已记录',
   );
+  const id2RejectVer = reject2.body.data.version; // 驳回后版本号
 
   // 重新提交
   const resubmit2 = await request(
@@ -611,6 +620,7 @@ async function step5_annotationWorkflow() {
     `/api/annotation-items/${id2}/resubmit`,
     {
       annotationData: { category: 'dog', quality: 'hd', difficulty: 1, note: '已修正为狗' },
+      version: id2RejectVer,
     },
     ctx.annotatorToken,
   );
@@ -623,11 +633,13 @@ async function step5_annotationWorkflow() {
   console.log('\n  ▸ 5C: AI预审失败场景');
 
   // 提交缺少必填字段 + 低评分的标注，触发 R001（必填缺失，-30）+ R006（低评分风险，-15）= 55分 FAIL
+  // id3 初始版本号为 1
   const submit3 = await request(
     'PUT',
     `/api/annotation-items/${id3}/submit`,
     {
       annotationData: { category: '', quality: 'blurry', difficulty: 1, note: '太暗了看不清' },
+      version: 1,
     },
     ctx.annotatorToken,
   );
@@ -640,6 +652,7 @@ async function step5_annotationWorkflow() {
     `AI审核评分较低（实际: ${submit3.body.data.review.score}）`,
   );
   assertEq(submit3.body.data.review.reviewStatus, 'fail', 'AI审核状态为 fail');
+  const id3SubmitVer = submit3.body.data.item.version; // 提交+AI预审后版本号
 
   // ── 5D: 驳回缺少原因 ──
   console.log('\n  ▸ 5D: 驳回缺少原因');
@@ -649,6 +662,7 @@ async function step5_annotationWorkflow() {
     `/api/annotation-items/${id3}/reject`,
     {
       reason: '',
+      version: id3SubmitVer,
     },
     ctx.reviewerToken,
   );
