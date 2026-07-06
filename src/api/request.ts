@@ -4,7 +4,7 @@ import axios, {
   type AxiosResponse,
   type InternalAxiosRequestConfig,
 } from 'axios';
-import { useAuthStore } from '@/stores/auth';
+import { useAuthStore } from '@/store/useAuthStore';
 
 export const AUTH_EXPIRED_EVENT = 'labelhub:auth-expired';
 
