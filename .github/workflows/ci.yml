@@ -108,7 +108,7 @@ jobs:
         run: npm run build
 
       - name: Check bundle size budget
-        run: node scripts/check-bundle-size.js
+        run: node scripts/check-bundle-size.cjs
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
