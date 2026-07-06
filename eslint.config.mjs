@@ -84,7 +84,7 @@ export default tseslint.config(
 
   // ── Standalone Node.js scripts ──────────────────────────
   {
-    files: ['scripts/**/*.{js,mjs}'],
+    files: ['scripts/**/*.{js,mjs,cjs}'],
     rules: {
       '@typescript-eslint/no-require-imports': 'off',
       'no-console': 'off',
