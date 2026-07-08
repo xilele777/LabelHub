@@ -243,9 +243,19 @@ let trendChart: echarts.ECharts | null = null;
 let ratingChart: echarts.ECharts | null = null;
 let resizeObserver: ResizeObserver | null = null;
 
+function ensureResizeObserver() {
+  if (resizeObserver) return;
+  resizeObserver = new ResizeObserver(() => {
+    trendChart?.resize();
+    ratingChart?.resize();
+  });
+}
+
 function renderTrendChart() {
   if (!trendChartRef.value) return;
   if (!trendChart) trendChart = echarts.init(trendChartRef.value);
+  ensureResizeObserver();
+  resizeObserver?.observe(trendChartRef.value);
 
   const metric = trendMetric.value;
   const trend = summary.value?.trend ?? [];
@@ -300,6 +310,8 @@ function renderTrendChart() {
 function renderRatingChart() {
   if (!ratingChartRef.value) return;
   if (!ratingChart) ratingChart = echarts.init(ratingChartRef.value);
+  ensureResizeObserver();
+  resizeObserver?.observe(ratingChartRef.value);
 
   const names = presentMetrics.value;
   const ratingKeys = ['good', 'needs-improvement', 'poor'] as const;
@@ -378,11 +390,6 @@ onMounted(() => {
   void fetchSummary().then(() => {
     if (error.value) message.warning('监控数据加载失败，可稍后重试');
   });
-  resizeObserver = new ResizeObserver(() => {
-    trendChart?.resize();
-    ratingChart?.resize();
-  });
-  resizeObserver.observe(document.body);
 });
 
 onBeforeUnmount(() => {

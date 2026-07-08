@@ -109,8 +109,8 @@ async function run() {
     'POST',
     '/api/auth/login',
     {
-      username: 'owner',
-      password: 'owner123',
+      username: 'o',
+      password: '123',
     },
     null,
   );
@@ -126,8 +126,8 @@ async function run() {
     'POST',
     '/api/auth/login',
     {
-      username: 'annotator',
-      password: 'annotator123',
+      username: 'a',
+      password: '123',
     },
     null,
   );
@@ -143,8 +143,8 @@ async function run() {
     'POST',
     '/api/auth/login',
     {
-      username: 'reviewer',
-      password: 'reviewer123',
+      username: 'r',
+      password: '123',
     },
     null,
   );

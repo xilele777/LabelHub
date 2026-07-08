@@ -72,9 +72,9 @@ async function main() {
   const health = await fetchJSON('/health');
   assert(ok(health), 'server health', health);
 
-  const ownerToken = await login('owner', 'owner123');
-  const annotatorToken = await login('annotator', 'annotator123');
-  const reviewerToken = await login('reviewer', 'reviewer123');
+  const ownerToken = await login('o', '123');
+  const annotatorToken = await login('a', '123');
+  const reviewerToken = await login('r', '123');
 
   if (!ownerToken || !annotatorToken || !reviewerToken) {
     process.exit(1);
@@ -89,7 +89,7 @@ async function main() {
       description: 'RBAC test template',
       type: 'text_ner',
       fieldCount: 1,
-      creator: 'owner',
+      creator: 'o',
       fields: [{ id: 'rbac_field', type: 'input', fieldKey: 'text', label: 'Text' }],
     }),
   });
@@ -103,7 +103,7 @@ async function main() {
       name: 'RBAC Test Task',
       description: 'RBAC test task',
       type: 'text_ner',
-      owner: 'owner',
+      owner: 'o',
       templateId,
       status: 'in_progress',
     }),
@@ -124,26 +124,26 @@ async function main() {
   const pendingItemId = await createItem('pending item', { status: 'pending' });
   const pendingReviewItemId = await createItem('pending review item', {
     status: 'pending_review',
-    annotator: 'annotator',
+    annotator: 'a',
     annotationData: { text: 'done' },
     submittedAt: new Date().toISOString(),
   });
   const reviewerOwnItemId = await createItem('reviewer own item', {
     status: 'pending_review',
-    annotator: 'reviewer',
+    annotator: 'r',
     annotationData: { text: 'own' },
     submittedAt: new Date().toISOString(),
   });
   const ownerPendingItemId = await createItem('owner pending item', { status: 'pending' });
   const ownerReviewItemId = await createItem('owner review item', {
     status: 'pending_review',
-    annotator: 'annotator',
+    annotator: 'a',
     annotationData: { text: 'review' },
     submittedAt: new Date().toISOString(),
   });
   const annotatorRejectItemId = await createItem('annotator reject item', {
     status: 'pending_review',
-    annotator: 'annotator',
+    annotator: 'a',
     annotationData: { text: 'reject' },
     submittedAt: new Date().toISOString(),
   });
@@ -152,7 +152,7 @@ async function main() {
   let result = await fetchJSON('/tasks', {
     method: 'POST',
     headers: auth(ownerToken),
-    body: JSON.stringify({ name: 'Owner Task', type: 'text_ner', owner: 'owner', templateId }),
+    body: JSON.stringify({ name: 'Owner Task', type: 'text_ner', owner: 'o', templateId }),
   });
   assert(ok(result), 'owner can create task', result);
 

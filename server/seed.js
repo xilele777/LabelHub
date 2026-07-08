@@ -11,22 +11,22 @@ const runSeed = db._db.transaction(() => {
   db.seed('users', [
     {
       id: 'u001',
-      username: 'owner',
-      password: hashPassword('owner123'),
+      username: 'o',
+      password: hashPassword('123'),
       avatar: null,
       role: 'owner',
     },
     {
       id: 'u002',
-      username: 'annotator',
-      password: hashPassword('annotator123'),
+      username: 'a',
+      password: hashPassword('123'),
       avatar: null,
       role: 'annotator',
     },
     {
       id: 'u003',
-      username: 'reviewer',
-      password: hashPassword('reviewer123'),
+      username: 'r',
+      password: hashPassword('123'),
       avatar: null,
       role: 'reviewer',
     },
@@ -39,7 +39,7 @@ const runSeed = db._db.transaction(() => {
       name: '猫狗图像分类-批次A',
       description: '对猫狗图片进行二分类标注，区分猫与狗的图像。',
       type: 'image_classification',
-      owner: 'owner',
+      owner: 'o',
       templateId: 'tpl001',
       templateName: '图像分类模板v1',
       instructions: '请根据图片内容选择"猫"或"狗"标签，不确定的标记为"不确定"。',
@@ -51,7 +51,7 @@ const runSeed = db._db.transaction(() => {
       name: '交通标志检测-批次B',
       description: '标注交通场景中的各类标志牌位置。',
       type: 'object_detection',
-      owner: 'owner',
+      owner: 'o',
       templateId: 'tpl004',
       templateName: '目标检测模板v2',
       instructions: '用矩形框标注所有交通标志，类别从下拉列表中选择。',
@@ -63,7 +63,7 @@ const runSeed = db._db.transaction(() => {
       name: '遥感图像语义分割',
       description: '对遥感卫星图像进行地物语义分割。',
       type: 'semantic_segmentation',
-      owner: 'owner',
+      owner: 'o',
       templateId: 'tpl005',
       templateName: '语义分割模板v1',
       instructions: '使用多边形工具勾勒地物边界，分类包括：建筑、植被、水体、道路。',
@@ -75,7 +75,7 @@ const runSeed = db._db.transaction(() => {
       name: '医疗报告实体识别',
       description: '从医疗报告中识别疾病、药物等命名实体。',
       type: 'text_ner',
-      owner: 'owner',
+      owner: 'o',
       templateId: 'tpl007',
       templateName: 'NER模板v1',
       instructions: '标注文本中的疾病、药物、检查项目等实体，使用对应颜色高亮。',
@@ -89,7 +89,7 @@ const runSeed = db._db.transaction(() => {
       name: '猫狗图像分类-批次B',
       description: '第二批猫狗图片的二分类标注。',
       type: 'image_classification',
-      owner: 'owner',
+      owner: 'o',
       templateId: 'tpl001',
       templateName: '图像分类模板v1',
       instructions: '标注规范与批次A相同。',
@@ -103,7 +103,7 @@ const runSeed = db._db.transaction(() => {
       name: '行人与车辆检测',
       description: '检测街景图像中的行人与车辆。',
       type: 'object_detection',
-      owner: 'owner',
+      owner: 'o',
       templateId: 'tpl004',
       templateName: '目标检测模板v2',
       instructions: '分别用矩形框标注行人和车辆，确保不遗漏边缘目标。',
@@ -115,7 +115,7 @@ const runSeed = db._db.transaction(() => {
       name: '卫星图像地物分类',
       description: '对卫星图像进行地物像素级分类。',
       type: 'semantic_segmentation',
-      owner: 'owner',
+      owner: 'o',
       templateId: 'tpl006',
       templateName: '语义分割模板v2',
       instructions: '按像素级别标注地物类型，注意处理云遮挡区域。',
@@ -127,7 +127,7 @@ const runSeed = db._db.transaction(() => {
       name: '新闻文本命名实体识别',
       description: '对新闻文本进行人名、地名、机构名实体识别。',
       type: 'text_ner',
-      owner: 'owner',
+      owner: 'o',
       templateId: 'tpl008',
       templateName: 'NER模板v2',
       instructions: '标注人名、地名、机构名三类实体，重叠部分取最长匹配。',
@@ -139,7 +139,7 @@ const runSeed = db._db.transaction(() => {
       name: '农作物病害图像分类',
       description: '对农作物图片进行病害类型分类。',
       type: 'image_classification',
-      owner: 'owner',
+      owner: 'o',
       templateId: 'tpl002',
       templateName: '图像分类模板v2',
       instructions: '选择对应的病害类型标签，健康植株标注为"健康"。',
@@ -151,7 +151,7 @@ const runSeed = db._db.transaction(() => {
       name: '工业缺陷检测-批次C',
       description: '检测工业产品图像中的表面缺陷。',
       type: 'object_detection',
-      owner: 'owner',
+      owner: 'o',
       templateId: 'tpl003',
       templateName: '目标检测模板v1',
       instructions: '用矩形框标注缺陷区域，标注缺陷类型：划痕、凹陷、色差。',
@@ -165,7 +165,7 @@ const runSeed = db._db.transaction(() => {
       name: '街景语义分割-批次A',
       description: '对街道场景图像进行语义分割。',
       type: 'semantic_segmentation',
-      owner: 'owner',
+      owner: 'o',
       templateId: 'tpl005',
       templateName: '语义分割模板v1',
       instructions: '标注道路、人行道、建筑、天空等区域。',
@@ -179,7 +179,7 @@ const runSeed = db._db.transaction(() => {
       name: '电商评论NER',
       description: '对电商评论进行产品属性和情感实体识别。',
       type: 'text_ner',
-      owner: 'owner',
+      owner: 'o',
       templateId: 'tpl007',
       templateName: 'NER模板v1',
       instructions: '标注产品属性、情感倾向等实体，保持粒度一致。',
@@ -196,7 +196,7 @@ const runSeed = db._db.transaction(() => {
       description: '适用于猫狗、农作物等图像分类场景，支持单选类别与附加标签。',
       type: 'image_classification',
       fieldCount: 8,
-      creator: 'owner',
+      creator: 'o',
       createdAt: '2026-03-10T09:00:00Z',
       fields: [
         {
@@ -294,7 +294,7 @@ const runSeed = db._db.transaction(() => {
       description: '图像分类增强版，新增难度评分与来源URL字段。',
       type: 'image_classification',
       fieldCount: 10,
-      creator: 'owner',
+      creator: 'o',
       createdAt: '2026-04-05T14:30:00Z',
       fields: [
         {
@@ -414,7 +414,7 @@ const runSeed = db._db.transaction(() => {
       description: '基础目标检测模板，支持矩形框标注与类别选择。',
       type: 'object_detection',
       fieldCount: 5,
-      creator: 'owner',
+      creator: 'o',
       createdAt: '2026-03-15T10:20:00Z',
       fields: [
         {
@@ -481,7 +481,7 @@ const runSeed = db._db.transaction(() => {
       description: '目标检测增强版，新增遮挡率与截断判断字段。',
       type: 'object_detection',
       fieldCount: 7,
-      creator: 'owner',
+      creator: 'o',
       createdAt: '2026-04-12T08:15:00Z',
       fields: [
         {
@@ -569,7 +569,7 @@ const runSeed = db._db.transaction(() => {
       description: '适用于遥感、街景等像素级语义分割任务。',
       type: 'semantic_segmentation',
       fieldCount: 4,
-      creator: 'owner',
+      creator: 'o',
       createdAt: '2026-02-20T11:00:00Z',
       fields: [
         {
@@ -627,7 +627,7 @@ const runSeed = db._db.transaction(() => {
       description: '语义分割增强版，新增区域备注与边界质量控制。',
       type: 'semantic_segmentation',
       fieldCount: 6,
-      creator: 'owner',
+      creator: 'o',
       createdAt: '2026-03-28T16:40:00Z',
       fields: [
         {
@@ -703,7 +703,7 @@ const runSeed = db._db.transaction(() => {
       description: '命名实体识别基础模板，覆盖人名、地名、机构名等实体类型。',
       type: 'text_ner',
       fieldCount: 3,
-      creator: 'owner',
+      creator: 'o',
       createdAt: '2026-01-18T09:30:00Z',
       fields: [
         {
@@ -748,7 +748,7 @@ const runSeed = db._db.transaction(() => {
       description: 'NER增强版，支持实体关系标注与置信度评分。',
       type: 'text_ner',
       fieldCount: 5,
-      creator: 'owner',
+      creator: 'o',
       createdAt: '2026-02-25T13:20:00Z',
       fields: [
         {
@@ -889,7 +889,7 @@ const runSeed = db._db.transaction(() => {
         isClear: true,
         note: '猫占主要画面',
       },
-      annotator: 'annotator',
+      annotator: 'a',
       submittedAt: null,
       reviewer: null,
       reviewedAt: null,
@@ -897,7 +897,7 @@ const runSeed = db._db.transaction(() => {
       auditHistory: [
         {
           id: 'h001',
-          operator: 'annotator',
+          operator: 'a',
           actionType: 'save_draft',
           fromStatus: 'pending',
           toStatus: 'draft',
@@ -925,7 +925,7 @@ const runSeed = db._db.transaction(() => {
         isClear: true,
         note: '',
       },
-      annotator: 'annotator',
+      annotator: 'a',
       submittedAt: '2026-05-18T14:30:00Z',
       reviewer: null,
       reviewedAt: null,
@@ -933,7 +933,7 @@ const runSeed = db._db.transaction(() => {
       auditHistory: [
         {
           id: 'h002',
-          operator: 'annotator',
+          operator: 'a',
           actionType: 'save_draft',
           fromStatus: 'pending',
           toStatus: 'draft',
@@ -942,7 +942,7 @@ const runSeed = db._db.transaction(() => {
         },
         {
           id: 'h003',
-          operator: 'annotator',
+          operator: 'a',
           actionType: 'submit',
           fromStatus: 'draft',
           toStatus: 'submitted',
@@ -1007,7 +1007,7 @@ const runSeed = db._db.transaction(() => {
         confidence: 3,
         remark: '雨天拍摄，部分遮挡',
       },
-      annotator: 'annotator',
+      annotator: 'a',
       submittedAt: null,
       reviewer: null,
       reviewedAt: null,
@@ -1015,7 +1015,7 @@ const runSeed = db._db.transaction(() => {
       auditHistory: [
         {
           id: 'h004',
-          operator: 'annotator',
+          operator: 'a',
           actionType: 'save_draft',
           fromStatus: 'pending',
           toStatus: 'draft',
@@ -1082,7 +1082,7 @@ const runSeed = db._db.transaction(() => {
         isClear: true,
         note: '目标清晰，室内近景',
       },
-      annotator: 'annotator',
+      annotator: 'a',
       submittedAt: '2026-05-19T09:15:00Z',
       reviewer: null,
       reviewedAt: null,
@@ -1090,7 +1090,7 @@ const runSeed = db._db.transaction(() => {
       auditHistory: [
         {
           id: 'h005',
-          operator: 'annotator',
+          operator: 'a',
           actionType: 'submit',
           fromStatus: 'draft',
           toStatus: 'submitted',
@@ -1145,7 +1145,7 @@ const runSeed = db._db.transaction(() => {
         isClear: true,
         note: '',
       },
-      annotator: 'annotator',
+      annotator: 'a',
       submittedAt: '2026-05-19T10:30:00Z',
       reviewer: null,
       reviewedAt: null,
@@ -1153,7 +1153,7 @@ const runSeed = db._db.transaction(() => {
       auditHistory: [
         {
           id: 'h009',
-          operator: 'annotator',
+          operator: 'a',
           actionType: 'submit',
           fromStatus: 'draft',
           toStatus: 'submitted',
@@ -1208,7 +1208,7 @@ const runSeed = db._db.transaction(() => {
         isClear: false,
         note: '图像模糊难以判断',
       },
-      annotator: 'annotator',
+      annotator: 'a',
       submittedAt: '2026-05-19T11:45:00Z',
       reviewer: null,
       reviewedAt: null,
@@ -1216,7 +1216,7 @@ const runSeed = db._db.transaction(() => {
       auditHistory: [
         {
           id: 'h013',
-          operator: 'annotator',
+          operator: 'a',
           actionType: 'submit',
           fromStatus: 'draft',
           toStatus: 'submitted',
@@ -1271,7 +1271,7 @@ const runSeed = db._db.transaction(() => {
         isClear: false,
         note: '光线太暗看不清',
       },
-      annotator: 'annotator',
+      annotator: 'a',
       submittedAt: '2026-05-19T14:20:00Z',
       reviewer: null,
       reviewedAt: null,
@@ -1279,7 +1279,7 @@ const runSeed = db._db.transaction(() => {
       auditHistory: [
         {
           id: 'h017',
-          operator: 'annotator',
+          operator: 'a',
           actionType: 'submit',
           fromStatus: 'draft',
           toStatus: 'submitted',
@@ -1333,7 +1333,7 @@ const runSeed = db._db.transaction(() => {
         confidence: 4,
         remark: '多目标场景',
       },
-      annotator: 'annotator',
+      annotator: 'a',
       submittedAt: '2026-05-19T16:00:00Z',
       reviewer: null,
       reviewedAt: null,
@@ -1341,7 +1341,7 @@ const runSeed = db._db.transaction(() => {
       auditHistory: [
         {
           id: 'h021',
-          operator: 'annotator',
+          operator: 'a',
           actionType: 'submit',
           fromStatus: 'draft',
           toStatus: 'submitted',
@@ -1395,7 +1395,7 @@ const runSeed = db._db.transaction(() => {
         confidence: 2,
         remark: '夜间低光照，遮挡严重',
       },
-      annotator: 'annotator',
+      annotator: 'a',
       submittedAt: '2026-05-19T17:30:00Z',
       reviewer: null,
       reviewedAt: null,
@@ -1403,7 +1403,7 @@ const runSeed = db._db.transaction(() => {
       auditHistory: [
         {
           id: 'h025',
-          operator: 'annotator',
+          operator: 'a',
           actionType: 'submit',
           fromStatus: 'draft',
           toStatus: 'submitted',
@@ -1457,7 +1457,7 @@ const runSeed = db._db.transaction(() => {
         confidence: 5,
         remark: '',
       },
-      annotator: 'annotator',
+      annotator: 'a',
       submittedAt: '2026-05-20T08:00:00Z',
       reviewer: null,
       reviewedAt: null,
@@ -1465,7 +1465,7 @@ const runSeed = db._db.transaction(() => {
       auditHistory: [
         {
           id: 'h029',
-          operator: 'annotator',
+          operator: 'a',
           actionType: 'submit',
           fromStatus: 'draft',
           toStatus: 'submitted',
@@ -1521,15 +1521,15 @@ const runSeed = db._db.transaction(() => {
         isClear: true,
         note: '品种特征明显',
       },
-      annotator: 'annotator',
+      annotator: 'a',
       submittedAt: '2026-05-17T10:00:00Z',
-      reviewer: 'reviewer',
+      reviewer: 'r',
       reviewedAt: '2026-05-18T09:00:00Z',
       rejectReason: null,
       auditHistory: [
         {
           id: 'h033',
-          operator: 'annotator',
+          operator: 'a',
           actionType: 'submit',
           fromStatus: 'draft',
           toStatus: 'submitted',
@@ -1565,7 +1565,7 @@ const runSeed = db._db.transaction(() => {
         },
         {
           id: 'h037',
-          operator: 'reviewer',
+          operator: 'r',
           actionType: 'approve',
           fromStatus: 'pending_review',
           toStatus: 'reviewed',
@@ -1593,15 +1593,15 @@ const runSeed = db._db.transaction(() => {
         isClear: true,
         note: '',
       },
-      annotator: 'annotator',
+      annotator: 'a',
       submittedAt: '2026-05-17T11:00:00Z',
-      reviewer: 'reviewer',
+      reviewer: 'r',
       reviewedAt: '2026-05-18T10:00:00Z',
       rejectReason: '类别标注错误：图像明显为犬类（泰迪），但标注为"猫"，请核实后重新标注。',
       auditHistory: [
         {
           id: 'h038',
-          operator: 'annotator',
+          operator: 'a',
           actionType: 'submit',
           fromStatus: 'draft',
           toStatus: 'submitted',
@@ -1637,7 +1637,7 @@ const runSeed = db._db.transaction(() => {
         },
         {
           id: 'h042',
-          operator: 'reviewer',
+          operator: 'r',
           actionType: 'reject',
           fromStatus: 'pending_review',
           toStatus: 'rejected',

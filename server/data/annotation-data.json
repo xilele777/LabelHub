@@ -14,22 +14,22 @@
   "users": [
     {
       "id": "u001",
-      "username": "owner",
-      "password": "owner123",
+      "username": "o",
+      "password": "123",
       "avatar": null,
       "role": "owner"
     },
     {
       "id": "u002",
-      "username": "annotator",
-      "password": "annotator123",
+      "username": "a",
+      "password": "123",
       "avatar": null,
       "role": "annotator"
     },
     {
       "id": "u003",
-      "username": "reviewer",
-      "password": "reviewer123",
+      "username": "r",
+      "password": "123",
       "avatar": null,
       "role": "reviewer"
     },
@@ -61,7 +61,7 @@
       "name": "猫狗图像分类-批次A",
       "description": "对猫狗图片进行二分类标注，区分猫与狗的图像。",
       "type": "image_classification",
-      "owner": "owner",
+      "owner": "o",
       "templateId": "tpl001",
       "templateName": "图像分类模板v1",
       "instructions": "请根据图片内容选择"猫"或"狗"标签，不确定的标记为"不确定"。",
@@ -73,7 +73,7 @@
       "name": "交通标志检测-批次B",
       "description": "标注交通场景中的各类标志牌位置。",
       "type": "object_detection",
-      "owner": "owner",
+      "owner": "o",
       "templateId": "tpl004",
       "templateName": "目标检测模板v2",
       "instructions": "用矩形框标注所有交通标志，类别从下拉列表中选择。",
@@ -85,7 +85,7 @@
       "name": "遥感图像语义分割",
       "description": "对遥感卫星图像进行地物语义分割。",
       "type": "semantic_segmentation",
-      "owner": "owner",
+      "owner": "o",
       "templateId": "tpl005",
       "templateName": "语义分割模板v1",
       "instructions": "使用多边形工具勾勒地物边界，分类包括：建筑、植被、水体、道路。",
@@ -97,7 +97,7 @@
       "name": "医疗报告实体识别",
       "description": "从医疗报告中识别疾病、药物等命名实体。",
       "type": "text_ner",
-      "owner": "owner",
+      "owner": "o",
       "templateId": "tpl007",
       "templateName": "NER模板v1",
       "instructions": "标注文本中的疾病、药物、检查项目等实体，使用对应颜色高亮。",
@@ -109,7 +109,7 @@
       "name": "猫狗图像分类-批次B",
       "description": "第二批猫狗图片的二分类标注。",
       "type": "image_classification",
-      "owner": "owner",
+      "owner": "o",
       "templateId": "tpl001",
       "templateName": "图像分类模板v1",
       "instructions": "标注规范与批次A相同。",
@@ -121,7 +121,7 @@
       "name": "行人与车辆检测",
       "description": "检测街景图像中的行人与车辆。",
       "type": "object_detection",
-      "owner": "owner",
+      "owner": "o",
       "templateId": "tpl004",
       "templateName": "目标检测模板v2",
       "instructions": "分别用矩形框标注行人和车辆，确保不遗漏边缘目标。",
@@ -133,7 +133,7 @@
       "name": "卫星图像地物分类",
       "description": "对卫星图像进行地物像素级分类。",
       "type": "semantic_segmentation",
-      "owner": "owner",
+      "owner": "o",
       "templateId": "tpl006",
       "templateName": "语义分割模板v2",
       "instructions": "按像素级别标注地物类型，注意处理云遮挡区域。",
@@ -145,7 +145,7 @@
       "name": "新闻文本命名实体识别",
       "description": "对新闻文本进行人名、地名、机构名实体识别。",
       "type": "text_ner",
-      "owner": "owner",
+      "owner": "o",
       "templateId": "tpl008",
       "templateName": "NER模板v2",
       "instructions": "标注人名、地名、机构名三类实体，重叠部分取最长匹配。",
@@ -157,7 +157,7 @@
       "name": "农作物病害图像分类",
       "description": "对农作物图片进行病害类型分类。",
       "type": "image_classification",
-      "owner": "owner",
+      "owner": "o",
       "templateId": "tpl002",
       "templateName": "图像分类模板v2",
       "instructions": "选择对应的病害类型标签，健康植株标注为"健康"。",
@@ -169,7 +169,7 @@
       "name": "工业缺陷检测-批次C",
       "description": "检测工业产品图像中的表面缺陷。",
       "type": "object_detection",
-      "owner": "owner",
+      "owner": "o",
       "templateId": "tpl003",
       "templateName": "目标检测模板v1",
       "instructions": "用矩形框标注缺陷区域，标注缺陷类型：划痕、凹陷、色差。",
@@ -181,7 +181,7 @@
       "name": "街景语义分割-批次A",
       "description": "对街道场景图像进行语义分割。",
       "type": "semantic_segmentation",
-      "owner": "owner",
+      "owner": "o",
       "templateId": "tpl005",
       "templateName": "语义分割模板v1",
       "instructions": "标注道路、人行道、建筑、天空等区域。",
@@ -193,7 +193,7 @@
       "name": "电商评论NER",
       "description": "对电商评论进行产品属性和情感实体识别。",
       "type": "text_ner",
-      "owner": "owner",
+      "owner": "o",
       "templateId": "tpl007",
       "templateName": "NER模板v1",
       "instructions": "标注产品属性、情感倾向等实体，保持粒度一致。",
@@ -208,7 +208,7 @@
       "description": "适用于猫狗、农作物等图像分类场景，支持单选类别与附加标签。",
       "type": "image_classification",
       "fieldCount": 8,
-      "creator": "owner",
+      "creator": "o",
       "createdAt": "2026-03-10T09:00:00Z",
       "fields": [
         { "id": "f_title_1", "type": "title", "fieldKey": "", "label": "标注须知", "description": "请仔细阅读后进行标注，注意区分目标物体类别。", "level": 4 },
@@ -227,7 +227,7 @@
       "description": "图像分类增强版，新增难度评分与来源URL字段。",
       "type": "image_classification",
       "fieldCount": 10,
-      "creator": "owner",
+      "creator": "o",
       "createdAt": "2026-04-05T14:30:00Z",
       "fields": [
         { "id": "f_title_1", "type": "title", "fieldKey": "", "label": "标注须知", "description": "增强版分类模板，请仔细标注每个字段。", "level": 4 },
@@ -248,7 +248,7 @@
       "description": "基础目标检测模板，支持矩形框标注与类别选择。",
       "type": "object_detection",
       "fieldCount": 5,
-      "creator": "owner",
+      "creator": "o",
       "createdAt": "2026-03-15T10:20:00Z",
       "fields": [
         { "id": "f_obj_type", "type": "select", "fieldKey": "objectType", "label": "目标类别", "required": true, "placeholder": "请选择目标类别", "options": [{ "id": "o1", "label": "行人", "value": "pedestrian" }, { "id": "o2", "label": "车辆", "value": "vehicle" }, { "id": "o3", "label": "自行车", "value": "bicycle" }, { "id": "o4", "label": "交通标志", "value": "sign" }, { "id": "o5", "label": "其他", "value": "other" }], "searchable": true },
@@ -264,7 +264,7 @@
       "description": "目标检测增强版，新增遮挡率与截断判断字段。",
       "type": "object_detection",
       "fieldCount": 7,
-      "creator": "owner",
+      "creator": "o",
       "createdAt": "2026-04-12T08:15:00Z",
       "fields": [
         { "id": "f_obj_type", "type": "select", "fieldKey": "objectType", "label": "目标类别", "required": true, "placeholder": "请选择目标类别", "options": [{ "id": "o1", "label": "行人", "value": "pedestrian" }, { "id": "o2", "label": "车辆", "value": "vehicle" }, { "id": "o3", "label": "自行车", "value": "bicycle" }, { "id": "o4", "label": "交通标志", "value": "sign" }, { "id": "o5", "label": "其他", "value": "other" }], "searchable": true },
@@ -282,7 +282,7 @@
       "description": "适用于遥感、街景等像素级语义分割任务。",
       "type": "semantic_segmentation",
       "fieldCount": 4,
-      "creator": "owner",
+      "creator": "o",
       "createdAt": "2026-02-20T11:00:00Z",
       "fields": [
         { "id": "f_seg_class", "type": "select", "fieldKey": "segClass", "label": "分割类别", "required": true, "placeholder": "选择地物类别", "options": [{ "id": "s1", "label": "建筑", "value": "building" }, { "id": "s2", "label": "植被", "value": "vegetation" }, { "id": "s3", "label": "水体", "value": "water" }, { "id": "s4", "label": "道路", "value": "road" }, { "id": "s5", "label": "天空", "value": "sky" }], "searchable": true },
@@ -297,7 +297,7 @@
       "description": "语义分割增强版，新增区域备注与边界质量控制。",
       "type": "semantic_segmentation",
       "fieldCount": 6,
-      "creator": "owner",
+      "creator": "o",
       "createdAt": "2026-03-28T16:40:00Z",
       "fields": [
         { "id": "f_seg_class", "type": "select", "fieldKey": "segClass", "label": "分割类别", "required": true, "placeholder": "选择地物类别", "options": [{ "id": "s1", "label": "建筑", "value": "building" }, { "id": "s2", "label": "植被", "value": "vegetation" }, { "id": "s3", "label": "水体", "value": "water" }, { "id": "s4", "label": "道路", "value": "road" }, { "id": "s5", "label": "天空", "value": "other" }], "searchable": true },
@@ -314,7 +314,7 @@
       "description": "命名实体识别基础模板，覆盖人名、地名、机构名等实体类型。",
       "type": "text_ner",
       "fieldCount": 3,
-      "creator": "owner",
+      "creator": "o",
       "createdAt": "2026-01-18T09:30:00Z",
       "fields": [
         { "id": "f_entity_type", "type": "select", "fieldKey": "entityType", "label": "实体类型", "required": true, "placeholder": "选择实体类型", "options": [{ "id": "e1", "label": "人名", "value": "person" }, { "id": "e2", "label": "地名", "value": "location" }, { "id": "e3", "label": "机构名", "value": "organization" }, { "id": "e4", "label": "日期", "value": "date" }, { "id": "e5", "label": "其他", "value": "other" }], "searchable": true },
@@ -328,7 +328,7 @@
       "description": "NER增强版，支持实体关系标注与置信度评分。",
       "type": "text_ner",
       "fieldCount": 5,
-      "creator": "owner",
+      "creator": "o",
       "createdAt": "2026-02-25T13:20:00Z",
       "fields": [
         { "id": "f_entity_type", "type": "select", "fieldKey": "entityType", "label": "实体类型", "required": true, "placeholder": "选择实体类型", "options": [{ "id": "e1", "label": "人名", "value": "person" }, { "id": "e2", "label": "地名", "value": "location" }, { "id": "e3", "label": "机构名", "value": "organization" }, { "id": "e4", "label": "日期", "value": "date" }, { "id": "e5", "label": "其他", "value": "other" }], "searchable": true },
@@ -416,13 +416,13 @@
         "isClear": true,
         "note": "猫占主要画面，狗在背景中"
       },
-      "annotator": "annotator",
+      "annotator": "a",
       "submittedAt": null,
       "reviewer": null,
       "reviewedAt": null,
       "rejectReason": null,
       "auditHistory": [
-        { "id": "h001", "operator": "annotator", "actionType": "save_draft", "fromStatus": "pending", "toStatus": "draft", "reason": null, "timestamp": "2026-05-18T10:00:00Z" }
+        { "id": "h001", "operator": "a", "actionType": "save_draft", "fromStatus": "pending", "toStatus": "draft", "reason": null, "timestamp": "2026-05-18T10:00:00Z" }
       ]
     },
     {
@@ -444,14 +444,14 @@
         "isClear": true,
         "note": ""
       },
-      "annotator": "annotator",
+      "annotator": "a",
       "submittedAt": "2026-05-18T14:30:00Z",
       "reviewer": null,
       "reviewedAt": null,
       "rejectReason": null,
       "auditHistory": [
-        { "id": "h002", "operator": "annotator", "actionType": "save_draft", "fromStatus": "pending", "toStatus": "draft", "reason": null, "timestamp": "2026-05-18T14:00:00Z" },
-        { "id": "h003", "operator": "annotator", "actionType": "submit", "fromStatus": "draft", "toStatus": "submitted", "reason": null, "timestamp": "2026-05-18T14:30:00Z" }
+        { "id": "h002", "operator": "a", "actionType": "save_draft", "fromStatus": "pending", "toStatus": "draft", "reason": null, "timestamp": "2026-05-18T14:00:00Z" },
+        { "id": "h003", "operator": "a", "actionType": "submit", "fromStatus": "draft", "toStatus": "submitted", "reason": null, "timestamp": "2026-05-18T14:30:00Z" }
       ]
     },
     {
@@ -512,13 +512,13 @@
         "occlusionRate": 2,
         "lighting": "normal"
       },
-      "annotator": "annotator",
+      "annotator": "a",
       "submittedAt": null,
       "reviewer": null,
       "reviewedAt": null,
       "rejectReason": null,
       "auditHistory": [
-        { "id": "h004", "operator": "annotator", "actionType": "save_draft", "fromStatus": "pending", "toStatus": "draft", "reason": null, "timestamp": "2026-05-19T08:00:00Z" }
+        { "id": "h004", "operator": "a", "actionType": "save_draft", "fromStatus": "pending", "toStatus": "draft", "reason": null, "timestamp": "2026-05-19T08:00:00Z" }
       ]
     },
     {
@@ -581,7 +581,7 @@
       },
       "annotator": "annotator_wang",
       "submittedAt": "2026-03-08T09:20:00Z",
-      "reviewer": "reviewer",
+      "reviewer": "r",
       "reviewedAt": "2026-03-09T14:00:00Z",
       "rejectReason": null,
       "auditHistory": [
@@ -590,7 +590,7 @@
         { "id": "h103", "operator": "AI系统", "actionType": "ai_review_start", "fromStatus": "submitted", "toStatus": "ai_reviewing", "reason": null, "timestamp": "2026-03-08T09:20:01Z" },
         { "id": "h104", "operator": "AI系统", "actionType": "ai_review_complete", "fromStatus": "ai_reviewing", "toStatus": "ai_reviewed", "reason": null, "timestamp": "2026-03-08T09:20:06Z" },
         { "id": "h105", "operator": "系统", "actionType": "assign_reviewer", "fromStatus": "ai_reviewed", "toStatus": "pending_review", "reason": null, "timestamp": "2026-03-08T09:20:07Z" },
-        { "id": "h106", "operator": "reviewer", "actionType": "approve", "fromStatus": "pending_review", "toStatus": "reviewed", "reason": null, "timestamp": "2026-03-09T14:00:00Z" }
+        { "id": "h106", "operator": "r", "actionType": "approve", "fromStatus": "pending_review", "toStatus": "reviewed", "reason": null, "timestamp": "2026-03-09T14:00:00Z" }
       ]
     },
     {
@@ -613,7 +613,7 @@
       },
       "annotator": "annotator_wang",
       "submittedAt": "2026-03-10T10:15:00Z",
-      "reviewer": "reviewer",
+      "reviewer": "r",
       "reviewedAt": "2026-03-11T16:30:00Z",
       "rejectReason": null,
       "auditHistory": [
@@ -621,7 +621,7 @@
         { "id": "h112", "operator": "AI系统", "actionType": "ai_review_start", "fromStatus": "submitted", "toStatus": "ai_reviewing", "reason": null, "timestamp": "2026-03-10T10:15:01Z" },
         { "id": "h113", "operator": "AI系统", "actionType": "ai_review_complete", "fromStatus": "ai_reviewing", "toStatus": "ai_reviewed", "reason": null, "timestamp": "2026-03-10T10:15:06Z" },
         { "id": "h114", "operator": "系统", "actionType": "assign_reviewer", "fromStatus": "ai_reviewed", "toStatus": "pending_review", "reason": null, "timestamp": "2026-03-10T10:15:07Z" },
-        { "id": "h115", "operator": "reviewer", "actionType": "approve", "fromStatus": "pending_review", "toStatus": "reviewed", "reason": null, "timestamp": "2026-03-11T16:30:00Z" }
+        { "id": "h115", "operator": "r", "actionType": "approve", "fromStatus": "pending_review", "toStatus": "reviewed", "reason": null, "timestamp": "2026-03-11T16:30:00Z" }
       ]
     },
     {
@@ -672,14 +672,14 @@
         "remark": "划痕长度约3cm，贯穿中部区域",
         "bbox": { "x": 320, "y": 180, "width": 280, "height": 60 }
       },
-      "annotator": "annotator",
+      "annotator": "a",
       "submittedAt": "2026-03-22T09:00:00Z",
-      "reviewer": "reviewer",
+      "reviewer": "r",
       "reviewedAt": "2026-03-23T11:00:00Z",
       "rejectReason": null,
       "auditHistory": [
-        { "id": "h131", "operator": "annotator", "actionType": "submit", "fromStatus": "draft", "toStatus": "submitted", "reason": null, "timestamp": "2026-03-22T09:00:00Z" },
-        { "id": "h132", "operator": "reviewer", "actionType": "approve", "fromStatus": "pending_review", "toStatus": "reviewed", "reason": null, "timestamp": "2026-03-23T11:00:00Z" }
+        { "id": "h131", "operator": "a", "actionType": "submit", "fromStatus": "draft", "toStatus": "submitted", "reason": null, "timestamp": "2026-03-22T09:00:00Z" },
+        { "id": "h132", "operator": "r", "actionType": "approve", "fromStatus": "pending_review", "toStatus": "reviewed", "reason": null, "timestamp": "2026-03-23T11:00:00Z" }
       ]
     },
     {
@@ -701,14 +701,14 @@
         "remark": "凹陷区域直径约1.5cm",
         "bbox": { "x": 500, "y": 300, "width": 90, "height": 85 }
       },
-      "annotator": "annotator",
+      "annotator": "a",
       "submittedAt": "2026-03-22T09:30:00Z",
-      "reviewer": "reviewer",
+      "reviewer": "r",
       "reviewedAt": "2026-03-23T11:30:00Z",
       "rejectReason": null,
       "auditHistory": [
-        { "id": "h141", "operator": "annotator", "actionType": "submit", "fromStatus": "draft", "toStatus": "submitted", "reason": null, "timestamp": "2026-03-22T09:30:00Z" },
-        { "id": "h142", "operator": "reviewer", "actionType": "approve", "fromStatus": "pending_review", "toStatus": "reviewed", "reason": null, "timestamp": "2026-03-23T11:30:00Z" }
+        { "id": "h141", "operator": "a", "actionType": "submit", "fromStatus": "draft", "toStatus": "submitted", "reason": null, "timestamp": "2026-03-22T09:30:00Z" },
+        { "id": "h142", "operator": "r", "actionType": "approve", "fromStatus": "pending_review", "toStatus": "reviewed", "reason": null, "timestamp": "2026-03-23T11:30:00Z" }
       ]
     },
     {
@@ -787,14 +787,14 @@
         "isClear": true,
         "note": "暹罗猫特征明显"
       },
-      "annotator": "annotator",
+      "annotator": "a",
       "submittedAt": "2026-02-15T10:00:00Z",
-      "reviewer": "reviewer",
+      "reviewer": "r",
       "reviewedAt": "2026-02-16T14:00:00Z",
       "rejectReason": null,
       "auditHistory": [
-        { "id": "h171", "operator": "annotator", "actionType": "submit", "fromStatus": "draft", "toStatus": "submitted", "reason": null, "timestamp": "2026-02-15T10:00:00Z" },
-        { "id": "h172", "operator": "reviewer", "actionType": "approve", "fromStatus": "pending_review", "toStatus": "reviewed", "reason": null, "timestamp": "2026-02-16T14:00:00Z" }
+        { "id": "h171", "operator": "a", "actionType": "submit", "fromStatus": "draft", "toStatus": "submitted", "reason": null, "timestamp": "2026-02-15T10:00:00Z" },
+        { "id": "h172", "operator": "r", "actionType": "approve", "fromStatus": "pending_review", "toStatus": "reviewed", "reason": null, "timestamp": "2026-02-16T14:00:00Z" }
       ]
     },
     {
@@ -816,14 +816,14 @@
         "isClear": true,
         "note": ""
       },
-      "annotator": "annotator",
+      "annotator": "a",
       "submittedAt": "2026-02-15T11:00:00Z",
-      "reviewer": "reviewer",
+      "reviewer": "r",
       "reviewedAt": "2026-02-16T15:00:00Z",
       "rejectReason": null,
       "auditHistory": [
-        { "id": "h181", "operator": "annotator", "actionType": "submit", "fromStatus": "draft", "toStatus": "submitted", "reason": null, "timestamp": "2026-02-15T11:00:00Z" },
-        { "id": "h182", "operator": "reviewer", "actionType": "approve", "fromStatus": "pending_review", "toStatus": "reviewed", "reason": null, "timestamp": "2026-02-16T15:00:00Z" }
+        { "id": "h181", "operator": "a", "actionType": "submit", "fromStatus": "draft", "toStatus": "submitted", "reason": null, "timestamp": "2026-02-15T11:00:00Z" },
+        { "id": "h182", "operator": "r", "actionType": "approve", "fromStatus": "pending_review", "toStatus": "reviewed", "reason": null, "timestamp": "2026-02-16T15:00:00Z" }
       ]
     },
     {
@@ -845,12 +845,12 @@
       },
       "annotator": "annotator_li",
       "submittedAt": "2026-01-20T09:00:00Z",
-      "reviewer": "reviewer",
+      "reviewer": "r",
       "reviewedAt": "2026-01-21T14:00:00Z",
       "rejectReason": null,
       "auditHistory": [
         { "id": "h191", "operator": "annotator_li", "actionType": "submit", "fromStatus": "draft", "toStatus": "submitted", "reason": null, "timestamp": "2026-01-20T09:00:00Z" },
-        { "id": "h192", "operator": "reviewer", "actionType": "approve", "fromStatus": "pending_review", "toStatus": "reviewed", "reason": null, "timestamp": "2026-01-21T14:00:00Z" }
+        { "id": "h192", "operator": "r", "actionType": "approve", "fromStatus": "pending_review", "toStatus": "reviewed", "reason": null, "timestamp": "2026-01-21T14:00:00Z" }
       ]
     },
     {
@@ -872,12 +872,12 @@
       },
       "annotator": "annotator_li",
       "submittedAt": "2026-01-20T10:30:00Z",
-      "reviewer": "reviewer",
+      "reviewer": "r",
       "reviewedAt": "2026-01-21T15:00:00Z",
       "rejectReason": null,
       "auditHistory": [
         { "id": "h201", "operator": "annotator_li", "actionType": "submit", "fromStatus": "draft", "toStatus": "submitted", "reason": null, "timestamp": "2026-01-20T10:30:00Z" },
-        { "id": "h202", "operator": "reviewer", "actionType": "approve", "fromStatus": "pending_review", "toStatus": "reviewed", "reason": null, "timestamp": "2026-01-21T15:00:00Z" }
+        { "id": "h202", "operator": "r", "actionType": "approve", "fromStatus": "pending_review", "toStatus": "reviewed", "reason": null, "timestamp": "2026-01-21T15:00:00Z" }
       ]
     },
     {
@@ -1235,13 +1235,13 @@
         "isClear": true,
         "note": "目标清晰，室内近景"
       },
-      "annotator": "annotator",
+      "annotator": "a",
       "submittedAt": "2026-05-19T09:15:00Z",
       "reviewer": null,
       "reviewedAt": null,
       "rejectReason": null,
       "auditHistory": [
-        { "id": "h261", "operator": "annotator", "actionType": "submit", "fromStatus": "draft", "toStatus": "submitted", "reason": null, "timestamp": "2026-05-19T09:15:00Z" },
+        { "id": "h261", "operator": "a", "actionType": "submit", "fromStatus": "draft", "toStatus": "submitted", "reason": null, "timestamp": "2026-05-19T09:15:00Z" },
         { "id": "h262", "operator": "AI系统", "actionType": "ai_review_start", "fromStatus": "submitted", "toStatus": "ai_reviewing", "reason": null, "timestamp": "2026-05-19T09:15:01Z" },
         { "id": "h263", "operator": "AI系统", "actionType": "ai_review_complete", "fromStatus": "ai_reviewing", "toStatus": "ai_reviewed", "reason": null, "timestamp": "2026-05-19T09:15:05Z" },
         { "id": "h264", "operator": "系统", "actionType": "assign_reviewer", "fromStatus": "ai_reviewed", "toStatus": "pending_review", "reason": null, "timestamp": "2026-05-19T09:15:06Z" }
@@ -1266,13 +1266,13 @@
         "isClear": true,
         "note": ""
       },
-      "annotator": "annotator",
+      "annotator": "a",
       "submittedAt": "2026-05-19T10:30:00Z",
       "reviewer": null,
       "reviewedAt": null,
       "rejectReason": null,
       "auditHistory": [
-        { "id": "h271", "operator": "annotator", "actionType": "submit", "fromStatus": "draft", "toStatus": "submitted", "reason": null, "timestamp": "2026-05-19T10:30:00Z" },
+        { "id": "h271", "operator": "a", "actionType": "submit", "fromStatus": "draft", "toStatus": "submitted", "reason": null, "timestamp": "2026-05-19T10:30:00Z" },
         { "id": "h272", "operator": "AI系统", "actionType": "ai_review_start", "fromStatus": "submitted", "toStatus": "ai_reviewing", "reason": null, "timestamp": "2026-05-19T10:30:01Z" },
         { "id": "h273", "operator": "AI系统", "actionType": "ai_review_complete", "fromStatus": "ai_reviewing", "toStatus": "ai_reviewed", "reason": null, "timestamp": "2026-05-19T10:30:05Z" },
         { "id": "h274", "operator": "系统", "actionType": "assign_reviewer", "fromStatus": "ai_reviewed", "toStatus": "pending_review", "reason": null, "timestamp": "2026-05-19T10:30:06Z" }
@@ -1297,13 +1297,13 @@
         "isClear": false,
         "note": "图像模糊难以判断"
       },
-      "annotator": "annotator",
+      "annotator": "a",
       "submittedAt": "2026-05-19T11:45:00Z",
       "reviewer": null,
       "reviewedAt": null,
       "rejectReason": null,
       "auditHistory": [
-        { "id": "h281", "operator": "annotator", "actionType": "submit", "fromStatus": "draft", "toStatus": "submitted", "reason": null, "timestamp": "2026-05-19T11:45:00Z" },
+        { "id": "h281", "operator": "a", "actionType": "submit", "fromStatus": "draft", "toStatus": "submitted", "reason": null, "timestamp": "2026-05-19T11:45:00Z" },
         { "id": "h282", "operator": "AI系统", "actionType": "ai_review_start", "fromStatus": "submitted", "toStatus": "ai_reviewing", "reason": null, "timestamp": "2026-05-19T11:45:01Z" },
         { "id": "h283", "operator": "AI系统", "actionType": "ai_review_complete", "fromStatus": "ai_reviewing", "toStatus": "ai_reviewed", "reason": null, "timestamp": "2026-05-19T11:45:05Z" },
         { "id": "h284", "operator": "系统", "actionType": "assign_reviewer", "fromStatus": "ai_reviewed", "toStatus": "pending_review", "reason": null, "timestamp": "2026-05-19T11:45:06Z" }
@@ -1328,13 +1328,13 @@
         "isClear": false,
         "note": "光线太暗看不清"
       },
-      "annotator": "annotator",
+      "annotator": "a",
       "submittedAt": "2026-05-19T14:20:00Z",
       "reviewer": null,
       "reviewedAt": null,
       "rejectReason": null,
       "auditHistory": [
-        { "id": "h291", "operator": "annotator", "actionType": "submit", "fromStatus": "draft", "toStatus": "submitted", "reason": null, "timestamp": "2026-05-19T14:20:00Z" },
+        { "id": "h291", "operator": "a", "actionType": "submit", "fromStatus": "draft", "toStatus": "submitted", "reason": null, "timestamp": "2026-05-19T14:20:00Z" },
         { "id": "h292", "operator": "AI系统", "actionType": "ai_review_start", "fromStatus": "submitted", "toStatus": "ai_reviewing", "reason": null, "timestamp": "2026-05-19T14:20:01Z" },
         { "id": "h293", "operator": "AI系统", "actionType": "ai_review_complete", "fromStatus": "ai_reviewing", "toStatus": "ai_reviewed", "reason": null, "timestamp": "2026-05-19T14:20:05Z" },
         { "id": "h294", "operator": "系统", "actionType": "assign_reviewer", "fromStatus": "ai_reviewed", "toStatus": "pending_review", "reason": null, "timestamp": "2026-05-19T14:20:06Z" }
@@ -1360,13 +1360,13 @@
         "occlusionRate": 2,
         "lighting": "good"
       },
-      "annotator": "annotator",
+      "annotator": "a",
       "submittedAt": "2026-05-19T16:00:00Z",
       "reviewer": null,
       "reviewedAt": null,
       "rejectReason": null,
       "auditHistory": [
-        { "id": "h301", "operator": "annotator", "actionType": "submit", "fromStatus": "draft", "toStatus": "submitted", "reason": null, "timestamp": "2026-05-19T16:00:00Z" },
+        { "id": "h301", "operator": "a", "actionType": "submit", "fromStatus": "draft", "toStatus": "submitted", "reason": null, "timestamp": "2026-05-19T16:00:00Z" },
         { "id": "h302", "operator": "AI系统", "actionType": "ai_review_start", "fromStatus": "submitted", "toStatus": "ai_reviewing", "reason": null, "timestamp": "2026-05-19T16:00:01Z" },
         { "id": "h303", "operator": "AI系统", "actionType": "ai_review_complete", "fromStatus": "ai_reviewing", "toStatus": "ai_reviewed", "reason": null, "timestamp": "2026-05-19T16:00:05Z" },
         { "id": "h304", "operator": "系统", "actionType": "assign_reviewer", "fromStatus": "ai_reviewed", "toStatus": "pending_review", "reason": null, "timestamp": "2026-05-19T16:00:06Z" }
@@ -1392,13 +1392,13 @@
         "occlusionRate": 4,
         "lighting": "dark"
       },
-      "annotator": "annotator",
+      "annotator": "a",
       "submittedAt": "2026-05-19T17:30:00Z",
       "reviewer": null,
       "reviewedAt": null,
       "rejectReason": null,
       "auditHistory": [
-        { "id": "h311", "operator": "annotator", "actionType": "submit", "fromStatus": "draft", "toStatus": "submitted", "reason": null, "timestamp": "2026-05-19T17:30:00Z" },
+        { "id": "h311", "operator": "a", "actionType": "submit", "fromStatus": "draft", "toStatus": "submitted", "reason": null, "timestamp": "2026-05-19T17:30:00Z" },
         { "id": "h312", "operator": "AI系统", "actionType": "ai_review_start", "fromStatus": "submitted", "toStatus": "ai_reviewing", "reason": null, "timestamp": "2026-05-19T17:30:01Z" },
         { "id": "h313", "operator": "AI系统", "actionType": "ai_review_complete", "fromStatus": "ai_reviewing", "toStatus": "ai_reviewed", "reason": null, "timestamp": "2026-05-19T17:30:05Z" },
         { "id": "h314", "operator": "系统", "actionType": "assign_reviewer", "fromStatus": "ai_reviewed", "toStatus": "pending_review", "reason": null, "timestamp": "2026-05-19T17:30:06Z" }
@@ -1455,17 +1455,17 @@
         "isClear": true,
         "note": "品种特征明显"
       },
-      "annotator": "annotator",
+      "annotator": "a",
       "submittedAt": "2026-05-17T10:00:00Z",
-      "reviewer": "reviewer",
+      "reviewer": "r",
       "reviewedAt": "2026-05-18T09:00:00Z",
       "rejectReason": null,
       "auditHistory": [
-        { "id": "h331", "operator": "annotator", "actionType": "submit", "fromStatus": "draft", "toStatus": "submitted", "reason": null, "timestamp": "2026-05-17T10:00:00Z" },
+        { "id": "h331", "operator": "a", "actionType": "submit", "fromStatus": "draft", "toStatus": "submitted", "reason": null, "timestamp": "2026-05-17T10:00:00Z" },
         { "id": "h332", "operator": "AI系统", "actionType": "ai_review_start", "fromStatus": "submitted", "toStatus": "ai_reviewing", "reason": null, "timestamp": "2026-05-17T10:00:01Z" },
         { "id": "h333", "operator": "AI系统", "actionType": "ai_review_complete", "fromStatus": "ai_reviewing", "toStatus": "ai_reviewed", "reason": null, "timestamp": "2026-05-17T10:00:05Z" },
         { "id": "h334", "operator": "系统", "actionType": "assign_reviewer", "fromStatus": "ai_reviewed", "toStatus": "pending_review", "reason": null, "timestamp": "2026-05-17T10:00:06Z" },
-        { "id": "h335", "operator": "reviewer", "actionType": "approve", "fromStatus": "pending_review", "toStatus": "reviewed", "reason": null, "timestamp": "2026-05-18T09:00:00Z" }
+        { "id": "h335", "operator": "r", "actionType": "approve", "fromStatus": "pending_review", "toStatus": "reviewed", "reason": null, "timestamp": "2026-05-18T09:00:00Z" }
       ]
     },
     {
@@ -1487,17 +1487,17 @@
         "isClear": true,
         "note": ""
       },
-      "annotator": "annotator",
+      "annotator": "a",
       "submittedAt": "2026-05-17T11:00:00Z",
-      "reviewer": "reviewer",
+      "reviewer": "r",
       "reviewedAt": "2026-05-18T10:00:00Z",
       "rejectReason": "类别标注错误：图像明显为犬类（泰迪），但标注为"猫"，请核实后重新标注。",
       "auditHistory": [
-        { "id": "h341", "operator": "annotator", "actionType": "submit", "fromStatus": "draft", "toStatus": "submitted", "reason": null, "timestamp": "2026-05-17T11:00:00Z" },
+        { "id": "h341", "operator": "a", "actionType": "submit", "fromStatus": "draft", "toStatus": "submitted", "reason": null, "timestamp": "2026-05-17T11:00:00Z" },
         { "id": "h342", "operator": "AI系统", "actionType": "ai_review_start", "fromStatus": "submitted", "toStatus": "ai_reviewing", "reason": null, "timestamp": "2026-05-17T11:00:01Z" },
         { "id": "h343", "operator": "AI系统", "actionType": "ai_review_complete", "fromStatus": "ai_reviewing", "toStatus": "ai_reviewed", "reason": null, "timestamp": "2026-05-17T11:00:05Z" },
         { "id": "h344", "operator": "系统", "actionType": "assign_reviewer", "fromStatus": "ai_reviewed", "toStatus": "pending_review", "reason": null, "timestamp": "2026-05-17T11:00:06Z" },
-        { "id": "h345", "operator": "reviewer", "actionType": "reject", "fromStatus": "pending_review", "toStatus": "rejected", "reason": "类别标注错误：图像明显为犬类（泰迪），但标注为\"猫\"，请核实后重新标注。", "timestamp": "2026-05-18T10:00:00Z" }
+        { "id": "h345", "operator": "r", "actionType": "reject", "fromStatus": "pending_review", "toStatus": "rejected", "reason": "类别标注错误：图像明显为犬类（泰迪），但标注为\"猫\"，请核实后重新标注。", "timestamp": "2026-05-18T10:00:00Z" }
       ]
     },
     {
@@ -1620,7 +1620,7 @@
       },
       "annotator": "annotator_li",
       "submittedAt": "2026-05-21T15:30:00Z",
-      "reviewer": "reviewer",
+      "reviewer": "r",
       "reviewedAt": "2026-05-22T09:00:00Z",
       "rejectReason": "类别标注严重错误：这是农作物病害图像，类别应为"其他"而非"狗"。请确认后再提交。",
       "auditHistory": [
@@ -1628,7 +1628,7 @@
         { "id": "h382", "operator": "AI系统", "actionType": "ai_review_start", "fromStatus": "submitted", "toStatus": "ai_reviewing", "reason": null, "timestamp": "2026-05-21T15:30:01Z" },
         { "id": "h383", "operator": "AI系统", "actionType": "ai_review_complete", "fromStatus": "ai_reviewing", "toStatus": "ai_reviewed", "reason": null, "timestamp": "2026-05-21T15:30:06Z" },
         { "id": "h384", "operator": "系统", "actionType": "assign_reviewer", "fromStatus": "ai_reviewed", "toStatus": "pending_review", "reason": null, "timestamp": "2026-05-21T15:30:07Z" },
-        { "id": "h385", "operator": "reviewer", "actionType": "reject", "fromStatus": "pending_review", "toStatus": "rejected", "reason": "类别标注严重错误：这是农作物病害图像，类别应为\"其他\"而非\"狗\"。请确认后再提交。", "timestamp": "2026-05-22T09:00:00Z" }
+        { "id": "h385", "operator": "r", "actionType": "reject", "fromStatus": "pending_review", "toStatus": "rejected", "reason": "类别标注严重错误：这是农作物病害图像，类别应为\"其他\"而非\"狗\"。请确认后再提交。", "timestamp": "2026-05-22T09:00:00Z" }
       ]
     },
     {
@@ -1752,12 +1752,12 @@
       },
       "annotator": "annotator_li",
       "submittedAt": "2026-03-25T09:00:00Z",
-      "reviewer": "reviewer",
+      "reviewer": "r",
       "reviewedAt": "2026-03-26T10:00:00Z",
       "rejectReason": null,
       "auditHistory": [
         { "id": "h421", "operator": "annotator_li", "actionType": "submit", "fromStatus": "draft", "toStatus": "submitted", "reason": null, "timestamp": "2026-03-25T09:00:00Z" },
-        { "id": "h422", "operator": "reviewer", "actionType": "approve", "fromStatus": "pending_review", "toStatus": "reviewed", "reason": null, "timestamp": "2026-03-26T10:00:00Z" }
+        { "id": "h422", "operator": "r", "actionType": "approve", "fromStatus": "pending_review", "toStatus": "reviewed", "reason": null, "timestamp": "2026-03-26T10:00:00Z" }
       ]
     },
     {
@@ -1780,12 +1780,12 @@
       },
       "annotator": "annotator_li",
       "submittedAt": "2026-03-25T10:30:00Z",
-      "reviewer": "reviewer",
+      "reviewer": "r",
       "reviewedAt": "2026-03-26T11:00:00Z",
       "rejectReason": "目标类别选择错误：这是工业缺陷检测任务，应选择"其他"而非"交通标志"。色差区域需要用矩形框标注出来。",
       "auditHistory": [
         { "id": "h431", "operator": "annotator_li", "actionType": "submit", "fromStatus": "draft", "toStatus": "submitted", "reason": null, "timestamp": "2026-03-25T10:30:00Z" },
-        { "id": "h432", "operator": "reviewer", "actionType": "reject", "fromStatus": "pending_review", "toStatus": "rejected", "reason": "目标类别选择错误：这是工业缺陷检测任务，应选择\"其他\"而非\"交通标志\"。色差区域需要用矩形框标注出来。", "timestamp": "2026-03-26T11:00:00Z" }
+        { "id": "h432", "operator": "r", "actionType": "reject", "fromStatus": "pending_review", "toStatus": "rejected", "reason": "目标类别选择错误：这是工业缺陷检测任务，应选择\"其他\"而非\"交通标志\"。色差区域需要用矩形框标注出来。", "timestamp": "2026-03-26T11:00:00Z" }
       ]
     },
     {
@@ -1865,12 +1865,12 @@
       },
       "annotator": "annotator_li",
       "submittedAt": "2026-02-18T14:00:00Z",
-      "reviewer": "reviewer",
+      "reviewer": "r",
       "reviewedAt": "2026-02-19T10:00:00Z",
       "rejectReason": "类别标注错误：贵宾犬修剪造型后外观特殊但仍为犬类，不应标注为"鸟"。请仔细辨认后再标注。",
       "auditHistory": [
         { "id": "h461", "operator": "annotator_li", "actionType": "submit", "fromStatus": "draft", "toStatus": "submitted", "reason": null, "timestamp": "2026-02-18T14:00:00Z" },
-        { "id": "h462", "operator": "reviewer", "actionType": "reject", "fromStatus": "pending_review", "toStatus": "rejected", "reason": "类别标注错误：贵宾犬修剪造型后外观特殊但仍为犬类，不应标注为\"鸟\"。请仔细辨认后再标注。", "timestamp": "2026-02-19T10:00:00Z" }
+        { "id": "h462", "operator": "r", "actionType": "reject", "fromStatus": "pending_review", "toStatus": "rejected", "reason": "类别标注错误：贵宾犬修剪造型后外观特殊但仍为犬类，不应标注为\"鸟\"。请仔细辨认后再标注。", "timestamp": "2026-02-19T10:00:00Z" }
       ]
     },
     {

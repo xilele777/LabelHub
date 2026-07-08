@@ -29,7 +29,7 @@ assert.strictEqual(
 
 const assignedItem = {
   ...unclaimedPoolItem,
-  reviewer: 'reviewer',
+  reviewer: 'r',
   auditHistory: [
     ...unclaimedPoolItem.auditHistory,
     {
@@ -47,7 +47,7 @@ assert.strictEqual(
 
 const claimedItem = {
   ...unclaimedPoolItem,
-  reviewer: 'reviewer',
+  reviewer: 'r',
   auditHistory: [
     ...unclaimedPoolItem.auditHistory,
     {
@@ -70,7 +70,7 @@ assert.strictEqual(
 
 const rejectedItem = {
   status: 'rejected',
-  annotator: 'annotator',
+  annotator: 'a',
   auditHistory: [
     {
       actionType: 'claim_assignment',

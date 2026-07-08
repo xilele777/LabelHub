@@ -215,14 +215,17 @@ const useAnnotationPiniaStore = defineStore('annotation', () => {
   async function approveItem(id: string, _reviewer: string): Promise<void> {
     error.value = null;
     try {
-      const res = await annotationApi.approveAnnotation(id);
+      const current = dataItems.value.find((item) => item.id === id);
+      const version = current?.version ?? 1;
+      const res = await annotationApi.approveAnnotation(id, version);
       const updatedItem = res.data;
 
       if (updatedItem.archived) {
-        const current = dataItems.value.find((item) => item.id === id);
-        if (current) {
-          assertDataItemStatusTransition(current.status, updatedItem.status, 'approveItem');
-        }
+        assertDataItemStatusTransition(
+          current?.status ?? updatedItem.status,
+          updatedItem.status,
+          'approveItem',
+        );
         dataItems.value = dataItems.value.filter((item) => item.id !== id);
         archivedItems.value = [updatedItem, ...archivedItems.value];
       } else {
@@ -230,16 +233,20 @@ const useAnnotationPiniaStore = defineStore('annotation', () => {
       }
     } catch (err: unknown) {
       error.value = getErrorMessage(err, '审核通过失败');
+      throw err;
     }
   }
 
   async function rejectItem(id: string, _reviewer: string, reason: string): Promise<void> {
     error.value = null;
     try {
-      const res = await annotationApi.rejectAnnotation(id, reason);
+      const current = dataItems.value.find((item) => item.id === id);
+      const version = current?.version ?? 1;
+      const res = await annotationApi.rejectAnnotation(id, reason, version);
       replaceDataItem(res.data, 'rejectItem');
     } catch (err: unknown) {
       error.value = getErrorMessage(err, '审核驳回失败');
+      throw err;
     }
   }
 

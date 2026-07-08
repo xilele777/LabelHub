@@ -331,7 +331,6 @@ import { useAnnotationStore } from '../../store/useAnnotationStore';
 import { useAuthStore } from '../../store/useAuthStore';
 import { getTemplateSchemaAsync } from '../../utils/templateSchemaHelper';
 import * as taskApi from '../../api/task';
-import * as annotationApi from '../../api/annotation';
 import {
   connectNotificationWS,
   getSocket,
@@ -676,7 +675,10 @@ function itemStatusTag(item: DataItem) {
   if (item.status === DataItemStatus.PENDING_REVIEW) {
     const ai = aiResultMap.value.get(item.id);
     return ai
-      ? { color: aiStatusMeta(ai.reviewStatus).tagColor, label: `${ai.score} 分` }
+      ? {
+          color: aiStatusMeta(ai.reviewStatus).tagColor,
+          label: `${aiStatusMeta(ai.reviewStatus).label} · ${ai.score}分`,
+        }
       : { color: 'processing', label: '待审核' };
   }
   if (
@@ -695,7 +697,7 @@ async function approveSelected() {
   if (!selectedItem.value) return;
   approving.value = true;
   try {
-    await annotationApi.approveAnnotation(selectedItem.value.id);
+    await annotationStore.approveItem(selectedItem.value.id, authStore.user?.username ?? '');
     message.success('审核通过');
     await refreshData();
     await tryContinuousClaim();
@@ -717,7 +719,7 @@ async function rejectSelected(reason: string) {
   if (!selectedItem.value) return;
   rejecting.value = true;
   try {
-    await annotationApi.rejectAnnotation(selectedItem.value.id, reason);
+    await annotationStore.rejectItem(selectedItem.value.id, authStore.user?.username ?? '', reason);
     message.success('已驳回');
     rejectModalOpen.value = false;
     await refreshData();
@@ -814,6 +816,20 @@ async function rejectSelected(reason: string) {
   min-height: 0;
 }
 
+/* a-spin 会在插槽外包两层 div（nested-loading/container），flex 高度链需穿透传递，
+   否则 .review-main 的 flex:1 失效，列表被内容撑高后溢出被裁，页面与列表均无法滚动 */
+.review-workbench > :deep(.ant-spin-nested-loading) {
+  flex: 1;
+  min-height: 0;
+}
+
+.review-workbench :deep(.ant-spin-nested-loading > .ant-spin-container) {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
 .review-main {
   display: grid;
   grid-template-columns: minmax(270px, 320px) minmax(420px, 1fr) minmax(320px, 360px);
@@ -859,7 +875,11 @@ async function rejectSelected(reason: string) {
   border-right: 1px solid var(--lh-divider);
 }
 
-.review-list-card :deep(.ant-card-body),
+.review-list-card :deep(.ant-card-body) {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
 .content-card :deep(.ant-card-body),
 .action-card :deep(.ant-card-body) {
   flex: 1;
@@ -988,6 +1008,11 @@ async function rejectSelected(reason: string) {
     height: auto;
     min-height: 0;
     overflow: visible;
+  }
+
+  /* 小屏下页面整体滚动，高度链失效；虚拟列表容器需有界高度才能内部滚动 */
+  .review-list {
+    height: 480px;
   }
 
   .review-main {

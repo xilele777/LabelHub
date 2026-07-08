@@ -52,14 +52,14 @@ export function submitAnnotation(
   });
 }
 
-/** 审核通过 */
-export function approveAnnotation(id: string, reason?: string) {
-  return put<DataItem>(`/annotation-items/${id}/approve`, { reason });
+/** 审核通过（含乐观锁 version） */
+export function approveAnnotation(id: string, version: number, reason?: string) {
+  return put<DataItem>(`/annotation-items/${id}/approve`, { reason, version });
 }
 
-/** 审核驳回 */
-export function rejectAnnotation(id: string, reason: string) {
-  return put<DataItem>(`/annotation-items/${id}/reject`, { reason });
+/** 审核驳回（含乐观锁 version） */
+export function rejectAnnotation(id: string, reason: string, version: number) {
+  return put<DataItem>(`/annotation-items/${id}/reject`, { reason, version });
 }
 
 /** 驳回后重新提交（含乐观锁 version，后端自动触发 AI 预审，返回 { item, review }） */

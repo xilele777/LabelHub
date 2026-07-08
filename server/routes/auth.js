@@ -33,7 +33,7 @@ router.post('/login', loginRateLimit, body(loginSchema), async (req, res) => {
     {
       name: 'username',
       required: true,
-      minLength: 3,
+      minLength: 1,
       maxLength: 32,
       pattern: /^[A-Za-z0-9_.-]+$/,
       patternMessage: 'username can only contain letters, numbers, underscore, dot, and hyphen',

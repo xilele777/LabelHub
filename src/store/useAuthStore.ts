@@ -11,6 +11,7 @@ export interface AuthState {
 }
 
 const USER_KEY = 'user';
+const TOKEN_KEY = 'token';
 
 function getStorage() {
   return typeof window === 'undefined' ? null : window.localStorage;
@@ -38,8 +39,9 @@ function loadPersistedUser(): UserInfo | null {
 }
 
 const useAuthPiniaStore = defineStore('auth', () => {
+  const storage = getStorage();
   const user = ref<UserInfo | null>(loadPersistedUser());
-  const token = ref<string | null>(null);
+  const token = ref<string | null>(storage?.getItem(TOKEN_KEY) ?? null);
   const loading = ref(false);
   const error = ref<string | null>(null);
 
@@ -54,6 +56,7 @@ const useAuthPiniaStore = defineStore('auth', () => {
 
     const storage = getStorage();
     storage?.setItem(USER_KEY, JSON.stringify(payload.user));
+    storage?.setItem(TOKEN_KEY, payload.token);
   }
 
   function clearSession(message?: string) {
@@ -64,6 +67,7 @@ const useAuthPiniaStore = defineStore('auth', () => {
 
     const storage = getStorage();
     storage?.removeItem(USER_KEY);
+    storage?.removeItem(TOKEN_KEY);
   }
 
   function setUser(nextUser: UserInfo | null) {

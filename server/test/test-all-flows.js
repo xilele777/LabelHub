@@ -68,35 +68,32 @@ async function runTests() {
   // ─── 1. 登录/认证流程 ─────────────────────────
   console.log('📌 1. 登录/认证流程');
 
-  const ownerLogin = await POST('/api/auth/login', { username: 'owner', password: 'owner123' });
+  const ownerLogin = await POST('/api/auth/login', { username: 'o', password: '123' });
   assert(ownerLogin.status === 200 && ownerLogin.data.code === 200, 'Owner 登录成功');
   ownerToken = ownerLogin.data.data?.token;
   assert(!!ownerToken, 'Owner 获取 token');
 
   const annotatorLogin = await POST('/api/auth/login', {
-    username: 'annotator',
-    password: 'annotator123',
+    username: 'a',
+    password: '123',
   });
   assert(annotatorLogin.status === 200 && annotatorLogin.data.code === 200, 'Annotator 登录成功');
   annotatorToken = annotatorLogin.data.data?.token;
   assert(!!annotatorToken, 'Annotator 获取 token');
 
   const reviewerLogin = await POST('/api/auth/login', {
-    username: 'reviewer',
-    password: 'reviewer123',
+    username: 'r',
+    password: '123',
   });
   assert(reviewerLogin.status === 200 && reviewerLogin.data.code === 200, 'Reviewer 登录成功');
   reviewerToken = reviewerLogin.data.data?.token;
   assert(!!reviewerToken, 'Reviewer 获取 token');
 
-  const badLogin = await POST('/api/auth/login', { username: 'owner', password: 'wrong' });
+  const badLogin = await POST('/api/auth/login', { username: 'o', password: 'wrong' });
   assert(badLogin.status === 401 || badLogin.data.code === 401, '错误密码登录失败');
 
   const meRes = await GET('/api/auth/me', ownerToken);
-  assert(
-    meRes.status === 200 && meRes.data.data?.username === 'owner',
-    '/api/auth/me 返回当前用户',
-  );
+  assert(meRes.status === 200 && meRes.data.data?.username === 'o', '/api/auth/me 返回当前用户');
 
   // ─── 2. 模板管理流程 ─────────────────────────
   console.log('\n📌 2. 模板管理流程');
@@ -124,7 +121,7 @@ async function runTests() {
       description: 'Integration test',
       type: 'image_classification',
       fieldCount: 1,
-      creator: 'owner',
+      creator: 'o',
       fields: [
         { id: 'f1', type: 'input', fieldKey: 'test', label: 'Test Field', placeholder: 'Input' },
       ],
@@ -174,7 +171,7 @@ async function runTests() {
       name: 'Test Task',
       description: 'Integration test task',
       type: 'image_classification',
-      owner: 'owner',
+      owner: 'o',
       templateId: 'tpl001',
       templateName: 'Image Classification v1',
       instructions: 'Test instructions',
@@ -210,7 +207,7 @@ async function runTests() {
     '/api/tasks/t001/assign',
     {
       strategy: 'even_split',
-      annotators: ['annotator'],
+      annotators: ['a'],
     },
     ownerToken,
   );
@@ -240,7 +237,7 @@ async function runTests() {
     '/api/tasks/t001/assign',
     {
       strategy: 'even_split',
-      annotators: ['annotator'],
+      annotators: ['a'],
     },
     ownerToken,
   );

@@ -18,10 +18,12 @@
               </a-tag>
               <a-tag color="cyan">数据总量 {{ stats.totalDataItems }}</a-tag>
               <a-tag
+                v-if="stats.reviewPassRate.total > 0"
                 :color="passRatePercent >= 80 ? 'green' : passRatePercent >= 50 ? 'orange' : 'red'"
               >
                 审核通过率 {{ passRatePercent }}%
               </a-tag>
+              <a-tag v-else color="default">暂无审核数据</a-tag>
             </a-space>
           </a-col>
         </a-row>

@@ -2,9 +2,9 @@ import {
   computed,
   getCurrentInstance,
   getCurrentScope,
-  onMounted,
   onScopeDispose,
   ref,
+  watch,
   type Ref,
 } from 'vue';
 
@@ -138,20 +138,28 @@ export function useVirtualList<T>(
     }
   }
 
-  // 组件上下文中自动测量视口高度并跟随容器尺寸变化
+  // 组件上下文中自动测量视口高度并跟随容器尺寸变化。
+  // 容器可能因 v-if 延迟出现或销毁重建（如列表先 loading/empty 再有数据），
+  // 故监听 ref 变化而非仅在 onMounted 测量一次。
   if (getCurrentInstance()) {
     let observer: ResizeObserver | undefined;
-    onMounted(() => {
-      const el = containerRef.value;
-      if (!el) return;
-      viewportHeight.value = el.clientHeight;
-      if (typeof ResizeObserver !== 'undefined') {
-        observer = new ResizeObserver(() => {
-          viewportHeight.value = el.clientHeight;
-        });
-        observer.observe(el);
-      }
-    });
+    watch(
+      containerRef,
+      (el) => {
+        observer?.disconnect();
+        observer = undefined;
+        if (!el) return;
+        viewportHeight.value = el.clientHeight;
+        scrollTop.value = el.scrollTop;
+        if (typeof ResizeObserver !== 'undefined') {
+          observer = new ResizeObserver(() => {
+            viewportHeight.value = el.clientHeight;
+          });
+          observer.observe(el);
+        }
+      },
+      { flush: 'post' },
+    );
     if (getCurrentScope()) {
       onScopeDispose(() => observer?.disconnect());
     }

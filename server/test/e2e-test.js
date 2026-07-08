@@ -127,8 +127,8 @@ async function step1_healthCheckAndAuth() {
 
   // 1.2 登录 - owner
   const ownerLogin = await request('POST', '/api/auth/login', {
-    username: 'owner',
-    password: 'owner123',
+    username: 'o',
+    password: '123',
   });
   assertEq(ownerLogin.body.code, 200, 'owner 登录成功');
   assertTruthy(ownerLogin.body.data.token, '返回 token');
@@ -136,36 +136,36 @@ async function step1_healthCheckAndAuth() {
 
   // 1.3 登录 - annotator
   const annotatorLogin = await request('POST', '/api/auth/login', {
-    username: 'annotator',
-    password: 'annotator123',
+    username: 'a',
+    password: '123',
   });
   assertEq(annotatorLogin.body.code, 200, 'annotator 登录成功');
   ctx.annotatorToken = annotatorLogin.body.data.token;
 
   // 1.4 登录 - reviewer
   const reviewerLogin = await request('POST', '/api/auth/login', {
-    username: 'reviewer',
-    password: 'reviewer123',
+    username: 'r',
+    password: '123',
   });
   assertEq(reviewerLogin.body.code, 200, 'reviewer 登录成功');
   ctx.reviewerToken = reviewerLogin.body.data.token;
 
   // 1.5 登录失败 - 错误密码
   const badLogin = await request('POST', '/api/auth/login', {
-    username: 'owner',
+    username: 'o',
     password: 'wrong',
   });
   assertEq(badLogin.body.code, 401, '错误密码返回 401');
 
   // 1.6 登录失败 - 缺少字段
   const missingLogin = await request('POST', '/api/auth/login', {
-    username: 'owner',
+    username: 'o',
   });
   assert(missingLogin.body.code !== 200, '缺少密码字段登录失败');
 
   // 1.7 获取当前用户信息
   const me = await request('GET', '/api/auth/me', null, ctx.ownerToken);
-  assertEq(me.body.data.username, 'owner', '/auth/me 返回当前用户');
+  assertEq(me.body.data.username, 'o', '/auth/me 返回当前用户');
 
   // 1.8 无 token 访问 /auth/me
   const meNoToken = await request('GET', '/api/auth/me');
@@ -188,7 +188,7 @@ async function step2_templateCRUD() {
       description: '用于E2E测试的图像分类模板',
       type: 'image_classification',
       fieldCount: 4,
-      creator: 'owner',
+      creator: 'o',
       fields: [
         {
           id: 'f1',
@@ -315,7 +315,7 @@ async function step2_templateCRUD() {
       description: '用于E2E测试的目标检测模板',
       type: 'object_detection',
       fieldCount: 2,
-      creator: 'owner',
+      creator: 'o',
       fields: [
         {
           id: 'f_obj',
@@ -351,7 +351,7 @@ async function step3_taskCRUD() {
       name: 'E2E测试-猫狗分类任务',
       description: '端到端测试用的猫狗分类标注任务',
       type: 'image_classification',
-      owner: 'owner',
+      owner: 'o',
       templateId: ctx.templateId,
       instructions: '请根据图片选择猫或狗，标注图像质量与难度。',
       status: 'draft',
@@ -522,7 +522,7 @@ async function step5_annotationWorkflow() {
   );
   assertEq(draft1.body.code, 200, '保存草稿成功');
   assertEq(draft1.body.data.status, 'draft', '状态变为 draft');
-  assertEq(draft1.body.data.annotator, 'annotator', '标注员为 annotator');
+  assertEq(draft1.body.data.annotator, 'a', '标注员为 annotator');
   assertGte(draft1.body.data.auditHistory.length, 1, '审计历史记录 >= 1');
   const itemV1 = draft1.body.data.version; // 保存草稿后版本号自动递增
 
@@ -559,7 +559,7 @@ async function step5_annotationWorkflow() {
   );
   assertEq(approve1.body.code, 200, '审核通过成功');
   assertEq(approve1.body.data.status, 'reviewed', '状态变为 reviewed');
-  assertEq(approve1.body.data.reviewer, 'reviewer', '审核员为 reviewer');
+  assertEq(approve1.body.data.reviewer, 'r', '审核员为 reviewer');
   assertTruthy(approve1.body.data.reviewedAt, '有审核时间');
 
   // 验证审计历史完整
@@ -748,7 +748,7 @@ async function step7_statisticsAndEdgeCases() {
       description: '测试删除',
       type: 'text_ner',
       fieldCount: 1,
-      creator: 'owner',
+      creator: 'o',
       fields: [{ id: 'f1', type: 'input', fieldKey: 'text', label: '文本', maxLength: 100 }],
     },
     ctx.ownerToken,

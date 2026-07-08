@@ -114,7 +114,11 @@ const loading = computed(() => taskStore.loading || templateStore.loading);
 const runningTaskCount = computed(
   () => taskStore.tasks.filter((task) => task.status === TaskStatus.IN_PROGRESS).length,
 );
-const recentTasks = computed(() => [...taskStore.tasks].slice(0, 6));
+const recentTasks = computed(() =>
+  [...taskStore.tasks]
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .slice(0, 6),
+);
 const roleLabel = computed(() => getRoleLabel(authStore.user?.role));
 const roleColor = computed(() => getRoleColor(authStore.user?.role));
 
@@ -183,7 +187,7 @@ function getTaskTypeMeta(type: TaskType) {
     [TaskType.SEMANTIC_SEGMENTATION]: { label: '语义分割', color: 'purple' },
     [TaskType.TEXT_NER]: { label: '文本 NER', color: 'orange' },
   };
-  return map[type];
+  return map[type] ?? { label: type, color: 'default' };
 }
 </script>
 

@@ -61,22 +61,22 @@ async function runTests() {
   db.seed('users', [
     {
       id: 'u001',
-      username: 'owner',
-      password: hashPassword('owner123'),
+      username: 'o',
+      password: hashPassword('123'),
       avatar: null,
       role: 'owner',
     },
     {
       id: 'u002',
-      username: 'annotator',
-      password: hashPassword('annotator123'),
+      username: 'a',
+      password: hashPassword('123'),
       avatar: null,
       role: 'annotator',
     },
     {
       id: 'u003',
-      username: 'reviewer',
-      password: hashPassword('reviewer123'),
+      username: 'r',
+      password: hashPassword('123'),
       avatar: null,
       role: 'reviewer',
     },
@@ -99,11 +99,11 @@ async function runTests() {
     {
       id: 'notif_perm_reject_item',
       taskId: 't001',
-      annotator: 'annotator',
+      annotator: 'a',
       rejectReason: 'permission isolation test',
       reviewedAt: new Date().toISOString(),
     },
-    { username: 'reviewer' },
+    { username: 'r' },
   );
 
   await wait(150);
@@ -129,7 +129,7 @@ async function runTests() {
   assert(
     annotator.notifications
       .find((n) => n.type === 'review_rejected' && n.data?.dataItemId === 'notif_perm_reject_item')
-      ?.targetUsers?.includes('annotator'),
+      ?.targetUsers?.includes('a'),
     'review_rejected notification carries targetUsers=annotator',
   );
 
@@ -138,11 +138,11 @@ async function runTests() {
     {
       id: 'notif_perm_submit_item',
       taskId: 't001',
-      annotator: 'annotator',
-      reviewer: 'reviewer',
+      annotator: 'a',
+      reviewer: 'r',
       submittedAt: new Date().toISOString(),
     },
-    { username: 'annotator' },
+    { username: 'a' },
   );
 
   await wait(150);
@@ -171,11 +171,11 @@ async function runTests() {
     {
       id: 'notif_perm_resubmit_item',
       taskId: 't001',
-      annotator: 'annotator',
-      reviewer: 'reviewer',
+      annotator: 'a',
+      reviewer: 'r',
       submittedAt: new Date().toISOString(),
     },
-    { username: 'annotator' },
+    { username: 'a' },
   );
 
   await wait(150);
@@ -203,7 +203,7 @@ async function runTests() {
       .find(
         (n) => n.type === 'task_resubmitted' && n.data?.dataItemId === 'notif_perm_resubmit_item',
       )
-      ?.targetUsers?.includes('reviewer'),
+      ?.targetUsers?.includes('r'),
     'task_resubmitted notification carries targetUsers=reviewer',
   );
 

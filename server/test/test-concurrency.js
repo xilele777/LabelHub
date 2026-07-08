@@ -16,7 +16,7 @@ function withTempData(fn) {
         name: 'Concurrency task',
         description: 'test',
         type: 'image_classification',
-        owner: 'owner',
+        owner: 'o',
         templateId: null,
         templateName: null,
         instructions: '',

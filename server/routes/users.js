@@ -9,7 +9,7 @@ const router = express.Router();
 const VALID_ROLES = ['owner', 'annotator', 'reviewer'];
 const USERNAME_FIELD = {
   name: 'username',
-  minLength: 3,
+  minLength: 1,
   maxLength: 32,
   pattern: /^[A-Za-z0-9_.-]+$/,
   patternMessage: 'username can only contain letters, numbers, underscore, dot, and hyphen',

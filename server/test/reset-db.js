@@ -7,9 +7,9 @@ const db = require('../store/db');
 const { hashPassword } = require('../utils/password');
 
 const TEST_USERS = [
-  { id: 'u001', username: 'owner', password: 'owner123', avatar: null, role: 'owner' },
-  { id: 'u002', username: 'annotator', password: 'annotator123', avatar: null, role: 'annotator' },
-  { id: 'u003', username: 'reviewer', password: 'reviewer123', avatar: null, role: 'reviewer' },
+  { id: 'u001', username: 'o', password: '123', avatar: null, role: 'owner' },
+  { id: 'u002', username: 'a', password: '123', avatar: null, role: 'annotator' },
+  { id: 'u003', username: 'r', password: '123', avatar: null, role: 'reviewer' },
 ];
 
 db._db.transaction(() => {

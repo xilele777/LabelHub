@@ -84,31 +84,43 @@
         </a-space>
       </a-card>
 
-      <a-card title="任务数据" size="small">
-        <a-table
-          row-key="id"
-          size="small"
-          :columns="itemColumns"
-          :data-source="annotationStore.dataItems"
-          :loading="annotationStore.loading"
-          :pagination="{ pageSize: 10, showSizeChanger: false }"
-        >
-          <template #bodyCell="{ column, record }">
-            <template v-if="column.key === 'status'">
-              <a-tag :color="getDataStatusMeta(record.status).color">
-                {{ getDataStatusMeta(record.status).label }}
-              </a-tag>
-            </template>
-            <template v-else-if="column.key === 'rawData'">
-              <a-tooltip :title="stringify(record.rawData)">
-                <span class="ellipsis-text">{{ stringify(record.rawData) }}</span>
-              </a-tooltip>
-            </template>
-            <template v-else-if="column.key === 'submittedAt'">
-              {{ formatDate(record.submittedAt) }}
-            </template>
-          </template>
-        </a-table>
+      <a-card size="small" :body-style="{ padding: '0 16px 16px' }">
+        <a-tabs v-model:active-key="activeTab">
+          <a-tab-pane key="data" tab="数据概览">
+            <a-table
+              row-key="id"
+              size="small"
+              :columns="itemColumns"
+              :data-source="annotationStore.dataItems"
+              :loading="annotationStore.loading"
+              :pagination="{ pageSize: 10, showSizeChanger: false }"
+            >
+              <template #bodyCell="{ column, record }">
+                <template v-if="column.key === 'status'">
+                  <a-tag :color="getDataStatusMeta(record.status).color">
+                    {{ getDataStatusMeta(record.status).label }}
+                  </a-tag>
+                </template>
+                <template v-else-if="column.key === 'rawData'">
+                  <a-tooltip :title="stringify(record.rawData)">
+                    <span class="ellipsis-text">{{ stringify(record.rawData) }}</span>
+                  </a-tooltip>
+                </template>
+                <template v-else-if="column.key === 'submittedAt'">
+                  {{ formatDate(record.submittedAt) }}
+                </template>
+              </template>
+            </a-table>
+          </a-tab-pane>
+
+          <a-tab-pane v-if="isManager" key="assign" tab="标注分配">
+            <AnnotationAssignmentPanel :task-id="taskId" />
+          </a-tab-pane>
+
+          <a-tab-pane v-if="isManager" key="review-assign" tab="审核分配">
+            <ReviewAssignmentPanel :task-id="taskId" />
+          </a-tab-pane>
+        </a-tabs>
       </a-card>
     </template>
 
@@ -169,6 +181,8 @@ import {
 import { useAnnotationStore } from '../../store/useAnnotationStore';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useTaskStore } from '../../store/useTaskStore';
+import AnnotationAssignmentPanel from './components/AnnotationAssignmentPanel.vue';
+import ReviewAssignmentPanel from './components/ReviewAssignmentPanel.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -179,6 +193,7 @@ const annotationStore = useAnnotationStore();
 const importOpen = ref(false);
 const importLoading = ref(false);
 const previewData = ref<Array<{ rawData: Record<string, unknown> }>>([]);
+const activeTab = ref('data');
 
 const taskId = computed(() => (typeof route.query.id === 'string' ? route.query.id : ''));
 const task = computed(
@@ -343,7 +358,7 @@ function getTaskTypeMeta(type: TaskType) {
     [TaskType.SEMANTIC_SEGMENTATION]: { label: '语义分割', color: 'purple' },
     [TaskType.TEXT_NER]: { label: '文本 NER', color: 'orange' },
   };
-  return map[type];
+  return map[type] ?? { label: type, color: 'default' };
 }
 
 function getDataStatusMeta(status: DataItemStatus) {
