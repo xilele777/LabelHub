@@ -632,6 +632,21 @@ function handleSocketDisconnect() {
   socketConnected.value = false;
 }
 
+// 最近本地处理过的审核项 id → 时间戳。
+// 用于吸收 WebSocket 回推：自己刚 approve/reject 的条目，store 已本地更新，
+// 后端随后广播的 review_approved/rejected 会触发 refreshData 导致数组重建、列表跳跃。
+const recentLocalActionIds = new Map<string, number>();
+const LOCAL_ACTION_DEBOUNCE_MS = 2000;
+
+function rememberLocalAction(id: string) {
+  recentLocalActionIds.set(id, Date.now());
+  // 顺手清理过期项，避免 map 无限增长
+  const threshold = Date.now() - LOCAL_ACTION_DEBOUNCE_MS;
+  for (const [key, ts] of recentLocalActionIds) {
+    if (ts < threshold) recentLocalActionIds.delete(key);
+  }
+}
+
 function handleSocketNotification(notification: Notification) {
   const type = notification.type;
   if (
@@ -641,6 +656,13 @@ function handleSocketNotification(notification: Notification) {
     type === 'review_approved' ||
     type === 'review_rejected'
   ) {
+    // 自己刚操作过的条目，后端回推通知时跳过全量刷新（store 已本地更新），
+    // 避免数组重建打乱列表位置、造成滚动跳跃。
+    const payloadItemId = notification.data?.dataItemId;
+    if (payloadItemId && recentLocalActionIds.has(String(payloadItemId))) {
+      if (claimModalOpen.value) void loadReviewPool();
+      return;
+    }
     void refreshData();
     if (claimModalOpen.value) void loadReviewPool();
   }
@@ -696,11 +718,19 @@ function itemStatusTag(item: DataItem) {
 async function approveSelected() {
   if (!selectedItem.value) return;
   approving.value = true;
+  // 接口返回后条目可能被归档移除或因筛选不再显示，先记录其当前列表位置作为锚点
+  const currentId = selectedItem.value.id;
+  const anchorIndex = getItemRowIndex(currentId);
   try {
-    await annotationStore.approveItem(selectedItem.value.id, authStore.user?.username ?? '');
+    await annotationStore.approveItem(currentId, authStore.user?.username ?? '');
     message.success('审核通过');
-    await refreshData();
-    await tryContinuousClaim();
+    rememberLocalAction(currentId);
+    // 不全量 refresh：依赖 store 本地更新，避免数组重建导致列表位置漂移/跳跃。
+    // 审核完自动跳到下一条可审核项，符合连续审核工作流。
+    // 列表里还有可审核项时按显示顺序依次走；全部审完才连续领取下一条，
+    // 否则 onClaimed 会把选中项覆盖为新领取的（池中按序号排序的）条目，造成乱跳。
+    const hasNext = selectNextActionable(currentId, anchorIndex);
+    if (!hasNext) await tryContinuousClaim();
   } catch (error) {
     Modal.warning({
       title: '审核失败',
@@ -718,12 +748,16 @@ function openRejectModal() {
 async function rejectSelected(reason: string) {
   if (!selectedItem.value) return;
   rejecting.value = true;
+  const currentId = selectedItem.value.id;
+  const anchorIndex = getItemRowIndex(currentId);
   try {
-    await annotationStore.rejectItem(selectedItem.value.id, authStore.user?.username ?? '', reason);
+    await annotationStore.rejectItem(currentId, authStore.user?.username ?? '', reason);
     message.success('已驳回');
     rejectModalOpen.value = false;
-    await refreshData();
-    await tryContinuousClaim();
+    rememberLocalAction(currentId);
+    // 同 approveSelected：不全量 refresh；列表审完了才连续领取，避免选中项被覆盖乱跳。
+    const hasNext = selectNextActionable(currentId, anchorIndex);
+    if (!hasNext) await tryContinuousClaim();
   } catch (error) {
     Modal.warning({
       title: '审核失败',
@@ -732,6 +766,53 @@ async function rejectSelected(reason: string) {
   } finally {
     rejecting.value = false;
   }
+}
+
+/** 当前实际渲染顺序（listRows 拍平）中，条目 id 对应的序号；不存在返回 -1 */
+function getItemRowIndex(id: string): number {
+  return getItemRows().findIndex((row) => row.item.id === id);
+}
+
+function getItemRows() {
+  return listRows.value.filter(
+    (row): row is { type: 'item'; key: string; item: DataItem } => row.type === 'item',
+  );
+}
+
+/**
+ * 审核完一条后，选中「刚刚处理那条的下一条可审核项」。
+ * - 在筛选后的扁平列表里定位刚处理的项，取其后第一个仍可审核的项；
+ * - 若该项已从列表消失（归档移除、或状态变化后不再匹配当前筛选），
+ *   用操作前记录的 anchorIndex 定位：此时原位置上的行就是视觉上的"下一条"；
+ * - 向后没有了，就近向前找最近的可审核项，避免跳回列表开头造成大幅滚动；
+ * - 都没有则保持当前选中（交给自动选中 watch 兜底）。
+ * 关键：列表由 store 本地更新驱动，数组不整体重建，位置稳定、不跨页跳跃。
+ * @returns 是否找到并选中了下一条可审核项（false 表示当前列表已无可审核项）
+ */
+function selectNextActionable(currentId: string, anchorIndex: number): boolean {
+  // 必须基于「实际渲染的 listRows」找下一条，而非 filteredItems。
+  // listRows 是 groupedItems 拍平后的显示顺序，filteredItems 顺序与之不同，
+  // 用 filteredItems 找出的"下一条"在视觉上可能隔了几个分组，导致 scrollIntoView 大幅跳跃。
+  const itemRows = getItemRows();
+  const idx = itemRows.findIndex((row) => row.item.id === currentId);
+  // 条目还在列表里 → 从它的下一行开始；已被移除 → 原锚点位置的行即是"下一条"
+  const start = idx >= 0 ? idx + 1 : Math.max(0, Math.min(anchorIndex, itemRows.length - 1));
+  for (let i = start; i < itemRows.length; i++) {
+    const item = itemRows[i].item;
+    if (item.id !== currentId && REVIEW_ACTIONABLE_STATUSES.has(item.status)) {
+      selectedId.value = item.id;
+      return true;
+    }
+  }
+  // 向后没有了，就近向前找（视觉上离刚处理的位置最近的优先）
+  for (let i = Math.min(start, itemRows.length) - 1; i >= 0; i--) {
+    const item = itemRows[i].item;
+    if (item.id !== currentId && REVIEW_ACTIONABLE_STATUSES.has(item.status)) {
+      selectedId.value = item.id;
+      return true;
+    }
+  }
+  return false;
 }
 </script>
 

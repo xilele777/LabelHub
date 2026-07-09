@@ -1,13 +1,35 @@
 version: '3.9'
 
 services:
+  # ── 应用（前端 + API + WebSocket 同一进程）─────────────────
+  # 轻量部署（默认 SQLite，无需数据库容器）：docker compose up -d app
+  # 完整部署（Postgres + Redis）：
+  #   docker compose --profile full up -d
+  #   并给 app 设置环境变量 DB_TYPE=postgres、DATABASE_URL、REDIS_URL
+  app:
+    build: .
+    container_name: labelhub-app
+    restart: unless-stopped
+    ports:
+      - '3001:3001'
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      DB_TYPE: ${DB_TYPE:-sqlite}
+      DATABASE_URL: ${DATABASE_URL:-}
+      REDIS_URL: ${REDIS_URL:-}
+      HMAC_SECRET: ${HMAC_SECRET:?生产环境必须设置 HMAC_SECRET}
+    volumes:
+      - appdata:/app/server/data
+
   postgres:
     image: postgres:16-alpine
     container_name: labelhub-postgres
     restart: unless-stopped
+    profiles: ['full']
     environment:
       POSTGRES_USER: labelhub
-      POSTGRES_PASSWORD: labelhub123
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-labelhub123}
       POSTGRES_DB: labelhub
     ports:
       - '5432:5432'
@@ -24,6 +46,7 @@ services:
     image: redis:7-alpine
     container_name: labelhub-redis
     restart: unless-stopped
+    profiles: ['full']
     command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
     ports:
       - '6379:6379'
@@ -37,6 +60,8 @@ services:
       start_period: 3s
 
 volumes:
+  appdata:
+    name: labelhub_appdata
   pgdata:
     name: labelhub_pgdata
   redisdata:

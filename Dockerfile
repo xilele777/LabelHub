@@ -10,7 +10,6 @@ RUN npm ci
 # Copy source and build
 COPY tsconfig.json tsconfig.app.json vite.config.ts index.html ./
 COPY src/ ./src/
-COPY public/ ./public/
 RUN npm run build
 
 # ─── Stage 2: Production Runtime ───────────────────────────

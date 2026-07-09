@@ -43,8 +43,3 @@ npm-debug.log*
 server/test/
 **/*.test.*
 **/*.spec.*
-
-# TypeScript source (only compiled JS needed)
-*.ts
-!server/**/*.d.ts
-tsconfig*.json
