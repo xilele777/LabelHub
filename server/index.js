@@ -178,6 +178,17 @@ app.use('/api', (req, res) => {
   res.notFound(`API route not found: ${req.method} ${req.originalUrl}`);
 });
 
+// ─── 前端静态托管 + SPA history 路由 ─────────────────────
+// 构建产物在项目根目录的 dist/(server/ 的上一层)
+const distDir = path.join(__dirname, '..', 'dist');
+app.use(express.static(distDir));
+// 非 API、非静态文件的请求统一返回 index.html,交给前端路由处理(Vue Router history 模式)
+app.get('*', (_req, res, next) => {
+  res.sendFile(path.join(distDir, 'index.html'), (err) => {
+    if (err) next(err);
+  });
+});
+
 // ─── Global error handler ─────────────────────────────────
 app.use((err, req, res, _next) => {
   logger.error({ err, requestId: req.requestId }, 'Unhandled error');
