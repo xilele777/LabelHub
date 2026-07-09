@@ -1,3 +1,5 @@
+# 当前生产未启用 Docker，保留作为可选方案。
+
 services:
   # ── 应用（前端 + API + WebSocket 同一进程）─────────────────
   # 轻量部署（默认 SQLite，无需数据库容器）：docker compose up -d app

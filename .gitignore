@@ -43,3 +43,6 @@ test-data-*.json
 
 # Misc
 *.tsbuildinfo
+
+# 部署文档(本地保留,不进仓库)
+DEPLOY.md

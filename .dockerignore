@@ -1,3 +1,4 @@
+# 当前生产未启用 Docker，本文件仅供参考。
 # Dependencies
 node_modules/
 server/node_modules/

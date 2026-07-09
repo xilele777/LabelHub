@@ -1,3 +1,4 @@
+# 当前生产未启用 Docker（阿里云 ECS 拉不到 node 镜像），保留作为可选方案。
 # ─── Stage 1: Frontend Builder ─────────────────────────────
 FROM node:22-alpine AS frontend-builder
 
