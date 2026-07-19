@@ -1,15 +1,15 @@
 <template>
-  <section class="task-form-page">
-    <a-card class="page-hero" :body-style="{ padding: '18px 20px' }">
-      <a-space direction="vertical" :size="4">
+  <section class="task-form-page app-page">
+    <header class="app-page-header">
+      <div class="app-page-title">
         <a-typography-title :level="4" class="page-title">
           {{ isEdit ? '编辑任务' : '创建任务' }}
         </a-typography-title>
-        <a-typography-text type="secondary">
+        <a-typography-text class="app-page-desc" type="secondary">
           配置任务基础信息、模板绑定和处理时效。
         </a-typography-text>
-      </a-space>
-    </a-card>
+      </div>
+    </header>
 
     <a-alert
       v-if="errorText"
@@ -304,13 +304,6 @@ function fromLocalInputValue(value: string) {
 </script>
 
 <style scoped>
-.task-form-page {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  min-width: 0;
-}
-
 .page-title {
   margin: 0;
 }

@@ -124,7 +124,9 @@
                       <span class="notification-panel__item-meta">
                         {{ formatRelativeTime(item.timestamp) }}
                         <template
-                          v-if="item.sender && item.sender !== 'system' && item.sender !== 'AI系统'"
+                          v-if="
+                            item.sender && item.sender !== 'system' && item.sender !== '规则系统'
+                          "
                         >
                           来自 {{ item.sender }}
                         </template>
@@ -244,6 +246,7 @@ import {
   useNotificationStore,
 } from '../store/useNotificationStore';
 import { hasRouteRole } from '../utils/roleHelper';
+import { ROLE_META } from '../utils/statusMeta';
 import { useAnnotationStore } from '../store/useAnnotationStore';
 import {
   connectNotificationWS,
@@ -258,7 +261,13 @@ const route = useRoute();
 const router = useRouter();
 const userStore = useAuthStore();
 const notificationStore = useNotificationStore();
-const collapsed = ref(false);
+// ≤768px 时自动折叠侧边栏，避免 fixed 定位的 sider 遮挡内容
+const mobileQuery = window.matchMedia('(max-width: 768px)');
+const collapsed = ref(mobileQuery.matches);
+const onMobileChange = (e: MediaQueryListEvent) => {
+  collapsed.value = e.matches;
+};
+mobileQuery.addEventListener('change', onMobileChange);
 const simpleEmptyImage = undefined;
 
 type NavItem = {
@@ -268,13 +277,6 @@ type NavItem = {
   roles: Role[];
   icon: unknown;
   match?: string[];
-};
-
-const roleLabelMap: Record<Role, { label: string; color: string }> = {
-  [Role.ADMIN]: { label: '管理员', color: 'purple' },
-  [Role.OWNER]: { label: '负责人', color: 'blue' },
-  [Role.ANNOTATOR]: { label: '标注员', color: 'green' },
-  [Role.REVIEWER]: { label: '审核员', color: 'orange' },
 };
 
 const navItems: NavItem[] = [
@@ -363,7 +365,7 @@ const navItems: NavItem[] = [
 const notificationLabelMap: Record<string, string> = {
   review_approved: '通过',
   review_rejected: '驳回',
-  ai_review_complete: 'AI预审',
+  ai_review_complete: '规则预审',
   task_assigned: '分配',
   task_unassigned: '取消分配',
   task_submitted: '提交',
@@ -419,7 +421,7 @@ const selectedKeys = computed(() => {
 const currentTitle = computed(() => String(route.meta.title || 'LabelHub'));
 const roleInfo = computed(() => {
   const role = userStore.user?.role;
-  return role ? roleLabelMap[role] : null;
+  return role ? ROLE_META[role] : null;
 });
 
 watch(
@@ -441,6 +443,7 @@ watch(
 );
 
 onBeforeUnmount(() => {
+  mobileQuery.removeEventListener('change', onMobileChange);
   disconnectNotificationWS();
   notificationStore.setConnected(false);
 });

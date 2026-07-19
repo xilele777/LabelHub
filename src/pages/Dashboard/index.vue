@@ -101,7 +101,8 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue';
 import type { TableColumnsType } from 'ant-design-vue';
-import { Role, TaskStatus, TaskType, type TaskItem } from '../../types';
+import { TaskStatus, TaskType, type TaskItem } from '../../types';
+import { getRoleMeta, getTaskStatusMeta, getTaskTypeMeta } from '../../utils/statusMeta';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useTaskStore } from '../../store/useTaskStore';
 import { useTemplateStore } from '../../store/useTemplateStore';
@@ -119,8 +120,8 @@ const recentTasks = computed(() =>
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .slice(0, 6),
 );
-const roleLabel = computed(() => getRoleLabel(authStore.user?.role));
-const roleColor = computed(() => getRoleColor(authStore.user?.role));
+const roleLabel = computed(() => getRoleMeta(authStore.user?.role).label);
+const roleColor = computed(() => getRoleMeta(authStore.user?.role).color);
 
 const taskColumns: TableColumnsType<TaskItem> = [
   { title: '任务名称', dataIndex: 'name', key: 'name', ellipsis: true },
@@ -148,47 +149,6 @@ async function refresh() {
 function formatDate(value: string) {
   return value ? new Date(value).toLocaleString('zh-CN', { hour12: false }) : '-';
 }
-
-function getRoleLabel(role: Role | null | undefined) {
-  const map: Record<Role, string> = {
-    [Role.ADMIN]: '管理员',
-    [Role.OWNER]: '负责人',
-    [Role.ANNOTATOR]: '标注员',
-    [Role.REVIEWER]: '审核员',
-  };
-  return role ? map[role] : '-';
-}
-
-function getRoleColor(role: Role | null | undefined) {
-  const map: Record<Role, string> = {
-    [Role.ADMIN]: 'purple',
-    [Role.OWNER]: 'blue',
-    [Role.ANNOTATOR]: 'green',
-    [Role.REVIEWER]: 'orange',
-  };
-  return role ? map[role] : 'default';
-}
-
-function getTaskStatusMeta(status: TaskStatus) {
-  const map: Record<TaskStatus, { label: string; color: string }> = {
-    [TaskStatus.DRAFT]: { label: '草稿', color: 'default' },
-    [TaskStatus.PENDING]: { label: '待发布', color: 'processing' },
-    [TaskStatus.IN_PROGRESS]: { label: '进行中', color: 'blue' },
-    [TaskStatus.COMPLETED]: { label: '已完成', color: 'success' },
-    [TaskStatus.ENDED]: { label: '已结束', color: 'warning' },
-  };
-  return map[status];
-}
-
-function getTaskTypeMeta(type: TaskType) {
-  const map: Record<TaskType, { label: string; color: string }> = {
-    [TaskType.IMAGE_CLASSIFICATION]: { label: '图像分类', color: 'blue' },
-    [TaskType.OBJECT_DETECTION]: { label: '目标检测', color: 'green' },
-    [TaskType.SEMANTIC_SEGMENTATION]: { label: '语义分割', color: 'purple' },
-    [TaskType.TEXT_NER]: { label: '文本 NER', color: 'orange' },
-  };
-  return map[type] ?? { label: type, color: 'default' };
-}
 </script>
 
 <style scoped>
@@ -203,25 +163,6 @@ function getTaskTypeMeta(type: TaskType) {
 .metric-card,
 .panel-card {
   height: 100%;
-}
-
-.metric-card {
-  transition:
-    background-color 0.16s ease,
-    transform 0.16s ease;
-}
-
-.metric-card:hover {
-  background: #fbfdff;
-  transform: translateY(-2px);
-}
-
-.metric-card :deep(.ant-card-body) {
-  padding: 18px;
-}
-
-.metric-card :deep(.ant-statistic-content-value) {
-  font-weight: 700;
 }
 
 .metric-card__hint {

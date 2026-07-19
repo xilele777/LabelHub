@@ -1,11 +1,16 @@
 <template>
-  <section class="notification-manage-page">
-    <div class="page-header">
-      <a-space>
-        <NotificationOutlined class="page-icon" />
-        <a-typography-title :level="4" class="page-title">通知管理</a-typography-title>
-      </a-space>
-      <a-space>
+  <section class="notification-manage-page app-page">
+    <header class="app-page-header">
+      <div class="app-page-title">
+        <a-typography-title :level="4" class="page-title">
+          <NotificationOutlined class="page-icon" />
+          通知管理
+        </a-typography-title>
+        <a-typography-text class="app-page-desc" type="secondary">
+          查看、撤回和复用已发布的站内通知。
+        </a-typography-text>
+      </div>
+      <div class="app-toolbar">
         <a-input-search
           v-model:value="keyword"
           allow-clear
@@ -16,15 +21,16 @@
           <template #icon><ReloadOutlined /></template>
           刷新
         </a-button>
-      </a-space>
-    </div>
+      </div>
+    </header>
 
-    <a-card size="small" :body-style="{ padding: 0 }">
+    <a-card size="small" class="app-table-card" :body-style="{ padding: 0 }">
       <a-table
         row-key="id"
         :columns="columns"
         :data-source="filteredItems"
         :loading="loading"
+        :scroll="{ x: 720 }"
         :pagination="{
           pageSize: 10,
           showSizeChanger: false,
@@ -65,22 +71,15 @@
             {{ formatDate(record.timestamp) }}
           </template>
           <template v-else-if="column.key === 'actions'">
-            <a-space size="small">
-              <a-button type="link" size="small" @click="openDetail(record.id)">
-                <template #icon><EyeOutlined /></template>
-                详情
-              </a-button>
-              <a-button type="link" size="small" @click="copyPublish(record)">
-                <template #icon><CopyOutlined /></template>
-                复制再发
-              </a-button>
+            <a-space size="small" wrap>
+              <a-button type="link" size="small" @click="openDetail(record.id)">详情</a-button>
+              <a-button type="link" size="small" @click="copyPublish(record)">复制再发</a-button>
               <a-popconfirm
                 v-if="!record.revokedAt"
                 title="确认撤回该通知？"
                 @confirm="handleRevoke(record.id)"
               >
                 <a-button type="link" size="small" danger :loading="revokingId === record.id">
-                  <template #icon><StopOutlined /></template>
                   撤回
                 </a-button>
               </a-popconfirm>
@@ -152,13 +151,7 @@
 import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { message, type TableColumnsType } from 'ant-design-vue';
-import {
-  CopyOutlined,
-  EyeOutlined,
-  NotificationOutlined,
-  ReloadOutlined,
-  StopOutlined,
-} from '@ant-design/icons-vue';
+import { NotificationOutlined, ReloadOutlined } from '@ant-design/icons-vue';
 import {
   getPublishedNotification,
   getPublishedNotifications,
@@ -186,7 +179,7 @@ const columns: TableColumnsType<PublishedNotificationItem> = [
   { title: '目标范围', key: 'targets', width: 168, responsive: ['xxl'] },
   { title: '阅读', key: 'readRate', width: 136 },
   { title: '发布时间', dataIndex: 'timestamp', key: 'timestamp', width: 148, responsive: ['xl'] },
-  { title: '操作', key: 'actions', width: 166 },
+  { title: '操作', key: 'actions', width: 224 },
 ];
 
 const recipientColumns: TableColumnsType<PublishedNotificationRecipient> = [
@@ -296,20 +289,10 @@ function formatDate(value: string) {
 </script>
 
 <style scoped>
-.notification-manage-page {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.page-header {
+.page-title {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.page-title {
+  gap: 8px;
   margin: 0;
 }
 
@@ -318,7 +301,7 @@ function formatDate(value: string) {
 }
 
 .search-input {
-  width: 260px;
+  width: min(280px, 100%);
 }
 
 .read-rate {
@@ -332,5 +315,11 @@ function formatDate(value: string) {
 
 .message-content {
   white-space: pre-wrap;
+}
+
+@media (max-width: 576px) {
+  .search-input {
+    width: 100%;
+  }
 }
 </style>

@@ -109,16 +109,9 @@ import {
   message,
   type TableColumnsType,
 } from 'ant-design-vue';
-import { EyeOutlined, InboxOutlined, UndoOutlined } from '@ant-design/icons-vue';
-import {
-  DataItemStatus,
-  Role,
-  STATUS_DISPLAY_CONFIG,
-  TaskStatus,
-  TaskType,
-  type DataItem,
-  type TaskItem,
-} from '../../types';
+import { InboxOutlined } from '@ant-design/icons-vue';
+import { Role, type DataItem, type TaskItem } from '../../types';
+import { getDataStatusMeta, getTaskStatusMeta, getTaskTypeMeta } from '../../utils/statusMeta';
 import { useAnnotationStore } from '../../store/useAnnotationStore';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useTaskStore } from '../../store/useTaskStore';
@@ -143,7 +136,7 @@ const taskColumns: TableColumnsType<TaskItem> = [
   { title: '原状态', dataIndex: 'status', key: 'status', width: 96 },
   { title: '负责人', dataIndex: 'owner', key: 'owner', width: 88, responsive: ['xl'] },
   { title: '归档时间', dataIndex: 'archivedAt', key: 'archivedAt', width: 148, responsive: ['lg'] },
-  { title: '操作', key: 'action', width: 156 },
+  { title: '操作', key: 'action', width: 160 },
 ];
 
 const itemColumns: TableColumnsType<DataItem> = [
@@ -159,7 +152,7 @@ const itemColumns: TableColumnsType<DataItem> = [
     width: 148,
     responsive: ['xxl'],
   },
-  { title: '操作', key: 'action', width: 156 },
+  { title: '操作', key: 'action', width: 160 },
 ];
 
 onMounted(() => {
@@ -180,6 +173,7 @@ const ArchivedTaskTable = defineComponent({
               columns: taskColumns,
               dataSource: taskStore.archivedTasks,
               pagination: { pageSize: 10, showSizeChanger: false },
+              scroll: { x: 640 },
             },
             {
               bodyCell: ({ column, record }: { column: { key?: string }; record: TaskItem }) => {
@@ -193,14 +187,11 @@ const ArchivedTaskTable = defineComponent({
                 }
                 if (column.key === 'archivedAt') return formatDate(record.archivedAt);
                 if (column.key === 'action') {
-                  return h(Space, null, () => [
+                  return h(Space, { size: 'small' }, () => [
                     h(
                       Button,
-                      { size: 'small', onClick: () => openTaskDetail(record) },
-                      {
-                        icon: () => h(EyeOutlined),
-                        default: () => '查看',
-                      },
+                      { type: 'link', size: 'small', onClick: () => openTaskDetail(record) },
+                      () => '查看',
                     ),
                     isManager.value
                       ? h(
@@ -211,14 +202,7 @@ const ArchivedTaskTable = defineComponent({
                           },
                           {
                             default: () =>
-                              h(
-                                Button,
-                                { size: 'small' },
-                                {
-                                  icon: () => h(UndoOutlined),
-                                  default: () => '取消归档',
-                                },
-                              ),
+                              h(Button, { type: 'link', size: 'small' }, () => '取消归档'),
                           },
                         )
                       : null,
@@ -244,6 +228,7 @@ const ArchivedItemTable = defineComponent({
               columns: itemColumns,
               dataSource: annotationStore.archivedItems,
               pagination: { pageSize: 10, showSizeChanger: false },
+              scroll: { x: 660 },
             },
             {
               bodyCell: ({ column, record }: { column: { key?: string }; record: DataItem }) => {
@@ -255,14 +240,11 @@ const ArchivedItemTable = defineComponent({
                 if (column.key === 'reviewer') return record.reviewer || '-';
                 if (column.key === 'archivedAt') return formatDate(record.archivedAt);
                 if (column.key === 'action') {
-                  return h(Space, null, () => [
+                  return h(Space, { size: 'small' }, () => [
                     h(
                       Button,
-                      { size: 'small', onClick: () => openItemDetail(record) },
-                      {
-                        icon: () => h(EyeOutlined),
-                        default: () => '查看',
-                      },
+                      { type: 'link', size: 'small', onClick: () => openItemDetail(record) },
+                      () => '查看',
                     ),
                     isManager.value
                       ? h(
@@ -273,14 +255,7 @@ const ArchivedItemTable = defineComponent({
                           },
                           {
                             default: () =>
-                              h(
-                                Button,
-                                { size: 'small' },
-                                {
-                                  icon: () => h(UndoOutlined),
-                                  default: () => '取消归档',
-                                },
-                              ),
+                              h(Button, { type: 'link', size: 'small' }, () => '取消归档'),
                           },
                         )
                       : null,
@@ -319,31 +294,6 @@ function formatDate(value: string | null) {
 
 function stringify(value: unknown) {
   return value === null || value === undefined ? '-' : JSON.stringify(value, null, 2);
-}
-
-function getTaskStatusMeta(status: TaskStatus) {
-  const map: Record<TaskStatus, { label: string; color: string }> = {
-    [TaskStatus.DRAFT]: { label: '草稿', color: 'default' },
-    [TaskStatus.PENDING]: { label: '待发布', color: 'processing' },
-    [TaskStatus.IN_PROGRESS]: { label: '进行中', color: 'blue' },
-    [TaskStatus.COMPLETED]: { label: '已完成', color: 'success' },
-    [TaskStatus.ENDED]: { label: '已结束', color: 'warning' },
-  };
-  return map[status];
-}
-
-function getTaskTypeMeta(type: TaskType) {
-  const map: Record<TaskType, { label: string; color: string }> = {
-    [TaskType.IMAGE_CLASSIFICATION]: { label: '图像分类', color: 'blue' },
-    [TaskType.OBJECT_DETECTION]: { label: '目标检测', color: 'green' },
-    [TaskType.SEMANTIC_SEGMENTATION]: { label: '语义分割', color: 'purple' },
-    [TaskType.TEXT_NER]: { label: '文本 NER', color: 'orange' },
-  };
-  return map[type];
-}
-
-function getDataStatusMeta(status: DataItemStatus) {
-  return STATUS_DISPLAY_CONFIG[status] ?? { label: status, color: 'default' };
 }
 </script>
 

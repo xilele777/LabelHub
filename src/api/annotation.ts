@@ -40,7 +40,7 @@ export function saveDraft(id: string, annotationData: Record<string, unknown>, v
   return put<DataItem>(`/annotation-items/${id}/save-draft`, { annotationData, version });
 }
 
-/** 提交标注（含乐观锁 version，后端自动触发 AI 预审，返回 { item, review }） */
+/** 提交标注（含乐观锁 version，后端自动触发规则预审，返回 { item, review }） */
 export function submitAnnotation(
   id: string,
   annotationData: Record<string, unknown>,
@@ -62,7 +62,7 @@ export function rejectAnnotation(id: string, reason: string, version: number) {
   return put<DataItem>(`/annotation-items/${id}/reject`, { reason, version });
 }
 
-/** 驳回后重新提交（含乐观锁 version，后端自动触发 AI 预审，返回 { item, review }） */
+/** 驳回后重新提交（含乐观锁 version，后端自动触发规则预审，返回 { item, review }） */
 export function resubmitAnnotation(
   id: string,
   annotationData: Record<string, unknown>,
@@ -161,7 +161,7 @@ export function batchImportItems(
   return post<BatchImportResult>('/annotation-items/batch-import', { taskId, items });
 }
 
-/** 提交/重新提交后后端自动触发 AI 预审，返回的联合结果 */
+/** 提交/重新提交后后端自动触发规则预审，返回的联合结果 */
 export interface SubmitWithAIReviewResponse {
   item: DataItem;
   review?: Record<string, unknown>;

@@ -18,6 +18,7 @@
       :columns="columns"
       :data-source="items"
       :loading="itemsLoading"
+      :scroll="{ x: 900 }"
       :pagination="{ pageSize: 10, showSizeChanger: true, showTotal: (t: number) => `共 ${t} 条` }"
     >
       <template #bodyCell="{ column, record }">

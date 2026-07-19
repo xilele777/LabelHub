@@ -8,18 +8,19 @@ import {
   type AuditHistoryRecord,
 } from '../../types';
 import { ReviewStatus } from '../../types/aiReview';
+import { SEMANTIC_COLORS } from '../../utils/statusMeta';
 
 export const statusFilterOptions = [
-  { label: 'AI 预审中', value: 'ai_reviewing_group' },
+  { label: '规则预审中', value: 'ai_reviewing_group' },
   { label: '待人工审核', value: DataItemStatus.PENDING_REVIEW },
   { label: '审核通过', value: DataItemStatus.REVIEWED },
   { label: '审核驳回', value: DataItemStatus.REJECTED },
 ];
 
 export const aiReviewFilterOptions = [
-  { label: 'AI 通过', value: ReviewStatus.PASS },
-  { label: 'AI 风险', value: ReviewStatus.RISK },
-  { label: 'AI 不通过', value: ReviewStatus.FAIL },
+  { label: '预审通过', value: ReviewStatus.PASS },
+  { label: '预审风险', value: ReviewStatus.RISK },
+  { label: '预审不通过', value: ReviewStatus.FAIL },
 ];
 
 export const REVIEW_ACTIONABLE_STATUSES = new Set<DataItemStatus>([
@@ -34,14 +35,30 @@ export const actionDisplay: Record<
   { label: string; color: string; tagColor: string }
 > = {
   [AuditActionType.SUBMIT]: { label: '提交标注', color: '#1890ff', tagColor: 'processing' },
-  [AuditActionType.SAVE_DRAFT]: { label: '保存草稿', color: '#faad14', tagColor: 'warning' },
+  [AuditActionType.SAVE_DRAFT]: {
+    label: '保存草稿',
+    color: SEMANTIC_COLORS.warning,
+    tagColor: 'warning',
+  },
   [AuditActionType.CLAIM_ASSIGNMENT]: { label: '领取标注', color: '#2f54eb', tagColor: 'blue' },
-  [AuditActionType.AI_REVIEW_START]: { label: 'AI预审开始', color: '#722ed1', tagColor: 'purple' },
-  [AuditActionType.AI_REVIEW_COMPLETE]: { label: 'AI预审完成', color: '#13c2c2', tagColor: 'cyan' },
+  [AuditActionType.AI_REVIEW_START]: {
+    label: '规则预审开始',
+    color: '#722ed1',
+    tagColor: 'purple',
+  },
+  [AuditActionType.AI_REVIEW_COMPLETE]: {
+    label: '规则预审完成',
+    color: '#13c2c2',
+    tagColor: 'cyan',
+  },
   [AuditActionType.ASSIGN_REVIEWER]: { label: '分配审核员', color: '#fa8c16', tagColor: 'orange' },
   [AuditActionType.CLAIM_REVIEW]: { label: '领取审核', color: '#1677ff', tagColor: 'processing' },
-  [AuditActionType.APPROVE]: { label: '审核通过', color: '#52c41a', tagColor: 'success' },
-  [AuditActionType.REJECT]: { label: '审核驳回', color: '#ff4d4f', tagColor: 'error' },
+  [AuditActionType.APPROVE]: {
+    label: '审核通过',
+    color: SEMANTIC_COLORS.success,
+    tagColor: 'success',
+  },
+  [AuditActionType.REJECT]: { label: '审核驳回', color: SEMANTIC_COLORS.danger, tagColor: 'error' },
   [AuditActionType.RESUBMIT]: { label: '重新提交', color: '#1890ff', tagColor: 'processing' },
   [AuditActionType.RELEASE_ANNOTATION_DUE_OVERDUE]: {
     label: '标注逾期释放',
@@ -53,8 +70,12 @@ export const actionDisplay: Record<
     color: '#fa8c16',
     tagColor: 'warning',
   },
-  [AuditActionType.ARCHIVE]: { label: '归档', color: '#52c41a', tagColor: 'success' },
-  [AuditActionType.UNARCHIVE]: { label: '取消归档', color: '#faad14', tagColor: 'warning' },
+  [AuditActionType.ARCHIVE]: { label: '归档', color: SEMANTIC_COLORS.success, tagColor: 'success' },
+  [AuditActionType.UNARCHIVE]: {
+    label: '取消归档',
+    color: SEMANTIC_COLORS.warning,
+    tagColor: 'warning',
+  },
 };
 
 export function actionMeta(actionType: AuditHistoryRecord['actionType']) {
@@ -64,10 +85,10 @@ export function actionMeta(actionType: AuditHistoryRecord['actionType']) {
 
 export function aiStatusMeta(status: ReviewStatus) {
   if (status === ReviewStatus.PASS)
-    return { label: 'AI 通过', tagColor: 'success', alertType: 'success' as const };
+    return { label: '预审通过', tagColor: 'success', alertType: 'success' as const };
   if (status === ReviewStatus.RISK)
-    return { label: 'AI 风险', tagColor: 'warning', alertType: 'warning' as const };
-  return { label: 'AI 不通过', tagColor: 'error', alertType: 'error' as const };
+    return { label: '预审风险', tagColor: 'warning', alertType: 'warning' as const };
+  return { label: '预审不通过', tagColor: 'error', alertType: 'error' as const };
 }
 
 export function statusLabel(status: DataItemStatus) {

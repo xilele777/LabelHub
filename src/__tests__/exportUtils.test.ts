@@ -75,7 +75,7 @@ describe('buildHumanReviewResult', () => {
 });
 
 describe('buildExportRecords', () => {
-  it('关联 AI 预审结果到对应数据条目', () => {
+  it('关联规则预审结果到对应数据条目', () => {
     const itemA = makeItem({ id: 'a' });
     const itemB = makeItem({ id: 'b' });
     const items = [itemA, itemB];

@@ -2,7 +2,7 @@
   <section class="user-manage-page app-page">
     <header class="app-page-header">
       <div class="app-page-title">
-        <a-typography-title :level="5" class="page-title">用户管理</a-typography-title>
+        <a-typography-title :level="4" class="page-title">用户管理</a-typography-title>
         <a-typography-text class="app-page-desc" type="secondary">
           维护平台用户和角色权限。
         </a-typography-text>
@@ -35,23 +35,14 @@
             </a-tag>
           </template>
           <template v-else-if="column.key === 'action'">
-            <a-space size="small">
-              <a-button type="link" size="small" @click="openEdit(record)">
-                <template #icon><EditOutlined /></template>
-                编辑
-              </a-button>
-              <a-button type="link" size="small" @click="openPassword(record)">
-                <template #icon><KeyOutlined /></template>
-                改密
-              </a-button>
+            <a-space size="small" wrap>
+              <a-button type="link" size="small" @click="openEdit(record)">编辑</a-button>
+              <a-button type="link" size="small" @click="openPassword(record)">改密</a-button>
               <a-popconfirm
                 :title="`确定删除用户 ${record.username} 吗？`"
                 @confirm="handleDelete(record.id)"
               >
-                <a-button type="link" size="small" danger>
-                  <template #icon><DeleteOutlined /></template>
-                  删除
-                </a-button>
+                <a-button type="link" size="small" danger>删除</a-button>
               </a-popconfirm>
             </a-space>
           </template>
@@ -158,15 +149,10 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue';
 import { message, type FormInstance, type FormProps, type TableColumnsType } from 'ant-design-vue';
-import {
-  DeleteOutlined,
-  EditOutlined,
-  KeyOutlined,
-  ReloadOutlined,
-  UserAddOutlined,
-} from '@ant-design/icons-vue';
+import { ReloadOutlined, UserAddOutlined } from '@ant-design/icons-vue';
 import * as authApi from '../../api/auth';
 import { Role, type UserInfo } from '../../types';
+import { getRoleMeta } from '../../utils/statusMeta';
 
 const users = ref<UserInfo[]>([]);
 const loading = ref(false);
@@ -333,16 +319,6 @@ async function handleDelete(id: string) {
   } catch (error) {
     message.error(error instanceof Error ? error.message : '删除用户失败');
   }
-}
-
-function getRoleMeta(role: Role | string) {
-  const map: Record<string, { label: string; color: string }> = {
-    [Role.ADMIN]: { label: '管理员', color: 'purple' },
-    [Role.OWNER]: { label: '负责人', color: 'red' },
-    [Role.ANNOTATOR]: { label: '标注员', color: 'blue' },
-    [Role.REVIEWER]: { label: '审核员', color: 'green' },
-  };
-  return map[role] ?? { label: role, color: 'default' };
 }
 </script>
 

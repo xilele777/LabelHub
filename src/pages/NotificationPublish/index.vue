@@ -1,21 +1,19 @@
 <template>
-  <section class="notification-page">
-    <a-card class="page-hero" :body-style="{ padding: '18px 20px' }">
-      <a-row :gutter="[16, 12]" align="middle" justify="space-between">
-        <a-col :xs="24" :lg="14">
-          <a-space>
-            <NotificationOutlined class="page-icon" />
-            <a-space direction="vertical" :size="4">
-              <a-typography-title :level="4" class="page-title">通知发布</a-typography-title>
-              <a-typography-text type="secondary">按角色或指定人员发送站内通知。</a-typography-text>
-            </a-space>
-          </a-space>
-        </a-col>
-        <a-col :xs="24" :lg="10" class="page-hero__actions">
-          <a-tag color="blue">管理员权限</a-tag>
-        </a-col>
-      </a-row>
-    </a-card>
+  <section class="notification-page app-page">
+    <header class="app-page-header">
+      <div class="app-page-title">
+        <a-typography-title :level="4" class="page-title">
+          <NotificationOutlined class="page-icon" />
+          通知发布
+        </a-typography-title>
+        <a-typography-text class="app-page-desc" type="secondary">
+          按角色或指定人员发送站内通知。
+        </a-typography-text>
+      </div>
+      <div class="app-page-tools">
+        <a-tag color="blue">管理员权限</a-tag>
+      </div>
+    </header>
 
     <a-alert
       type="info"
@@ -181,18 +179,10 @@ function resetForm() {
 </script>
 
 <style scoped>
-.notification-page {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  min-width: 0;
-}
-
-.page-hero__actions {
-  text-align: right;
-}
-
 .page-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   margin: 0;
 }
 
@@ -210,11 +200,5 @@ function resetForm() {
 
 .form-actions {
   align-items: center;
-}
-
-@media (max-width: 992px) {
-  .page-hero__actions {
-    text-align: left;
-  }
 }
 </style>

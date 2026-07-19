@@ -78,7 +78,7 @@
       </div>
 
       <!-- 表格视图：图表的无障碍兜底 -->
-      <a-card size="small" title="汇总明细" class="table-card" :body-style="{ padding: 0 }">
+      <a-card size="small" title="汇总明细" class="app-table-card" :body-style="{ padding: 0 }">
         <a-table
           row-key="name"
           size="small"
@@ -402,19 +402,10 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
-.page-alert {
-  margin-bottom: 12px;
-}
-
-.empty-card {
-  margin-top: 12px;
-}
-
 .stat-row {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 12px;
-  margin-bottom: 12px;
 }
 
 .stat-name {
@@ -462,7 +453,6 @@ onBeforeUnmount(() => {
   display: grid;
   grid-template-columns: 3fr 2fr;
   gap: 12px;
-  margin-bottom: 12px;
 }
 
 .chart-box {

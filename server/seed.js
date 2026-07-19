@@ -1099,7 +1099,7 @@ const runSeed = db._db.transaction(() => {
         },
         {
           id: 'h006',
-          operator: 'AI系统',
+          operator: '规则系统',
           actionType: 'ai_review_start',
           fromStatus: 'submitted',
           toStatus: 'ai_reviewing',
@@ -1108,7 +1108,7 @@ const runSeed = db._db.transaction(() => {
         },
         {
           id: 'h007',
-          operator: 'AI系统',
+          operator: '规则系统',
           actionType: 'ai_review_complete',
           fromStatus: 'ai_reviewing',
           toStatus: 'ai_reviewed',
@@ -1162,7 +1162,7 @@ const runSeed = db._db.transaction(() => {
         },
         {
           id: 'h010',
-          operator: 'AI系统',
+          operator: '规则系统',
           actionType: 'ai_review_start',
           fromStatus: 'submitted',
           toStatus: 'ai_reviewing',
@@ -1171,7 +1171,7 @@ const runSeed = db._db.transaction(() => {
         },
         {
           id: 'h011',
-          operator: 'AI系统',
+          operator: '规则系统',
           actionType: 'ai_review_complete',
           fromStatus: 'ai_reviewing',
           toStatus: 'ai_reviewed',
@@ -1225,7 +1225,7 @@ const runSeed = db._db.transaction(() => {
         },
         {
           id: 'h014',
-          operator: 'AI系统',
+          operator: '规则系统',
           actionType: 'ai_review_start',
           fromStatus: 'submitted',
           toStatus: 'ai_reviewing',
@@ -1234,7 +1234,7 @@ const runSeed = db._db.transaction(() => {
         },
         {
           id: 'h015',
-          operator: 'AI系统',
+          operator: '规则系统',
           actionType: 'ai_review_complete',
           fromStatus: 'ai_reviewing',
           toStatus: 'ai_reviewed',
@@ -1288,7 +1288,7 @@ const runSeed = db._db.transaction(() => {
         },
         {
           id: 'h018',
-          operator: 'AI系统',
+          operator: '规则系统',
           actionType: 'ai_review_start',
           fromStatus: 'submitted',
           toStatus: 'ai_reviewing',
@@ -1297,7 +1297,7 @@ const runSeed = db._db.transaction(() => {
         },
         {
           id: 'h019',
-          operator: 'AI系统',
+          operator: '规则系统',
           actionType: 'ai_review_complete',
           fromStatus: 'ai_reviewing',
           toStatus: 'ai_reviewed',
@@ -1350,7 +1350,7 @@ const runSeed = db._db.transaction(() => {
         },
         {
           id: 'h022',
-          operator: 'AI系统',
+          operator: '规则系统',
           actionType: 'ai_review_start',
           fromStatus: 'submitted',
           toStatus: 'ai_reviewing',
@@ -1359,7 +1359,7 @@ const runSeed = db._db.transaction(() => {
         },
         {
           id: 'h023',
-          operator: 'AI系统',
+          operator: '规则系统',
           actionType: 'ai_review_complete',
           fromStatus: 'ai_reviewing',
           toStatus: 'ai_reviewed',
@@ -1412,7 +1412,7 @@ const runSeed = db._db.transaction(() => {
         },
         {
           id: 'h026',
-          operator: 'AI系统',
+          operator: '规则系统',
           actionType: 'ai_review_start',
           fromStatus: 'submitted',
           toStatus: 'ai_reviewing',
@@ -1421,7 +1421,7 @@ const runSeed = db._db.transaction(() => {
         },
         {
           id: 'h027',
-          operator: 'AI系统',
+          operator: '规则系统',
           actionType: 'ai_review_complete',
           fromStatus: 'ai_reviewing',
           toStatus: 'ai_reviewed',
@@ -1474,7 +1474,7 @@ const runSeed = db._db.transaction(() => {
         },
         {
           id: 'h030',
-          operator: 'AI系统',
+          operator: '规则系统',
           actionType: 'ai_review_start',
           fromStatus: 'submitted',
           toStatus: 'ai_reviewing',
@@ -1483,7 +1483,7 @@ const runSeed = db._db.transaction(() => {
         },
         {
           id: 'h031',
-          operator: 'AI系统',
+          operator: '规则系统',
           actionType: 'ai_review_complete',
           fromStatus: 'ai_reviewing',
           toStatus: 'ai_reviewed',
@@ -1538,7 +1538,7 @@ const runSeed = db._db.transaction(() => {
         },
         {
           id: 'h034',
-          operator: 'AI系统',
+          operator: '规则系统',
           actionType: 'ai_review_start',
           fromStatus: 'submitted',
           toStatus: 'ai_reviewing',
@@ -1547,7 +1547,7 @@ const runSeed = db._db.transaction(() => {
         },
         {
           id: 'h035',
-          operator: 'AI系统',
+          operator: '规则系统',
           actionType: 'ai_review_complete',
           fromStatus: 'ai_reviewing',
           toStatus: 'ai_reviewed',
@@ -1610,7 +1610,7 @@ const runSeed = db._db.transaction(() => {
         },
         {
           id: 'h039',
-          operator: 'AI系统',
+          operator: '规则系统',
           actionType: 'ai_review_start',
           fromStatus: 'submitted',
           toStatus: 'ai_reviewing',
@@ -1619,7 +1619,7 @@ const runSeed = db._db.transaction(() => {
         },
         {
           id: 'h040',
-          operator: 'AI系统',
+          operator: '规则系统',
           actionType: 'ai_review_complete',
           fromStatus: 'ai_reviewing',
           toStatus: 'ai_reviewed',

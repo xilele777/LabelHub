@@ -1,5 +1,5 @@
 /**
- * 审核 / AI预审相关 API
+ * 审核 / 规则预审相关 API
  */
 import { get, post, put, del } from './request';
 import type { RequestConfig } from './request';
@@ -30,7 +30,7 @@ export function getReviewsByTaskId(taskId: string, config?: RequestConfig) {
   return get<ReviewListResult>(`/reviews/by-task/${taskId}`, undefined, config);
 }
 
-/** 创建审核结果（AI 预审结果持久化） */
+/** 创建审核结果（规则预审结果持久化） */
 export function createReview(data: Partial<AIReviewResult>) {
   return post<AIReviewResult>('/reviews', data);
 }

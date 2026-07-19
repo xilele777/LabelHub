@@ -1,6 +1,13 @@
 <template>
-  <section class="task-detail-page">
-    <a-typography-title :level="4" class="page-title">任务详情</a-typography-title>
+  <section class="task-detail-page app-page">
+    <header class="app-page-header">
+      <div class="app-page-title">
+        <a-typography-title :level="4" class="page-title">任务详情</a-typography-title>
+        <a-typography-text class="app-page-desc" type="secondary">
+          查看任务配置、数据明细与分配进度。
+        </a-typography-text>
+      </div>
+    </header>
 
     <a-empty v-if="!task" description="未找到该任务">
       <a-button @click="router.push('/tasks')">返回列表</a-button>
@@ -170,14 +177,8 @@ import {
   UndoOutlined,
 } from '@ant-design/icons-vue';
 import { batchImportItems } from '../../api/annotation';
-import {
-  DataItemStatus,
-  Role,
-  STATUS_DISPLAY_CONFIG,
-  TaskStatus,
-  TaskType,
-  type DataItem,
-} from '../../types';
+import { Role, TaskStatus, type DataItem } from '../../types';
+import { getDataStatusMeta, getTaskStatusMeta, getTaskTypeMeta } from '../../utils/statusMeta';
 import { useAnnotationStore } from '../../store/useAnnotationStore';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useTaskStore } from '../../store/useTaskStore';
@@ -339,40 +340,9 @@ function formatRange(start: string | null, end: string | null) {
 function stringify(value: unknown) {
   return value === null || value === undefined ? '-' : JSON.stringify(value);
 }
-
-function getTaskStatusMeta(status: TaskStatus) {
-  const map: Record<TaskStatus, { label: string; color: string }> = {
-    [TaskStatus.DRAFT]: { label: '草稿', color: 'default' },
-    [TaskStatus.PENDING]: { label: '待发布', color: 'processing' },
-    [TaskStatus.IN_PROGRESS]: { label: '进行中', color: 'blue' },
-    [TaskStatus.COMPLETED]: { label: '已完成', color: 'success' },
-    [TaskStatus.ENDED]: { label: '已结束', color: 'warning' },
-  };
-  return map[status];
-}
-
-function getTaskTypeMeta(type: TaskType) {
-  const map: Record<TaskType, { label: string; color: string }> = {
-    [TaskType.IMAGE_CLASSIFICATION]: { label: '图像分类', color: 'blue' },
-    [TaskType.OBJECT_DETECTION]: { label: '目标检测', color: 'green' },
-    [TaskType.SEMANTIC_SEGMENTATION]: { label: '语义分割', color: 'purple' },
-    [TaskType.TEXT_NER]: { label: '文本 NER', color: 'orange' },
-  };
-  return map[type] ?? { label: type, color: 'default' };
-}
-
-function getDataStatusMeta(status: DataItemStatus) {
-  return STATUS_DISPLAY_CONFIG[status] ?? { label: status, color: 'default' };
-}
 </script>
 
 <style scoped>
-.task-detail-page {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
 .page-title {
   margin: 0;
 }

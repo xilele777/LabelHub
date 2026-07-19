@@ -23,12 +23,12 @@
         </a-space>
       </a-empty>
 
-      <template v-else-if="currentItem && templateSchema">
+      <template v-else-if="currentItem && currentTask && templateSchema">
         <a-card size="small" class="workbench-header">
           <div class="header-row">
             <a-space wrap>
               <a-typography-title :level="5" class="task-title">
-                {{ currentTask?.name || '标注任务' }}
+                {{ currentTask.name || '标注任务' }}
               </a-typography-title>
               <a-tag :color="statusMeta.color">{{ statusMeta.label }}</a-tag>
               <a-typography-text type="secondary">
@@ -284,6 +284,75 @@
         </a-card>
       </template>
 
+      <template v-else-if="currentItem && taskStore.loading">
+        <a-spin class="page-loading" tip="正在加载关联任务…" />
+      </template>
+
+      <a-result
+        v-else-if="currentItem && taskStore.error"
+        status="error"
+        title="任务信息加载失败"
+        :sub-title="taskStore.error"
+      >
+        <template #extra>
+          <a-button type="primary" @click="retryLoadDependencies">重试</a-button>
+        </template>
+      </a-result>
+
+      <a-result
+        v-else-if="currentItem && !currentTask"
+        status="warning"
+        title="关联任务不存在或不可用"
+        sub-title="当前标注数据关联的任务未能加载，可能已被删除或配置异常。"
+      >
+        <template #extra>
+          <a-button type="primary" @click="retryLoadDependencies">重新加载</a-button>
+        </template>
+      </a-result>
+
+      <a-result
+        v-else-if="currentTask && !currentTask.templateId"
+        status="warning"
+        title="任务未配置模板"
+        sub-title="请联系负责人为该任务绑定标注模板后再继续。"
+      >
+        <template #extra>
+          <a-button type="primary" @click="retryLoadDependencies">重新加载</a-button>
+        </template>
+      </a-result>
+
+      <template v-else-if="currentItem && currentTask && templateLoading">
+        <a-spin class="page-loading" tip="正在加载标注模板…" />
+      </template>
+
+      <a-result
+        v-else-if="currentItem && currentTask && templateError"
+        status="error"
+        title="标注模板加载失败"
+        :sub-title="templateError"
+      >
+        <template #extra>
+          <a-space>
+            <a-button type="primary" @click="retryLoadTemplate">重试加载模板</a-button>
+            <a-button @click="retryLoadDependencies">刷新全部依赖</a-button>
+          </a-space>
+        </template>
+      </a-result>
+
+      <a-result
+        v-else-if="currentItem && currentTask && !templateSchema"
+        status="warning"
+        title="未找到标注模板"
+        :sub-title="`模板 ${currentTask.templateId} 不存在或已被删除。`"
+      >
+        <template #extra>
+          <a-space>
+            <a-button type="primary" @click="retryLoadTemplate">重试加载模板</a-button>
+            <a-button @click="retryLoadDependencies">刷新全部依赖</a-button>
+          </a-space>
+        </template>
+      </a-result>
+
       <a-spin v-else class="page-loading" />
     </section>
 
@@ -363,6 +432,7 @@ import { useAnnotationStore, type AvailableItem } from '../../store/useAnnotatio
 import { useAuthStore } from '../../store/useAuthStore';
 import { useTaskStore } from '../../store/useTaskStore';
 import { getTemplateSchemaAsync } from '../../utils/templateSchemaHelper';
+import { SEMANTIC_COLORS } from '../../utils/statusMeta';
 import { useDraftPersistence } from '../../composables/useDraftPersistence';
 import { useEditLock } from './composables/useEditLock';
 import { useLivePreReview } from './composables/useLivePreReview';
@@ -390,7 +460,10 @@ const taskStore = useTaskStore();
 const authStore = useAuthStore();
 
 const formRef = ref<FormInstance>();
-const templateSchema = ref<AnnotationTemplate>();
+const templateSchema = ref<AnnotationTemplate | null>(null);
+const templateLoading = ref(false);
+const templateError = ref<string | null>(null);
+const templateRequestToken = ref(0);
 const formState = reactive<Record<string, unknown>>({});
 const submitting = ref(false);
 const claimModalOpen = ref(false);
@@ -534,8 +607,8 @@ const dataStatusMeta: Record<DataItemStatus, { label: string; color: string }> =
   [DataItemStatus.PENDING]: { label: '待标注', color: 'default' },
   [DataItemStatus.DRAFT]: { label: '草稿', color: 'processing' },
   [DataItemStatus.SUBMITTED]: { label: '已提交', color: 'success' },
-  [DataItemStatus.AI_REVIEWING]: { label: 'AI预审中', color: 'processing' },
-  [DataItemStatus.AI_REVIEWED]: { label: 'AI已预审', color: 'cyan' },
+  [DataItemStatus.AI_REVIEWING]: { label: '规则预审中', color: 'processing' },
+  [DataItemStatus.AI_REVIEWED]: { label: '规则已预审', color: 'cyan' },
   [DataItemStatus.PENDING_REVIEW]: { label: '待人工审核', color: 'orange' },
   [DataItemStatus.REVIEWED]: { label: '审核通过', color: 'green' },
   [DataItemStatus.REJECTED]: { label: '已驳回', color: 'red' },
@@ -553,19 +626,19 @@ const reviewStatusMeta: Record<
   [ReviewStatus.PASS]: {
     label: '通过',
     tagColor: 'success',
-    strokeColor: '#52c41a',
+    strokeColor: SEMANTIC_COLORS.success,
     alertType: 'success',
   },
   [ReviewStatus.RISK]: {
     label: '风险',
     tagColor: 'warning',
-    strokeColor: '#faad14',
+    strokeColor: SEMANTIC_COLORS.warning,
     alertType: 'warning',
   },
   [ReviewStatus.FAIL]: {
     label: '不通过',
     tagColor: 'error',
-    strokeColor: '#ff4d4f',
+    strokeColor: SEMANTIC_COLORS.danger,
     alertType: 'error',
   },
 };
@@ -612,10 +685,8 @@ watch(
 
 watch(
   () => currentTask.value?.templateId,
-  async (templateId) => {
-    templateSchema.value = undefined;
-    if (!templateId) return;
-    templateSchema.value = await getTemplateSchemaAsync(templateId);
+  (templateId) => {
+    void loadTemplateSchema(templateId);
   },
   { immediate: true },
 );
@@ -656,6 +727,42 @@ async function refreshWorkbenchData() {
     annotationStore.fetchDataItems(queryTaskId.value),
     annotationStore.fetchAIReviews(queryTaskId.value),
   ]);
+}
+
+async function loadTemplateSchema(templateId?: string) {
+  const requestToken = templateRequestToken.value + 1;
+  templateRequestToken.value = requestToken;
+  templateSchema.value = null;
+  templateError.value = null;
+
+  if (!templateId) {
+    templateLoading.value = false;
+    return;
+  }
+
+  templateLoading.value = true;
+  try {
+    const schema = await getTemplateSchemaAsync(templateId);
+    if (templateRequestToken.value !== requestToken) return;
+    templateSchema.value = schema ?? null;
+  } catch (error) {
+    if (templateRequestToken.value !== requestToken) return;
+    const messageText = error instanceof Error ? error.message : '加载标注模板失败';
+    templateError.value = `模板 ${templateId} 加载失败：${messageText}`;
+  } finally {
+    if (templateRequestToken.value === requestToken) {
+      templateLoading.value = false;
+    }
+  }
+}
+
+async function retryLoadTemplate() {
+  await loadTemplateSchema(currentTask.value?.templateId);
+}
+
+async function retryLoadDependencies() {
+  await taskStore.fetchTasks();
+  await refreshWorkbenchData();
 }
 
 function setupSocketLifecycle() {
@@ -753,14 +860,14 @@ async function submitCurrent() {
         { ...formState },
         authStore.user.username,
       );
-      message.success('标注已重新提交，AI 预审已完成');
+      message.success('标注已重新提交，规则预审已完成');
     } else {
       await annotationStore.submitAnnotation(
         currentItem.value.id,
         { ...formState },
         authStore.user.username,
       );
-      message.success('标注已提交，AI 预审已完成');
+      message.success('标注已提交，规则预审已完成');
     }
     draft.clear();
   } catch (error) {

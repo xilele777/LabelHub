@@ -199,6 +199,7 @@
                   :href="String(value)"
                   target="_blank"
                   rel="noopener noreferrer"
+                  class="raw-link"
                   >{{ String(value) }}</a
                 >
                 <span v-else>{{ String(value) }}</span>
@@ -1120,5 +1121,9 @@ function selectNextActionable(currentId: string, anchorIndex: number): boolean {
   .review-main {
     grid-template-columns: 1fr;
   }
+}
+
+.raw-link {
+  word-break: break-all;
 }
 </style>

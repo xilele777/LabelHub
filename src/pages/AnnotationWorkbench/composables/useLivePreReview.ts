@@ -18,7 +18,7 @@ export interface UseLivePreReviewOptions {
 
 /**
  * 本地实时预审引擎：监听表单变化，按模板规则（必填/评分范围/文本长度/选项完整性）
- * 即时产出与后端 AI 预审同构的结果对象，用于标注过程中的实时反馈。
+ * 即时产出与后端规则预审同构的结果对象，用于标注过程中的实时反馈。
  *
  * 性能策略：
  * - templateSchema / currentItem 切换立即响应（数据源变化）；

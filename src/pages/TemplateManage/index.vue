@@ -58,14 +58,13 @@
             {{ formatDate(record.createdAt) }}
           </template>
           <template v-else-if="column.key === 'action'">
-            <a-space size="small">
+            <a-space size="small" wrap>
               <a-button
                 type="link"
                 size="small"
                 :loading="previewLoadingId === record.id"
                 @click="openPreview(record)"
               >
-                <template #icon><EyeOutlined /></template>
                 预览
               </a-button>
               <a-button
@@ -73,17 +72,13 @@
                 size="small"
                 @click="router.push(`/templates/builder?id=${record.id}`)"
               >
-                <template #icon><EditOutlined /></template>
                 编辑
               </a-button>
               <a-popconfirm
                 title="确认删除该模板？删除后无法恢复。"
                 @confirm="handleDelete(record.id)"
               >
-                <a-button type="link" size="small" danger>
-                  <template #icon><DeleteOutlined /></template>
-                  删除
-                </a-button>
+                <a-button type="link" size="small" danger>删除</a-button>
               </a-popconfirm>
             </a-space>
           </template>
@@ -131,8 +126,9 @@
 import { computed, onActivated, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { message, type TableColumnsType, type TablePaginationConfig } from 'ant-design-vue';
-import { DeleteOutlined, EditOutlined, EyeOutlined, PlusOutlined } from '@ant-design/icons-vue';
-import { TaskType, type AnnotationTemplate, type TemplateItem } from '../../types';
+import { PlusOutlined } from '@ant-design/icons-vue';
+import { type AnnotationTemplate, type TemplateItem } from '../../types';
+import { getTaskTypeMeta } from '../../utils/statusMeta';
 import { useTemplateStore } from '../../store/useTemplateStore';
 import { getTemplateSchemaAsync } from '../../utils/templateSchemaHelper';
 import { useDebounced } from '../../composables/useDebounced';
@@ -164,7 +160,7 @@ const columns: TableColumnsType<TemplateItem> = [
   { title: '字段', dataIndex: 'fieldCount', key: 'fieldCount', width: 72, align: 'center' },
   { title: '创建人', dataIndex: 'creator', key: 'creator', width: 90, responsive: ['xl'] },
   { title: '创建时间', dataIndex: 'createdAt', key: 'createdAt', width: 148, responsive: ['xxl'] },
-  { title: '操作', key: 'action', width: 156 },
+  { title: '操作', key: 'action', width: 200 },
 ];
 
 const filteredTemplates = computed(() => {
@@ -223,16 +219,6 @@ async function openPreview(record: TemplateItem) {
 
 function formatDate(value: string) {
   return value ? new Date(value).toLocaleString('zh-CN', { hour12: false }) : '-';
-}
-
-function getTaskTypeMeta(type: TaskType) {
-  const map: Record<TaskType, { label: string; color: string }> = {
-    [TaskType.IMAGE_CLASSIFICATION]: { label: '图像分类', color: 'blue' },
-    [TaskType.OBJECT_DETECTION]: { label: '目标检测', color: 'green' },
-    [TaskType.SEMANTIC_SEGMENTATION]: { label: '语义分割', color: 'purple' },
-    [TaskType.TEXT_NER]: { label: '文本 NER', color: 'orange' },
-  };
-  return map[type];
 }
 </script>
 

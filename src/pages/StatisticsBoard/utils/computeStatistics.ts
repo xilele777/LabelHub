@@ -10,22 +10,23 @@ import {
   type TaskItem,
 } from '../../../types';
 import type { AIReviewResult } from '../../../types/aiReview';
+import { SEMANTIC_COLORS } from '../../../utils/statusMeta';
 
 const STATUS_CHART_COLOR_MAP: Record<DataItemStatus, string> = {
   [DataItemStatus.PENDING]: '#8c8c8c',
-  [DataItemStatus.DRAFT]: '#faad14',
-  [DataItemStatus.SUBMITTED]: '#1a73e8',
+  [DataItemStatus.DRAFT]: SEMANTIC_COLORS.warning,
+  [DataItemStatus.SUBMITTED]: SEMANTIC_COLORS.primary,
   [DataItemStatus.AI_REVIEWING]: '#597ef7',
   [DataItemStatus.AI_REVIEWED]: '#13c2c2',
   [DataItemStatus.PENDING_REVIEW]: '#fa8c16',
-  [DataItemStatus.REVIEWED]: '#52c41a',
-  [DataItemStatus.REJECTED]: '#ff4d4f',
+  [DataItemStatus.REVIEWED]: SEMANTIC_COLORS.success,
+  [DataItemStatus.REJECTED]: SEMANTIC_COLORS.danger,
 };
 
 const AI_RISK_MAP: Record<ReviewStatus, { label: string; color: string }> = {
-  [ReviewStatus.PASS]: { label: '通过', color: '#52c41a' },
-  [ReviewStatus.RISK]: { label: '风险', color: '#faad14' },
-  [ReviewStatus.FAIL]: { label: '不通过', color: '#ff4d4f' },
+  [ReviewStatus.PASS]: { label: '通过', color: SEMANTIC_COLORS.success },
+  [ReviewStatus.RISK]: { label: '风险', color: SEMANTIC_COLORS.warning },
+  [ReviewStatus.FAIL]: { label: '不通过', color: SEMANTIC_COLORS.danger },
 };
 
 export interface AnnotatorRankItem {

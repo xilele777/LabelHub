@@ -138,7 +138,8 @@
 import { computed, onMounted, ref } from 'vue';
 import { message, type TableColumnsType } from 'ant-design-vue';
 import { DownloadOutlined } from '@ant-design/icons-vue';
-import { DataItemStatus, STATUS_DISPLAY_CONFIG, type DataItem } from '../../types';
+import { DataItemStatus, type DataItem } from '../../types';
+import { getDataStatusMeta } from '../../utils/statusMeta';
 import { useAnnotationStore } from '../../store/useAnnotationStore';
 import { useTaskStore } from '../../store/useTaskStore';
 import {
@@ -245,10 +246,6 @@ async function handleExport() {
 function stringify(value: unknown) {
   if (value === null || value === undefined) return '无';
   return typeof value === 'string' ? value : JSON.stringify(value);
-}
-
-function getDataStatusMeta(status: DataItemStatus) {
-  return STATUS_DISPLAY_CONFIG[status] ?? { label: status, color: 'default' };
 }
 </script>
 

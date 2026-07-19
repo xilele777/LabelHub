@@ -253,8 +253,8 @@ export enum DataItemStatus {
   PENDING = 'pending', // 待标注
   DRAFT = 'draft', // 已存草稿
   SUBMITTED = 'submitted', // 已提交
-  AI_REVIEWING = 'ai_reviewing', // AI预审中
-  AI_REVIEWED = 'ai_reviewed', // AI 已预审
+  AI_REVIEWING = 'ai_reviewing', // 规则预审中
+  AI_REVIEWED = 'ai_reviewed', // 规则已预审
   PENDING_REVIEW = 'pending_review', // 待人工审核
   REVIEWED = 'reviewed', // 人工已审核（通过）
   REJECTED = 'rejected', // 人工已驳回
@@ -265,8 +265,8 @@ export enum AuditActionType {
   SUBMIT = 'submit', // 提交标注
   SAVE_DRAFT = 'save_draft', // 保存草稿
   CLAIM_ASSIGNMENT = 'claim_assignment', // 领取标注
-  AI_REVIEW_START = 'ai_review_start', // AI预审开始
-  AI_REVIEW_COMPLETE = 'ai_review_complete', // AI预审完成
+  AI_REVIEW_START = 'ai_review_start', // 规则预审开始
+  AI_REVIEW_COMPLETE = 'ai_review_complete', // 规则预审完成
   ASSIGN_REVIEWER = 'assign_reviewer', // 分配审核员（进入待人工审核）
   CLAIM_REVIEW = 'claim_review', // 领取审核
   APPROVE = 'approve', // 审核通过
@@ -281,7 +281,7 @@ export enum AuditActionType {
 /** 审核历史记录 */
 export interface AuditHistoryRecord {
   id: string; // 记录唯一ID
-  operator: string; // 操作人（标注员/审核员/AI系统）
+  operator: string; // 操作人（标注员/审核员/规则系统）
   actionType: AuditActionType | string; // 操作类型
   fromStatus: DataItemStatus; // 原状态
   toStatus: DataItemStatus; // 新状态
@@ -291,15 +291,20 @@ export interface AuditHistoryRecord {
 
 /** 状态流转映射（合法的状态转换） */
 export const STATUS_TRANSITIONS: Record<DataItemStatus, DataItemStatus[]> = {
-  // 允许从 pending 直接提交（无需先保存草稿）；服务端提交后会原子完成 AI 预审并进入待人工审核
+  // 允许从 pending 直接提交（无需先保存草稿）；服务端提交后会原子完成规则预审并进入待人工审核
   [DataItemStatus.PENDING]: [
     DataItemStatus.DRAFT,
     DataItemStatus.SUBMITTED,
     DataItemStatus.PENDING_REVIEW,
   ],
-  [DataItemStatus.DRAFT]: [DataItemStatus.SUBMITTED, DataItemStatus.PENDING],
-  // 服务端原子 AI 预审：submitted 可直接到 pending_review（跳过中间态）；
-  // 仍保留 → ai_reviewing 供手动重跑 AI 预审使用
+  // 草稿提交后服务端原子完成规则预审，前端会直接观察到 pending_review（同 pending/rejected）
+  [DataItemStatus.DRAFT]: [
+    DataItemStatus.SUBMITTED,
+    DataItemStatus.PENDING,
+    DataItemStatus.PENDING_REVIEW,
+  ],
+  // 服务端原子规则预审：submitted 可直接到 pending_review（跳过中间态）；
+  // 仍保留 → ai_reviewing 供手动重跑规则预审使用
   [DataItemStatus.SUBMITTED]: [
     DataItemStatus.PENDING_REVIEW,
     DataItemStatus.AI_REVIEWING,
@@ -318,7 +323,8 @@ export const STATUS_TRANSITIONS: Record<DataItemStatus, DataItemStatus[]> = {
   ],
   [DataItemStatus.PENDING_REVIEW]: [DataItemStatus.REVIEWED, DataItemStatus.REJECTED],
   [DataItemStatus.REVIEWED]: [],
-  [DataItemStatus.REJECTED]: [DataItemStatus.SUBMITTED], // 驳回后可重新提交
+  // 驳回后可重新提交；若服务端在同一次 resubmit 中自动完成规则预审，前端会直接观察到 pending_review
+  [DataItemStatus.REJECTED]: [DataItemStatus.SUBMITTED, DataItemStatus.PENDING_REVIEW],
 };
 
 /** 状态显示配置 */
@@ -330,11 +336,11 @@ export const STATUS_DISPLAY_CONFIG: Record<
   [DataItemStatus.DRAFT]: { label: '草稿', color: 'warning', icon: 'EditOutlined' },
   [DataItemStatus.SUBMITTED]: { label: '已提交', color: 'processing', icon: 'SendOutlined' },
   [DataItemStatus.AI_REVIEWING]: {
-    label: 'AI预审中',
+    label: '规则预审中',
     color: 'processing',
     icon: 'LoadingOutlined',
   },
-  [DataItemStatus.AI_REVIEWED]: { label: 'AI已预审', color: 'cyan', icon: 'RobotOutlined' },
+  [DataItemStatus.AI_REVIEWED]: { label: '规则已预审', color: 'cyan', icon: 'RobotOutlined' },
   [DataItemStatus.PENDING_REVIEW]: { label: '待人工审核', color: 'orange', icon: 'AuditOutlined' },
   [DataItemStatus.REVIEWED]: { label: '审核通过', color: 'success', icon: 'CheckCircleOutlined' },
   [DataItemStatus.REJECTED]: { label: '审核驳回', color: 'error', icon: 'CloseCircleOutlined' },

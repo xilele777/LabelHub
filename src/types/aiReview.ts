@@ -1,4 +1,4 @@
-// ========== AI 自动预审类型 ==========
+// ========== 规则预审类型 ==========
 
 /** 预审结果状态 */
 export enum ReviewStatus {
@@ -36,7 +36,7 @@ export interface ReviewSuggestion {
   reason: string; // 建议原因
 }
 
-/** 单条数据项的 AI 预审结果 */
+/** 单条数据项的规则预审结果 */
 export interface AIReviewResult {
   id: string; // 预审结果唯一 ID
   dataItemId: string; // 关联 DataItem.id
@@ -49,5 +49,5 @@ export interface AIReviewResult {
   fieldWarnings: FieldWarning[]; // 字段级警告列表
   suggestions: ReviewSuggestion[]; // 修改建议列表
   reviewedAt: string; // 预审时间 ISO 字符串
-  modelVersion: string; // 使用的 AI 模型版本，便于追溯
+  modelVersion: string; // 使用的预审引擎版本，便于追溯
 }

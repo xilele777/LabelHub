@@ -6,10 +6,18 @@
         <a-statistic title="总数" :value="stats.total" />
       </a-col>
       <a-col :span="6">
-        <a-statistic title="已分配" :value="stats.assigned" value-style="color: #52c41a" />
+        <a-statistic
+          title="已分配"
+          :value="stats.assigned"
+          :value-style="{ color: SEMANTIC_COLORS.success }"
+        />
       </a-col>
       <a-col :span="6">
-        <a-statistic title="未分配" :value="stats.unassigned" value-style="color: #faad14" />
+        <a-statistic
+          title="未分配"
+          :value="stats.unassigned"
+          :value-style="{ color: SEMANTIC_COLORS.warning }"
+        />
       </a-col>
       <a-col :span="6">
         <a-statistic title="标注员" :value="Object.keys(stats.byAnnotator).length" />
@@ -81,6 +89,7 @@
       :columns="columns"
       :data-source="items"
       :loading="itemsLoading"
+      :scroll="{ x: 640 }"
       :pagination="{ pageSize: 10, showSizeChanger: true, showTotal: (t: number) => `共 ${t} 条` }"
     >
       <template #bodyCell="{ column, record }">
@@ -124,6 +133,7 @@ import {
   type ExecuteAssignParams,
 } from '../../../api/assignment';
 import type { AnnotatorInfo, AssignmentStats } from '../../../types';
+import { SEMANTIC_COLORS } from '../../../utils/statusMeta';
 
 const props = defineProps<{ taskId: string }>();
 

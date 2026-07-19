@@ -45,10 +45,10 @@ export const CSV_COLUMN_MAP: Record<string, string> = {
   status: '状态',
   rawData: '原始数据',
   annotationResult: '标注结果',
-  aiReviewResult: 'AI预审结果(完整)',
-  aiReviewStatus: 'AI预审状态',
-  aiReviewScore: 'AI预审评分',
-  aiReviewSummary: 'AI预审摘要',
+  aiReviewResult: '规则预审结果(完整)',
+  aiReviewStatus: '规则预审状态',
+  aiReviewScore: '规则预审评分',
+  aiReviewSummary: '规则预审摘要',
   humanReviewResult: '人工审核结果(完整)',
   humanReviewer: '审核人',
   humanReviewResult2: '人工审核结论',
@@ -227,10 +227,10 @@ export function performExport(
  * | status             | DataItem.status                      | 状态                  | 枚举值字符串           |
  * | rawData            | DataItem.rawData                     | 原始数据              | JSON 序列化           |
  * | annotationResult   | DataItem.annotationData              | 标注结果              | JSON 序列化           |
- * | aiReviewResult     | AIReviewResult (by dataItemId)       | AI预审结果(完整)      | JSON 序列化           |
- * | aiReviewStatus     | AIReviewResult.reviewStatus          | AI预审状态            | 提取为独立列           |
- * | aiReviewScore      | AIReviewResult.score                 | AI预审评分            | 提取为独立列           |
- * | aiReviewSummary    | AIReviewResult.summary               | AI预审摘要            | 提取为独立列           |
+ * | aiReviewResult     | AIReviewResult (by dataItemId)       | 规则预审结果(完整)    | JSON 序列化           |
+ * | aiReviewStatus     | AIReviewResult.reviewStatus          | 规则预审状态          | 提取为独立列           |
+ * | aiReviewScore      | AIReviewResult.score                 | 规则预审评分          | 提取为独立列           |
+ * | aiReviewSummary    | AIReviewResult.summary               | 规则预审摘要          | 提取为独立列           |
  * | humanReviewResult  | 由 DataItem 审核字段构造              | 人工审核结果(完整)     | JSON 序列化           |
  * | humanReviewer      | DataItem.reviewer                    | 审核人                | 提取为独立列           |
  * | humanReviewResult2 | DataItem.status 推导                 | 人工审核结论           | 提取为独立列           |

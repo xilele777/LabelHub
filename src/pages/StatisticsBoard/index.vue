@@ -1,33 +1,31 @@
 <template>
   <a-spin :spinning="loading">
-    <section class="statistics-page">
-      <a-alert v-if="error" type="error" :message="error" show-icon closable />
+    <section class="statistics-page app-page">
+      <header class="app-page-header">
+        <div class="app-page-title">
+          <a-typography-title :level="4" class="page-title">统计看板</a-typography-title>
+          <a-typography-text class="app-page-desc" type="secondary">
+            汇总任务、标注、审核和规则预审风险。
+          </a-typography-text>
+        </div>
+        <div class="app-page-tools">
+          <a-space wrap>
+            <a-tag color="blue">
+              进行中任务 {{ stats.inProgressTasks }} / {{ stats.totalTasks }}
+            </a-tag>
+            <a-tag color="cyan">数据总量 {{ stats.totalDataItems }}</a-tag>
+            <a-tag
+              v-if="stats.reviewPassRate.total > 0"
+              :color="passRatePercent >= 80 ? 'green' : passRatePercent >= 50 ? 'orange' : 'red'"
+            >
+              审核通过率 {{ passRatePercent }}%
+            </a-tag>
+            <a-tag v-else color="default">暂无审核数据</a-tag>
+          </a-space>
+        </div>
+      </header>
 
-      <a-card class="hero-card">
-        <a-row :gutter="[16, 12]" align="middle" justify="space-between">
-          <a-col :xs="24" :lg="12">
-            <a-typography-title :level="4" class="page-title">统计看板</a-typography-title>
-            <a-typography-text type="secondary">
-              汇总任务、标注、审核和 AI 预审风险。
-            </a-typography-text>
-          </a-col>
-          <a-col :xs="24" :lg="12" class="hero-tags">
-            <a-space wrap>
-              <a-tag color="blue">
-                进行中任务 {{ stats.inProgressTasks }} / {{ stats.totalTasks }}
-              </a-tag>
-              <a-tag color="cyan">数据总量 {{ stats.totalDataItems }}</a-tag>
-              <a-tag
-                v-if="stats.reviewPassRate.total > 0"
-                :color="passRatePercent >= 80 ? 'green' : passRatePercent >= 50 ? 'orange' : 'red'"
-              >
-                审核通过率 {{ passRatePercent }}%
-              </a-tag>
-              <a-tag v-else color="default">暂无审核数据</a-tag>
-            </a-space>
-          </a-col>
-        </a-row>
-      </a-card>
+      <a-alert v-if="error" type="error" :message="error" show-icon closable />
 
       <a-row :gutter="[16, 16]">
         <a-col v-for="card in statCards" :key="card.title" :xs="24" :sm="12" :xl="8" :xxl="4">
@@ -97,10 +95,10 @@
         </a-col>
 
         <a-col :xs="24" :xl="12">
-          <a-card title="AI 风险分布" size="small" class="panel-card">
+          <a-card title="规则风险分布" size="small" class="panel-card">
             <a-list
               :data-source="stats.aiRiskDistribution"
-              :locale="{ emptyText: '暂无 AI 预审数据' }"
+              :locale="{ emptyText: '暂无规则预审数据' }"
             >
               <template #renderItem="{ item }">
                 <a-list-item>
@@ -169,7 +167,7 @@ const statCards = computed(() => [
   {
     title: '待人工审核',
     value: stats.value.reviewPendingCount,
-    description: 'AI 预审后等待处理',
+    description: '规则预审后等待处理',
     tone: 'orange',
   },
   {
@@ -188,7 +186,7 @@ const statCards = computed(() => [
     title: '审核通过率',
     value: passRatePercent.value,
     suffix: '%',
-    description: `AI 命中 ${stats.value.aiRiskHitCount} 条风险规则`,
+    description: `规则预审命中 ${stats.value.aiRiskHitCount} 条风险规则`,
     tone: 'blue',
   },
 ]);
@@ -217,23 +215,8 @@ function getAIRiskPercent(count: number) {
 </script>
 
 <style scoped>
-.statistics-page {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  min-width: 0;
-}
-
-.hero-card {
-  border-color: transparent;
-}
-
 .page-title {
-  margin: 0 0 4px;
-}
-
-.hero-tags {
-  text-align: right;
+  margin: 0;
 }
 
 .card-desc {
@@ -274,10 +257,6 @@ function getAIRiskPercent(count: number) {
 }
 
 @media (max-width: 900px) {
-  .hero-tags {
-    text-align: left;
-  }
-
   .rank-row,
   .distribution-row {
     grid-template-columns: max-content minmax(0, 1fr) max-content;

@@ -657,16 +657,16 @@ function notifyAnnotationResubmitted(item, annotator) {
 }
 
 /**
- * AI 预审完成通知 — 推送给审核员
+ * 规则预审完成通知 — 推送给审核员
  * @param {Object} item - 标注项
- * @param {Object} reviewRecord - AI 预审结果
+ * @param {Object} reviewRecord - 规则预审结果
  */
 function notifyAIReviewComplete(item, reviewRecord) {
   const task = db.getById('tasks', item.taskId);
   const notification = createNotification({
     type: NOTIFICATION_TYPE.AI_REVIEW_COMPLETE,
-    title: 'AI 预审完成',
-    message: `任务「${task?.name || item.taskId}」的数据项已完成 AI 预审，评分 ${reviewRecord.score}/100，请进行人工审核`,
+    title: '规则预审完成',
+    message: `任务「${task?.name || item.taskId}」的数据项已完成规则预审，评分 ${reviewRecord.score}/100，请进行人工审核`,
     data: {
       dataItemId: item.id,
       taskId: item.taskId,
@@ -675,7 +675,7 @@ function notifyAIReviewComplete(item, reviewRecord) {
       score: reviewRecord.score,
       reviewStatus: reviewRecord.reviewStatus,
     },
-    sender: 'AI系统',
+    sender: '规则系统',
   });
 
   // 只推送给该标注项对应的审核员；未指定 reviewer 时，推送给可处理未分配待审项的审核员

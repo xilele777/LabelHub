@@ -50,7 +50,7 @@ export async function getTemplateSchemaAsync(
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
     logger.warn(`[templateSchemaHelper] Failed to fetch template "${templateId}":`, message);
-    return undefined;
+    throw err;
   }
 }
 

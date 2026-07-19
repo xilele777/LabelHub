@@ -151,10 +151,22 @@ body {
   border-bottom-color: var(--lh-divider);
 }
 
+/* 排除 measure row：scroll.x 表格的测量行靠内联 padding:0 隐藏，被 !important 覆盖会显形为空行 */
 .ant-table-thead > tr > th,
-.ant-table-tbody > tr > td {
+.ant-table-tbody > tr:not(.ant-table-measure-row) > td {
   padding-block: 10px !important;
   padding-inline: 10px !important;
+}
+
+/* 首末列与容器边缘留出呼吸空间（表格卡片 body 无 padding，10px 会显得贴边） */
+.ant-table-thead > tr > th:first-child,
+.ant-table-tbody > tr:not(.ant-table-measure-row) > td:first-child {
+  padding-inline-start: 16px !important;
+}
+
+.ant-table-thead > tr > th:last-child,
+.ant-table-tbody > tr:not(.ant-table-measure-row) > td:last-child {
+  padding-inline-end: 16px !important;
 }
 
 .ant-table-cell {
@@ -401,7 +413,7 @@ body {
 .app-page {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 16px;
   min-width: 0;
   animation: lh-section-enter var(--lh-motion-slow) var(--lh-ease-emphasized);
 }
